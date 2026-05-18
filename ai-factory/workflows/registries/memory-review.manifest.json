@@ -1,0 +1,34 @@
+{
+  "id": "memory-review",
+  "name": "记忆复盘",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "markdown",
+  "inputs": ["stage summary", "selected working memory", "source references"],
+  "outputs": [
+    "working memory actions",
+    "durable memory candidates",
+    "memory index updates"
+  ],
+  "states": [
+    "not_started",
+    "intake",
+    "sources_loaded",
+    "review_drafted",
+    "waiting_for_human",
+    "approved",
+    "needs_revision",
+    "memory_updated",
+    "archived"
+  ],
+  "memoryDomains": [
+    "working/tasks",
+    "working/iterations",
+    "working/retrospectives",
+    "durable/architecture",
+    "durable/decisions"
+  ],
+  "humanReviewRequired": true
+}

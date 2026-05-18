@@ -75,3 +75,18 @@
 阶段价值：
 
 项目开始从“有雏形”进入“有稳定流程”的阶段。下一步重点不是堆功能，而是让 AI factory 的工作流、记忆、提示词和质量门禁更可靠。
+
+## 阶段 6：Phase 1.1 流程稳定化
+
+完成内容：
+
+- 补齐 Phase Gate、规格生命周期、记忆生命周期、契约生命周期和发布规则。
+- 补齐最小 Prompt 集、Agent 角色规范、核心 Workflow、Manifest 和 Run Record 模板。
+- 补齐 feature-development、bugfix、review、release 四个 Playbook。
+- 新增 requirements/design 契约入口。
+- 新增 `pnpm validate:factory`，并接入 CI。
+- 补齐设计系统最小规则和知识同步规则。
+
+阶段价值：
+
+AI 工厂从“文档化雏形”进入“流程可检查”的状态。下一步可以运行真实样例来验证流程，而不是直接进入产品功能开发。

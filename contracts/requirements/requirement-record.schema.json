@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-code.local/contracts/requirements/requirement-record.schema.json",
+  "title": "RequirementRecord",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "title",
+    "status",
+    "priority",
+    "source",
+    "statement",
+    "acceptanceCriteria",
+    "verification"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "kind": { "const": "requirement" },
+    "title": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "needs-confirmation",
+        "accepted",
+        "rejected",
+        "deferred"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["p0", "p1", "p2"]
+    },
+    "source": { "type": "string" },
+    "statement": { "type": "string" },
+    "acceptanceCriteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "verification": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "linkedSpec": { "type": "string" },
+    "needsDesignInput": { "type": "boolean" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

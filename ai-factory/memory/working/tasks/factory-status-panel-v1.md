@@ -1,5 +1,15 @@
 # 工厂状态面板 v1 任务记忆
 
+## 记忆类型
+
+- id: factory-status-panel-v1
+- domain: tasks
+- scope: working
+- status: active
+- sourcePath: ai-factory/memory/working/tasks/factory-status-panel-v1.md
+- created: 2026-05-18
+- lastReviewed: 2026-05-18
+
 ## 背景
 
 该任务实际运行 `spec-to-implementation-plan` 工作流：先写规格，再写实施计划，再按 TDD 推进后端响应、契约一致性检查和 Admin 面板。

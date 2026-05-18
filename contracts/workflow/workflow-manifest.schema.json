@@ -7,15 +7,24 @@
     "id",
     "name",
     "owner",
+    "trigger",
+    "execution",
+    "discovery",
+    "source",
     "inputs",
     "outputs",
     "states",
-    "memoryDomains"
+    "memoryDomains",
+    "humanReviewRequired"
   ],
   "properties": {
     "id": { "type": "string" },
     "name": { "type": "string" },
     "owner": { "type": "string" },
+    "trigger": { "type": "string" },
+    "execution": { "type": "string" },
+    "discovery": { "type": "string" },
+    "source": { "type": "string" },
     "inputs": {
       "type": "array",
       "items": { "type": "string" }
@@ -31,7 +40,8 @@
     "memoryDomains": {
       "type": "array",
       "items": { "type": "string" }
-    }
+    },
+    "humanReviewRequired": { "type": "boolean" }
   },
   "additionalProperties": false
 }

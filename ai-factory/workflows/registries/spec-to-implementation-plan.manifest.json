@@ -1,0 +1,43 @@
+{
+  "id": "spec-to-implementation-plan",
+  "name": "规格到实施计划",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "markdown",
+  "inputs": [
+    "spec source",
+    "scope",
+    "constraints",
+    "verification requirements"
+  ],
+  "outputs": [
+    "implementation plan",
+    "risks",
+    "verification commands",
+    "memory update suggestions"
+  ],
+  "states": [
+    "not_started",
+    "intake",
+    "context_loaded",
+    "plan_drafted",
+    "human_review",
+    "approved",
+    "in_progress",
+    "verified",
+    "archived"
+  ],
+  "memoryDomains": [
+    "durable/architecture",
+    "durable/product",
+    "durable/api",
+    "durable/decisions",
+    "working/active-context",
+    "working/tasks",
+    "working/iterations",
+    "working/retrospectives"
+  ],
+  "humanReviewRequired": true
+}

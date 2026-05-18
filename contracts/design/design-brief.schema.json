@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-code.local/contracts/design/design-brief.schema.json",
+  "title": "DesignBrief",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "title",
+    "status",
+    "linkedRequirement",
+    "pageGoal",
+    "audience",
+    "states",
+    "reviewChecklist"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "kind": { "const": "design-brief" },
+    "title": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "needs-confirmation", "accepted", "superseded"]
+    },
+    "linkedRequirement": { "type": "string" },
+    "pageGoal": { "type": "string" },
+    "audience": { "type": "string" },
+    "informationPriority": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "states": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "reviewChecklist": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "figmaUrl": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

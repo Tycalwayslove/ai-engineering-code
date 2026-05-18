@@ -3,7 +3,16 @@
   "$id": "https://ai-code.local/contracts/memory/memory-document.schema.json",
   "title": "MemoryDocument",
   "type": "object",
-  "required": ["id", "domain", "scope", "title", "sourcePath"],
+  "required": [
+    "id",
+    "domain",
+    "scope",
+    "title",
+    "sourcePath",
+    "status",
+    "created",
+    "lastReviewed"
+  ],
   "properties": {
     "id": { "type": "string" },
     "domain": {
@@ -26,6 +35,25 @@
     },
     "title": { "type": "string" },
     "sourcePath": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "candidate",
+        "current",
+        "archived",
+        "superseded"
+      ]
+    },
+    "created": { "type": "string" },
+    "lastReviewed": { "type": "string" },
+    "sourceRefs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "expiresAt": { "type": "string" },
+    "promotionCandidate": { "type": "boolean" },
     "tags": {
       "type": "array",
       "items": { "type": "string" }

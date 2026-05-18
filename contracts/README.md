@@ -3,7 +3,7 @@
 ## 所有权
 
 - 契约由其描述的运行时边界拥有，破坏性变更落地前需由所有消费者评审。
-- `contracts/openapi` 拥有 HTTP API 形态，`contracts/events` 拥有事件信封，`contracts/memory` 拥有记忆记录，`contracts/workflow` 拥有工作流 manifest。
+- `contracts/openapi` 拥有 HTTP API 形态，`contracts/events` 拥有事件信封，`contracts/memory` 拥有记忆记录，`contracts/workflow` 拥有工作流 manifest，`contracts/requirements` 拥有需求点记录，`contracts/design` 拥有设计 brief。
 
 ## 单一事实来源
 

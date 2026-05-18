@@ -1,0 +1,31 @@
+{
+  "id": "requirement-capture",
+  "name": "需求点记录",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "markdown",
+  "inputs": [
+    "confirmed product understanding",
+    "user additions",
+    "requirement template"
+  ],
+  "outputs": [
+    "requirement records",
+    "acceptance criteria",
+    "verification notes"
+  ],
+  "states": [
+    "not_started",
+    "intake",
+    "understanding_checked",
+    "requirements_drafted",
+    "waiting_for_human",
+    "accepted",
+    "needs_revision",
+    "archived"
+  ],
+  "memoryDomains": ["working/tasks", "durable/product", "durable/design"],
+  "humanReviewRequired": true
+}

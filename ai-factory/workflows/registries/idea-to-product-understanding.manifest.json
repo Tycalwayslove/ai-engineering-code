@@ -1,0 +1,28 @@
+{
+  "id": "idea-to-product-understanding",
+  "name": "想法到产品理解",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "markdown",
+  "inputs": ["raw idea", "external references", "selected memory"],
+  "outputs": ["product understanding draft", "assumptions", "open questions"],
+  "states": [
+    "not_started",
+    "intake",
+    "context_loaded",
+    "understanding_drafted",
+    "waiting_for_human",
+    "confirmed",
+    "needs_revision",
+    "archived"
+  ],
+  "memoryDomains": [
+    "working/active-context",
+    "working/tasks",
+    "durable/product",
+    "durable/architecture"
+  ],
+  "humanReviewRequired": true
+}

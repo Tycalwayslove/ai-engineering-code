@@ -12,6 +12,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "validate:contracts": "node scripts/validate-contracts.mjs",
+    "validate:factory": "node scripts/validate-factory.mjs",
     "format": "prettier --write ."
   },
   "devDependencies": {

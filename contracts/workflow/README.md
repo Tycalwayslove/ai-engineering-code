@@ -13,6 +13,7 @@
 ## 依赖边界
 
 - 工作流契约描述输入、输出、状态和记忆领域。
+- Phase 1.1 manifest 还必须声明 trigger、execution、discovery、source 和 humanReviewRequired。
 - 它们不得依赖编排引擎、UI 流程、提示词内部细节或队列提供商。
 
 ## 演进
@@ -23,3 +24,4 @@
 ## 校验
 
 - 运行 `pnpm validate:contracts` 可确认 `workflow-manifest.schema.json` 文件存在、JSON 可解析，并包含 JSON Schema 基础根字段。
+- 运行 `pnpm validate:factory` 可确认当前 workflow manifest 实例存在，并包含 Phase 1.1 所需字段。

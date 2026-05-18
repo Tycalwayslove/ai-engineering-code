@@ -1,0 +1,36 @@
+{
+  "id": "process-audit",
+  "name": "流程审计",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "markdown",
+  "inputs": [
+    "phase goal",
+    "repository evidence",
+    "workflow assets",
+    "user feedback"
+  ],
+  "outputs": [
+    "process audit report",
+    "P0/P1/P2 improvement list",
+    "phase recommendation"
+  ],
+  "states": [
+    "not_started",
+    "intake",
+    "evidence_loaded",
+    "audit_drafted",
+    "waiting_for_human",
+    "accepted",
+    "needs_revision",
+    "archived"
+  ],
+  "memoryDomains": [
+    "durable/architecture",
+    "durable/decisions",
+    "working/retrospectives"
+  ],
+  "humanReviewRequired": true
+}
