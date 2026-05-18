@@ -5,7 +5,7 @@
 - id: run-2026-05-18-idea-to-product-understanding-ai-time-management-agent
 - domain: tasks
 - scope: working
-- status: active
+- status: completed
 - sourcePath: ai-factory/workflows/runs/2026-05-18-idea-to-product-understanding-ai-time-management-agent.md
 - created: 2026-05-18
 - lastReviewed: 2026-05-18
@@ -43,6 +43,8 @@
 - 用户确认：数据策略采用本地优先 + 关键结构同步后端。
 - 用户确认：AI 策略采用规则 + LLM 混合。
 - 用户确认：第一版不做语音输入。
+- 用户确认：账号体系后续开发。
+- 用户确认：产品方向、第一版范围、Native/H5/Bridge 边界准确，允许进入 requirement-capture。
 
 ## 范围
 
@@ -58,15 +60,17 @@
 | 2026-05-18 | context_loaded        | 读取规格生命周期、产品理解模板和 workflow 模板   |
 | 2026-05-18 | understanding_drafted | 生成产品理解草案                                 |
 | 2026-05-18 | waiting_for_human     | 等待用户确认产品理解是否准确，是否进入需求点记录 |
+| 2026-05-18 | confirmed             | 用户确认产品理解与关键边界，账号体系后续开发     |
+| 2026-05-18 | archived              | 产品理解阶段完成，转入需求点记录                 |
 
 ## 人工确认点
 
-| 确认项                           | 状态    | 记录 |
-| -------------------------------- | ------- | ---- |
-| 产品方向是否准确                 | pending |      |
-| 第一版范围是否准确               | pending |      |
-| Native/H5/Bridge 边界是否准确    | pending |      |
-| 是否允许进入 requirement-capture | pending |      |
+| 确认项                           | 状态      | 记录                   |
+| -------------------------------- | --------- | ---------------------- |
+| 产品方向是否准确                 | confirmed | 准确                   |
+| 第一版范围是否准确               | confirmed | 准确，账号体系后续开发 |
+| Native/H5/Bridge 边界是否准确    | confirmed | 准确                   |
+| 是否允许进入 requirement-capture | confirmed | 允许                   |
 
 ## 输出
 
@@ -87,4 +91,4 @@
 ## 复盘
 
 - 这是第一个正式产品方向的产品理解流程。
-- 当前停止在 `waiting_for_human`，等待用户确认。
+- 当前已完成产品理解确认，下一步进入 `requirement-capture`。
