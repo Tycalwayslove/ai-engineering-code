@@ -1,0 +1,32 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+    command: pnpm dev:h5
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    command: uvicorn backend.app.main:app --app-dir python/backend --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ai_code
+      POSTGRES_PASSWORD: ai_code
+      POSTGRES_DB: ai_code
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
