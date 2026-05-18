@@ -12,7 +12,9 @@ export type FactoryCapabilityStatus = "ready" | "planned";
 export type FactoryCapability = {
   id: string;
   label: string;
+  source: string;
   status: FactoryCapabilityStatus;
+  summary: string;
 };
 
 export type FactoryStatus = {
@@ -20,4 +22,5 @@ export type FactoryStatus = {
   status: "ready" | "degraded";
   version: string;
   capabilities: FactoryCapability[];
+  nextActions: string[];
 };

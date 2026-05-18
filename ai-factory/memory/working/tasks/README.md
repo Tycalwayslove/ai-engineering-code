@@ -11,6 +11,7 @@
 ## 当前记录
 
 - [AI 工厂规格到实施计划工作流](ai-factory-spec-to-plan-workflow.md)：当前补齐首个真实工作流和结构化记忆的任务上下文。
+- [工厂状态面板 v1](factory-status-panel-v1.md)：当前用首个真实工作流推进 Admin 状态面板和契约一致性检查的任务上下文。
 
 ## 边界
 

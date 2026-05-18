@@ -8,7 +8,31 @@ const contractFiles = {
   openapi: "contracts/openapi/api-gateway.yaml",
   memorySchema: "contracts/memory/memory-document.schema.json",
   workflowSchema: "contracts/workflow/workflow-manifest.schema.json",
+  sdk: "packages/sdk/src/index.ts",
+  sharedTypes: "packages/shared-types/src/index.ts",
 };
+
+const expectedOperations = {
+  getFactoryStatus: "getFactoryStatus",
+  getHealth: "getHealth",
+  getVersion: "getVersion",
+};
+
+const expectedFactoryCapabilityFields = [
+  "id",
+  "label",
+  "status",
+  "source",
+  "summary",
+];
+
+const expectedFactoryStatusFields = [
+  "name",
+  "status",
+  "version",
+  "capabilities",
+  "nextActions",
+];
 
 const failures = [];
 
@@ -245,14 +269,112 @@ function validateOpenApiYaml(relativePath) {
     console.log(
       `ok - ${relativePath} parses as lightweight YAML and has OpenAPI roots`,
     );
+    return document;
   } catch (error) {
     reportFailure(relativePath, error.message);
+    return undefined;
   }
 }
 
-validateOpenApiYaml(contractFiles.openapi);
+function getPathValue(document, pathSegments) {
+  return pathSegments.reduce((value, segment) => {
+    if (typeof value !== "object" || value === null) {
+      return undefined;
+    }
+
+    return value[segment];
+  }, document);
+}
+
+function assertArrayIncludesAll(filePath, label, value, expectedValues) {
+  if (!Array.isArray(value)) {
+    reportFailure(filePath, `${label} must be an array`);
+    return;
+  }
+
+  for (const expectedValue of expectedValues) {
+    if (!value.includes(expectedValue)) {
+      reportFailure(filePath, `${label} is missing "${expectedValue}"`);
+    }
+  }
+}
+
+function validateFactoryStatusSlice(openapiDocument) {
+  if (openapiDocument === undefined) {
+    return;
+  }
+
+  const failureCountBeforeSlice = failures.length;
+  const sdkSource = readRequiredFile(contractFiles.sdk);
+  const sharedTypesSource = readRequiredFile(contractFiles.sharedTypes);
+  const openapiText = fs.readFileSync(
+    path.join(rootDir, contractFiles.openapi),
+    "utf8",
+  );
+
+  for (const [operationId, sdkMethod] of Object.entries(expectedOperations)) {
+    if (!openapiText.includes(`operationId: ${operationId}`)) {
+      reportFailure(
+        contractFiles.openapi,
+        `missing operationId "${operationId}"`,
+      );
+    }
+
+    if (sdkSource !== undefined && !sdkSource.includes(`async ${sdkMethod}(`)) {
+      reportFailure(contractFiles.sdk, `missing SDK method "${sdkMethod}"`);
+    }
+  }
+
+  const capabilityRequired = getPathValue(openapiDocument, [
+    "components",
+    "schemas",
+    "FactoryCapability",
+    "required",
+  ]);
+  assertArrayIncludesAll(
+    contractFiles.openapi,
+    "FactoryCapability.required",
+    capabilityRequired,
+    expectedFactoryCapabilityFields,
+  );
+
+  const statusRequired = getPathValue(openapiDocument, [
+    "components",
+    "schemas",
+    "FactoryStatus",
+    "required",
+  ]);
+  assertArrayIncludesAll(
+    contractFiles.openapi,
+    "FactoryStatus.required",
+    statusRequired,
+    expectedFactoryStatusFields,
+  );
+
+  if (sharedTypesSource === undefined) {
+    return;
+  }
+
+  for (const field of [
+    ...expectedFactoryCapabilityFields,
+    ...expectedFactoryStatusFields,
+  ]) {
+    if (!sharedTypesSource.includes(`${field}:`)) {
+      reportFailure(contractFiles.sharedTypes, `missing field "${field}"`);
+    }
+  }
+
+  if (failures.length === failureCountBeforeSlice) {
+    console.log(
+      "ok - factory status slice has lightweight cross-runtime checks",
+    );
+  }
+}
+
+const openapiDocument = validateOpenApiYaml(contractFiles.openapi);
 validateJsonSchema(contractFiles.memorySchema);
 validateJsonSchema(contractFiles.workflowSchema);
+validateFactoryStatusSlice(openapiDocument);
 
 if (failures.length > 0) {
   console.error("\nContract validation failed:");

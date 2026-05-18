@@ -38,7 +38,7 @@ export default async function HomePage() {
             />
             <div>
               <h2>{capability.label}</h2>
-              <p>{capability.status}</p>
+              <p>{capability.summary}</p>
             </div>
           </article>
         ))}

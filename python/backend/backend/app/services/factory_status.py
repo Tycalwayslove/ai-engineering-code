@@ -1,13 +1,12 @@
 from typing import Literal, TypedDict
 
-CapabilityStatus = Literal["ready", "planned"]
+from backend.app.services.factory_capabilities import (
+    FACTORY_CAPABILITIES,
+    NEXT_FACTORY_ACTIONS,
+    FactoryCapability,
+)
+
 FactoryStatusValue = Literal["ready", "degraded"]
-
-
-class FactoryCapability(TypedDict):
-    id: str
-    label: str
-    status: CapabilityStatus
 
 
 class FactoryStatus(TypedDict):
@@ -15,6 +14,7 @@ class FactoryStatus(TypedDict):
     status: FactoryStatusValue
     version: str
     capabilities: list[FactoryCapability]
+    nextActions: list[str]
 
 
 def get_factory_status() -> FactoryStatus:
@@ -22,26 +22,6 @@ def get_factory_status() -> FactoryStatus:
         "name": "AI Code Factory",
         "status": "ready",
         "version": "0.1.0",
-        "capabilities": [
-            {
-                "id": "contracts",
-                "label": "Contract-first API",
-                "status": "ready",
-            },
-            {
-                "id": "backend",
-                "label": "FastAPI gateway",
-                "status": "ready",
-            },
-            {
-                "id": "sdk",
-                "label": "TypeScript SDK",
-                "status": "ready",
-            },
-            {
-                "id": "web-surfaces",
-                "label": "H5 and Admin surfaces",
-                "status": "ready",
-            },
-        ],
+        "capabilities": FACTORY_CAPABILITIES,
+        "nextActions": NEXT_FACTORY_ACTIONS,
     }

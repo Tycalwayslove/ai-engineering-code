@@ -8,6 +8,11 @@
 
 活动规格拥有进行中工作的已接受问题框架、范围和成功标准。
 
+## 当前规格
+
+- [工厂状态面板 v1](factory-status-panel-v1.md)
+- [工厂状态面板 v1 实施计划](factory-status-panel-v1-implementation-plan.md)
+
 ## 边界
 
 状态已解决后，不要把完成或放弃的规格留在这里。

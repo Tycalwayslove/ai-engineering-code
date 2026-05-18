@@ -48,7 +48,7 @@ components:
   schemas:
     FactoryCapability:
       type: object
-      required: [id, label, status]
+      required: [id, label, status, source, summary]
       properties:
         id:
           type: string
@@ -56,12 +56,18 @@ components:
         label:
           type: string
           examples: [Contract-first API]
+        source:
+          type: string
+          examples: [contracts/openapi/api-gateway.yaml]
         status:
           type: string
           enum: [ready, planned]
+        summary:
+          type: string
+          example: HTTP API shape is declared before runtime consumers use it.
     FactoryStatus:
       type: object
-      required: [name, status, version, capabilities]
+      required: [name, status, version, capabilities, nextActions]
       properties:
         name:
           type: string
@@ -76,3 +82,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FactoryCapability"
+        nextActions:
+          type: array
+          items:
+            type: string
