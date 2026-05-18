@@ -5,7 +5,7 @@
 - id: run-2026-05-18-requirement-capture-ai-time-management-agent
 - domain: tasks
 - scope: working
-- status: active
+- status: completed
 - sourcePath: ai-factory/workflows/runs/2026-05-18-requirement-capture-ai-time-management-agent.md
 - created: 2026-05-18
 - lastReviewed: 2026-05-18
@@ -49,15 +49,17 @@
 | 2026-05-18 | understanding_checked | 确认产品理解已被用户认可               |
 | 2026-05-18 | requirements_drafted  | 生成需求点记录                         |
 | 2026-05-18 | waiting_for_human     | 等待用户确认需求点是否准确及是否进 PRD |
+| 2026-05-18 | accepted              | 用户确认需求点记录                     |
+| 2026-05-18 | archived              | 需求捕获完成，进入 Phase 1.2 PRD 候选  |
 
 ## 人工确认点
 
-| 确认项                      | 状态    | 记录 |
-| --------------------------- | ------- | ---- |
-| 需求陈述是否准确            | pending |      |
-| P0 子需求是否完整           | pending |      |
-| 非目标是否准确              | pending |      |
-| 是否进入 Phase 1.2 PRD 候选 | pending |      |
+| 确认项                      | 状态      | 记录                          |
+| --------------------------- | --------- | ----------------------------- |
+| 需求陈述是否准确            | confirmed | 准确                          |
+| P0 子需求是否完整           | confirmed | 当前版本完整，可进入 PRD 草案 |
+| 非目标是否准确              | confirmed | 准确                          |
+| 是否进入 Phase 1.2 PRD 候选 | confirmed | 允许                          |
 
 ## 输出
 
@@ -77,4 +79,4 @@
 ## 复盘
 
 - 这是第一个正式产品方向的需求捕获流程。
-- 当前停止在 `waiting_for_human`，等待用户确认需求点记录。
+- 当前已完成需求确认，下一步可进入 Phase 1.2 PRD 草案。

@@ -3,7 +3,7 @@
 ## 记忆类型
 
 - domain: product
-- status: draft
+- status: confirmed
 
 ## 元数据
 
@@ -108,6 +108,7 @@ Native 与 H5 之间必须通过显式 Bridge Contract 通信。H5 不得依赖�
 
 ## 确认状态
 
-- status: needs-confirmation
-- confirmedBy:
-- confirmedAt:
+- status: confirmed
+- confirmedBy: user
+- confirmedAt: 2026-05-18
+- decision: 需求点记录确认，允许进入 Phase 1.2 PRD 候选。
