@@ -11,10 +11,19 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "httpx>=0.28.0",
   "mypy>=1.13.0",
   "pytest>=8.3.0",
   "ruff>=0.8.0"
 ]
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["python/backend", "python/agent-runtime", "python/orchestrator"]
+include = ["backend*", "agent_runtime*", "orchestrator*"]
 
 [tool.ruff]
 line-length = 100
