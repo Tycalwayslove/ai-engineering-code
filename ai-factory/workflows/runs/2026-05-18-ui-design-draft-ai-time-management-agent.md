@@ -50,6 +50,9 @@
 | 2026-05-18 | figma_created        | 创建 Figma 文件                       |
 | 2026-05-18 | ui_drafted           | 生成 5 个核心画板                     |
 | 2026-05-18 | waiting_for_human    | 等待用户确认或提出修订意见            |
+| 2026-05-18 | needs_revision       | 用户反馈 UI 效果未达预期              |
+| 2026-05-18 | ui_drafted           | 安装并使用 `ui-ux-pro-max` 重画 v0.2  |
+| 2026-05-18 | waiting_for_human    | 等待用户确认 v0.2 或继续修订          |
 
 ## 人工确认点
 
@@ -65,10 +68,25 @@
 
 - `ai-factory/specs/design/2026-05-18-ai-time-management-agent-ui-design.md`
 - Figma：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy>
+- 当前页面：`AI 时间管理 Agent v0.2`
+
+## 修订记录
+
+### v0.1
+
+- 产出 5 个基础 UI 画板。
+- 问题：更像流程说明稿，真实 App 质感不足。
+
+### v0.2
+
+- 使用 `ui-ux-pro-max` skill 重新校准设计方向。
+- 采用 Soft UI Evolution、日历蓝 + 执行绿、移动端工作台结构。
+- 重画 5 个高保真手机画板：工作台首页、AI 创建、信息追问、执行确认、时间对象。
+- 当前仍停在人工确认点，不进入工程实现。
 
 ## 验证
 
-- 已创建 Figma 文件和核心画板。
+- 已创建 Figma v0.2 页面和核心画板。
 - 已运行 `pnpm validate:factory`。
 - 已运行 Markdown/JSON 格式检查。
 
