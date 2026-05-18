@@ -10,7 +10,7 @@ export class ApiClient {
   private readonly getAuthToken?: () => string | Promise<string>;
 
   constructor(options: ApiClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/$/, "");
+    this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.getAuthToken = options.getAuthToken;
   }
 
