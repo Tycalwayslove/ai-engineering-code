@@ -1,0 +1,38 @@
+{
+  "id": "prd-draft",
+  "name": "PRD 草案",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "markdown",
+  "inputs": [
+    "confirmed product understanding",
+    "confirmed requirement record",
+    "prd template"
+  ],
+  "outputs": [
+    "prd draft",
+    "user flow draft",
+    "design input checklist",
+    "open questions"
+  ],
+  "states": [
+    "not_started",
+    "intake",
+    "requirements_checked",
+    "prd_drafted",
+    "waiting_for_human",
+    "accepted",
+    "needs_revision",
+    "archived"
+  ],
+  "memoryDomains": [
+    "working/tasks",
+    "working/active-context",
+    "durable/product",
+    "durable/design",
+    "durable/architecture"
+  ],
+  "humanReviewRequired": true
+}

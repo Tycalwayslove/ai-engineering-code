@@ -10,6 +10,9 @@
 
 ## 已声明工作流
 
+- [想法到产品理解](idea-to-product-understanding.md)：将原始想法整理为可确认的产品理解草案。
+- [需求点记录](requirement-capture.md)：将已确认产品理解拆成需求点记录。
+- [PRD 草案](prd-draft.md)：将已确认需求点记录整理为可审阅 PRD 草案。
 - [规格到实施计划](spec-to-implementation-plan.md)：手动优先地把明确给定的规格转换为可审阅实施计划。
 
 ## 边界

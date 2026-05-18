@@ -23,6 +23,7 @@
 | 08 Phase 1.1 流程稳定化成果 | https://www.feishu.cn/wiki/AJ8vwBFdSiIylGkbWQUccQoqn1b | `SUV1dcpLoooxd4xmTK3csAvRnNd` | `docs/knowledge-sync/feishu-pages/08-phase-1-1-process-foundation.md`                  |
 | 09 真实流程演练：Intake     | https://www.feishu.cn/wiki/CUnZwZLNZiVMBrkDq11caqOsnQd | `Vo22dRonVoVxmsxVufScXvEXnsg` | `docs/knowledge-sync/feishu-pages/09-intake-real-workflow-run.md`                      |
 | 10 AI 时间管理 Agent        | https://www.feishu.cn/wiki/UG3rwxShGiatXGkKL68cSstmn8l | `IWOAdtQM0oexymxUftjc2Yi6n1b` | `docs/knowledge-sync/feishu-pages/10-ai-time-management-agent-requirement-baseline.md` |
+| 11 AI 时间管理 Agent PRD    | https://www.feishu.cn/wiki/SRn1whoCUi7qPYkus8Rcl5PknUb | `MD6TdSDHEoBzdhxk5INcvX22nBe` | `docs/knowledge-sync/feishu-pages/11-ai-time-management-agent-prd-draft.md`            |
 
 ## 同步规则
 
@@ -39,3 +40,4 @@
 - 2026-05-18：已新增 `08 Phase 1.1 流程稳定化成果`，并再次更新 `03 阶段演进记录`。
 - 2026-05-18：已新增 `09 真实流程演练：AI Factory Intake`，并验证页面结构可读取。
 - 2026-05-18：已新增 `10 AI 时间管理 Agent：产品方向与需求基线`，并验证页面结构可读取。
+- 2026-05-18：已新增 `11 AI 时间管理 Agent：PRD 草案`，并验证页面结构可读取。

@@ -41,6 +41,7 @@ const requiredFiles = [
 const workflowDefinitions = [
   "idea-to-product-understanding",
   "requirement-capture",
+  "prd-draft",
   "memory-review",
   "process-audit",
   "spec-to-implementation-plan",
