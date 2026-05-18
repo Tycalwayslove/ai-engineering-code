@@ -3,7 +3,7 @@
 ## 状态
 
 - phase: Phase 1.2
-- status: draft
+- status: accepted
 - lifecycle id: ai-time-management-agent-2026-05-18
 - source product understanding: `ai-factory/specs/product-understanding/2026-05-18-ai-time-management-agent-product-understanding.md`
 - source requirements: `ai-factory/specs/requirements/2026-05-18-ai-time-management-agent-requirements.md`
@@ -345,6 +345,7 @@ PRD 后续需要生成 design brief，至少覆盖：
 
 ## 用户确认记录
 
-- status: needs-confirmation
-- confirmedBy:
-- confirmedAt:
+- status: confirmed
+- confirmedBy: user
+- confirmedAt: 2026-05-18
+- decision: PRD 草案确认，允许进入 design brief / UI 设计图阶段。

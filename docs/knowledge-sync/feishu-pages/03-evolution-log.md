@@ -134,3 +134,18 @@ AI 工厂从“文档化雏形”进入“流程可检查”的状态。下一�
 阶段价值：
 
 项目完成了从产品想法到 PRD 草案的第一条主流程链路。下一步可以在用户确认 PRD 后进入 design brief 和 UI 设计图，而不是直接写功能代码。
+
+## 阶段 10：第一个 Design Brief 草案
+
+完成内容：
+
+- 用户确认 AI 时间管理 Agent PRD 草案，允许进入下一阶段。
+- 新增显式 `design-brief-draft` 工作流和 manifest。
+- 新增 `ai-factory/specs/design/` 目录，保存设计规格。
+- 将 `design-brief-draft` 纳入 `pnpm validate:factory` 校验。
+- 生成 AI 时间管理 Agent 的 design brief 草案。
+- 明确信息优先级、核心视图、状态覆盖、组件需求、响应式要求和 Hybrid 设计约束。
+
+阶段价值：
+
+项目完成了从 PRD 到设计输入的转换。后续 UI 设计图将有明确需求来源、信息架构、状态覆盖和组件层级，而不是凭直觉直接画页面。

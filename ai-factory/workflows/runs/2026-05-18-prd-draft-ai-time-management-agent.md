@@ -5,7 +5,7 @@
 - id: run-2026-05-18-prd-draft-ai-time-management-agent
 - domain: tasks
 - scope: working
-- status: active
+- status: completed
 - sourcePath: ai-factory/workflows/runs/2026-05-18-prd-draft-ai-time-management-agent.md
 - created: 2026-05-18
 - lastReviewed: 2026-05-18
@@ -41,22 +41,24 @@
 
 ## 状态轨迹
 
-| 时间       | 状态                 | 说明                          |
-| ---------- | -------------------- | ----------------------------- |
-| 2026-05-18 | not_started          | 收到 PRD 草案生成请求         |
-| 2026-05-18 | intake               | 读取产品理解、需求和 PRD 模板 |
-| 2026-05-18 | requirements_checked | 确认需求点记录已被用户确认    |
-| 2026-05-18 | prd_drafted          | 生成 PRD 草案                 |
-| 2026-05-18 | waiting_for_human    | 等待用户确认 PRD 草案         |
+| 时间       | 状态                 | 说明                           |
+| ---------- | -------------------- | ------------------------------ |
+| 2026-05-18 | not_started          | 收到 PRD 草案生成请求          |
+| 2026-05-18 | intake               | 读取产品理解、需求和 PRD 模板  |
+| 2026-05-18 | requirements_checked | 确认需求点记录已被用户确认     |
+| 2026-05-18 | prd_drafted          | 生成 PRD 草案                  |
+| 2026-05-18 | waiting_for_human    | 等待用户确认 PRD 草案          |
+| 2026-05-18 | accepted             | 用户确认 PRD 草案              |
+| 2026-05-18 | archived             | PRD 草案阶段完成，转入设计输入 |
 
 ## 人工确认点
 
-| 确认项                            | 状态    | 记录 |
-| --------------------------------- | ------- | ---- |
-| PRD 是否准确表达产品目标          | pending |      |
-| 第一版范围和非目标是否准确        | pending |      |
-| 用户流程是否符合预期              | pending |      |
-| 是否允许进入 design brief / UI 图 | pending |      |
+| 确认项                            | 状态      | 记录     |
+| --------------------------------- | --------- | -------- |
+| PRD 是否准确表达产品目标          | confirmed | 准确     |
+| 第一版范围和非目标是否准确        | confirmed | 准确     |
+| 用户流程是否符合预期              | confirmed | 符合预期 |
+| 是否允许进入 design brief / UI 图 | confirmed | 允许     |
 
 ## 输出
 
@@ -76,4 +78,4 @@
 ## 复盘
 
 - 这是第一个正式产品方向的 PRD 草案生成流程。
-- 当前停止在 `waiting_for_human`，等待用户确认 PRD 草案。
+- 当前已完成 PRD 草案确认，下一步进入 design brief。

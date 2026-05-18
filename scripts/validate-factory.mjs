@@ -42,6 +42,7 @@ const workflowDefinitions = [
   "idea-to-product-understanding",
   "requirement-capture",
   "prd-draft",
+  "design-brief-draft",
   "memory-review",
   "process-audit",
   "spec-to-implementation-plan",
