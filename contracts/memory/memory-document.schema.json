@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-code.local/contracts/memory/memory-document.schema.json",
+  "title": "MemoryDocument",
+  "type": "object",
+  "required": ["id", "domain", "scope", "title", "sourcePath"],
+  "properties": {
+    "id": { "type": "string" },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "architecture",
+        "product",
+        "design",
+        "decisions",
+        "api",
+        "tasks",
+        "iterations",
+        "active-context",
+        "retrospectives"
+      ]
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["durable", "working"]
+    },
+    "title": { "type": "string" },
+    "sourcePath": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

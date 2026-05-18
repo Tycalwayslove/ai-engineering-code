@@ -1,0 +1,36 @@
+openapi: 3.1.0
+info:
+  title: AI Code API Gateway
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+  /version:
+    get:
+      operationId: getVersion
+      responses:
+        "200":
+          description: Service version
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, version]
+                properties:
+                  name:
+                    type: string
+                  version:
+                    type: string

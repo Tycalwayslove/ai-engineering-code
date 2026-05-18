@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-code.local/contracts/workflow/workflow-manifest.schema.json",
+  "title": "WorkflowManifest",
+  "type": "object",
+  "required": ["id", "name", "owner", "inputs", "outputs", "states", "memoryDomains"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "owner": { "type": "string" },
+    "inputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "states": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "memoryDomains": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
