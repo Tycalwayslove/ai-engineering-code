@@ -4,7 +4,7 @@
 
 - id: design-ai-time-management-agent-001
 - kind: design-brief
-- status: needs-confirmation
+- status: accepted
 - lifecycle id: ai-time-management-agent-2026-05-18
 - linkedRequirement: `req-ai-time-management-agent-001`
 - linkedPrd: `ai-factory/specs/prd/2026-05-18-ai-time-management-agent-prd-draft.md`
@@ -244,10 +244,12 @@ AI 对话区用于承接自然语言输入、追问和解释。
 
 ## 待确认问题
 
-- 工作台首页的模块顺序是否认可。
-- 确认卡片是否允许第一版内联编辑字段。
-- 日程默认 60 分钟是否合理。
-- 待办无截止时间时直接创建是否合理。
-- 取消事项使用 `canceled` 状态是否合理。
-- 后端只保存结构化 action 和摘要是否合理。
-- 下一步 UI 设计图使用 Figma 还是飞书画板。
+- 已确认进入 UI 设计图阶段。
+- UI 设计图优先使用 Figma；飞书用于成果展示和演进记录。
+
+## 用户确认记录
+
+- status: confirmed
+- confirmedBy: user
+- confirmedAt: 2026-05-18
+- decision: Design brief 确认，允许进入 UI 设计图阶段。

@@ -30,6 +30,7 @@
 | requirement-capture           | `ai-factory/workflows/registries/requirement-capture.manifest.json`           |
 | prd-draft                     | `ai-factory/workflows/registries/prd-draft.manifest.json`                     |
 | design-brief-draft            | `ai-factory/workflows/registries/design-brief-draft.manifest.json`            |
+| ui-design-draft               | `ai-factory/workflows/registries/ui-design-draft.manifest.json`               |
 | memory-review                 | `ai-factory/workflows/registries/memory-review.manifest.json`                 |
 | process-audit                 | `ai-factory/workflows/registries/process-audit.manifest.json`                 |
 | spec-to-implementation-plan   | `ai-factory/workflows/registries/spec-to-implementation-plan.manifest.json`   |

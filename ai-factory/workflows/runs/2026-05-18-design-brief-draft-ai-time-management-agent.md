@@ -5,7 +5,7 @@
 - id: run-2026-05-18-design-brief-draft-ai-time-management-agent
 - domain: tasks
 - scope: working
-- status: active
+- status: completed
 - sourcePath: ai-factory/workflows/runs/2026-05-18-design-brief-draft-ai-time-management-agent.md
 - created: 2026-05-18
 - lastReviewed: 2026-05-18
@@ -50,15 +50,17 @@
 | 2026-05-18 | design_context_loaded | 读取设计模板和 UI 审查清单   |
 | 2026-05-18 | brief_drafted         | 生成 design brief 草案       |
 | 2026-05-18 | waiting_for_human     | 等待用户确认设计输入         |
+| 2026-05-18 | accepted              | 用户确认 design brief        |
+| 2026-05-18 | archived              | 设计输入阶段完成，转入 UI 图 |
 
 ## 人工确认点
 
-| 确认项                            | 状态    | 记录 |
-| --------------------------------- | ------- | ---- |
-| design brief 是否准确表达体验目标 | pending |      |
-| 信息优先级是否准确                | pending |      |
-| 设计默认决策是否认可              | pending |      |
-| 是否允许进入 UI 设计图阶段        | pending |      |
+| 确认项                            | 状态      | 记录 |
+| --------------------------------- | --------- | ---- |
+| design brief 是否准确表达体验目标 | confirmed | 准确 |
+| 信息优先级是否准确                | confirmed | 准确 |
+| 设计默认决策是否认可              | confirmed | 认可 |
+| 是否允许进入 UI 设计图阶段        | confirmed | 允许 |
 
 ## 输出
 
@@ -78,4 +80,4 @@
 ## 复盘
 
 - 这是第一个正式产品方向的 design brief 草案生成流程。
-- 当前停止在 `waiting_for_human`，等待用户确认。
+- 当前已完成 design brief 确认，下一步进入 UI 设计图阶段。

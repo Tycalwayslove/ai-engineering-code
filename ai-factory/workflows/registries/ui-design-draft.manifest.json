@@ -1,0 +1,39 @@
+{
+  "id": "ui-design-draft",
+  "name": "UI 设计图草案",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "markdown-and-figma",
+  "inputs": [
+    "accepted design brief",
+    "accepted PRD",
+    "UI review checklist",
+    "design system rules"
+  ],
+  "outputs": [
+    "UI design draft",
+    "Figma link",
+    "screen coverage",
+    "open design questions"
+  ],
+  "states": [
+    "not_started",
+    "intake",
+    "design_brief_checked",
+    "figma_created",
+    "ui_drafted",
+    "waiting_for_human",
+    "accepted",
+    "needs_revision",
+    "archived"
+  ],
+  "memoryDomains": [
+    "working/tasks",
+    "working/active-context",
+    "durable/design",
+    "durable/product"
+  ],
+  "humanReviewRequired": true
+}
