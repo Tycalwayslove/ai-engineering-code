@@ -1,4 +1,14 @@
-import type { HealthStatus, VersionInfo } from "@ai-code/shared-types";
+import type {
+  FactoryStatus,
+  HealthStatus,
+  VersionInfo,
+} from "@ai-code/shared-types";
+
+export type {
+  FactoryCapability,
+  FactoryCapabilityStatus,
+  FactoryStatus,
+} from "@ai-code/shared-types";
 
 export type ApiClientOptions = {
   baseUrl: string;
@@ -22,9 +32,13 @@ export class ApiClient {
     return this.request<VersionInfo>("/version");
   }
 
+  async getFactoryStatus(): Promise<FactoryStatus> {
+    return this.request<FactoryStatus>("/factory/status");
+  }
+
   private async request<T>(path: string): Promise<T> {
     const headers: Record<string, string> = {
-      Accept: "application/json"
+      Accept: "application/json",
     };
 
     const token = await this.getAuthToken?.();
@@ -34,7 +48,9 @@ export class ApiClient {
 
     const response = await fetch(`${this.baseUrl}${path}`, { headers });
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`,
+      );
     }
 
     return response.json() as Promise<T>;

@@ -28,6 +28,7 @@
 ## 任务 1：仓库治理文档
 
 **文件：**
+
 - 创建： `README.md`
 - 创建： `docs/README.md`
 - 创建： `docs/architecture/README.md`
@@ -101,6 +102,7 @@ git commit -m "docs: add repository governance"
 ## 任务 2：根工作区配置
 
 **文件：**
+
 - 创建： `.gitignore`
 - 创建： `.env.example`
 - 创建： `.python-version`
@@ -242,6 +244,7 @@ git commit -m "chore: add root workspace configuration"
 ## 任务 3：契约层
 
 **文件：**
+
 - 创建： `contracts/README.md`
 - 创建： `contracts/openapi/README.md`
 - 创建： `contracts/openapi/api-gateway.yaml`
@@ -309,7 +312,17 @@ paths:
     "id": { "type": "string" },
     "domain": {
       "type": "string",
-      "enum": ["architecture", "product", "design", "decisions", "api", "tasks", "iterations", "active-context", "retrospectives"]
+      "enum": [
+        "architecture",
+        "product",
+        "design",
+        "decisions",
+        "api",
+        "tasks",
+        "iterations",
+        "active-context",
+        "retrospectives"
+      ]
     },
     "scope": {
       "type": "string",
@@ -336,7 +349,15 @@ paths:
   "$id": "https://ai-code.local/contracts/workflow/workflow-manifest.schema.json",
   "title": "WorkflowManifest",
   "type": "object",
-  "required": ["id", "name", "owner", "inputs", "outputs", "states", "memoryDomains"],
+  "required": [
+    "id",
+    "name",
+    "owner",
+    "inputs",
+    "outputs",
+    "states",
+    "memoryDomains"
+  ],
   "properties": {
     "id": { "type": "string" },
     "name": { "type": "string" },
@@ -372,6 +393,7 @@ git commit -m "chore: add cross-runtime contracts"
 ## 任务 4：AI 工厂骨架
 
 **文件：**
+
 - 创建设计规格中 `ai-factory/` 下列出的所有目录。
 - 在每个主要目录中创建 `README.md`。
 - 创建： `ai-factory/agents/registry.md`
@@ -467,6 +489,7 @@ git commit -m "chore: add AI factory skeleton"
 ## 任务 5：服务边界文档
 
 **文件：**
+
 - 创建： `services/README.md`
 - 创建： `services/api-gateway/README.md`
 - 创建： `services/conversation-service/README.md`
@@ -534,6 +557,7 @@ git commit -m "docs: add service boundary definitions"
 ## 任务 6：TypeScript 包
 
 **文件：**
+
 - 在 `packages/shared-types`、`packages/shared-ui`、`packages/config` 和 `packages/sdk` 下创建包文件。
 
 - [ ] **步骤 1：创建共享类型包**
@@ -582,7 +606,7 @@ export class ApiClient {
 
   private async request<T>(path: string): Promise<T> {
     const headers: Record<string, string> = {
-      Accept: "application/json"
+      Accept: "application/json",
     };
 
     const token = await this.getAuthToken?.();
@@ -592,7 +616,9 @@ export class ApiClient {
 
     const response = await fetch(`${this.baseUrl}${path}`, { headers });
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`,
+      );
     }
 
     return response.json() as Promise<T>;
@@ -648,6 +674,7 @@ git commit -m "feat: add TypeScript shared packages"
 ## 任务 7：薄 Next.js 应用
 
 **文件：**
+
 - 在 `apps/h5` 和 `apps/admin` 下创建最小 Next.js 应用。
 - 在 `apps/ios` 和 `apps/android` 下创建占位 README。
 
@@ -709,6 +736,7 @@ git commit -m "feat: add thin Next.js app foundations"
 ## 任务 8：Python 后端与 AI 运行时基础
 
 **文件：**
+
 - 创建： `python/README.md`
 - 创建： `python/backend/README.md`
 - 创建： `python/backend/backend/app/main.py`
@@ -802,6 +830,7 @@ git commit -m "feat: add Python backend foundation"
 ## 任务 9：Docker 与本地基础设施
 
 **文件：**
+
 - 创建： `docker-compose.yml`
 - 创建： `infra/README.md`
 - 创建： `infra/docker/README.md`
@@ -867,6 +896,7 @@ git commit -m "chore: add local Docker infrastructure"
 ## 任务 10：CI 基线
 
 **文件：**
+
 - 创建： `.github/workflows/ci.yml`
 
 - [ ] **步骤 1：添加 CI 工作流**
@@ -918,6 +948,7 @@ git commit -m "ci: add baseline quality gates"
 ## 任务 11：最终验证
 
 **文件：**
+
 - 只有验证发现具体缺陷时才修改。
 
 - [ ] **步骤 1：运行完整本地验证**

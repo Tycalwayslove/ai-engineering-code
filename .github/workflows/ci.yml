@@ -21,6 +21,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pnpm install --frozen-lockfile
+      - run: pnpm validate:contracts
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

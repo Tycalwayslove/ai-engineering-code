@@ -3,6 +3,16 @@ info:
   title: AI Code API Gateway
   version: 0.1.0
 paths:
+  /factory/status:
+    get:
+      operationId: getFactoryStatus
+      responses:
+        "200":
+          description: Factory status and available capabilities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FactoryStatus"
   /health:
     get:
       operationId: getHealth
@@ -34,3 +44,35 @@ paths:
                     type: string
                   version:
                     type: string
+components:
+  schemas:
+    FactoryCapability:
+      type: object
+      required: [id, label, status]
+      properties:
+        id:
+          type: string
+          examples: [contracts]
+        label:
+          type: string
+          examples: [Contract-first API]
+        status:
+          type: string
+          enum: [ready, planned]
+    FactoryStatus:
+      type: object
+      required: [name, status, version, capabilities]
+      properties:
+        name:
+          type: string
+          examples: [AI Code Factory]
+        status:
+          type: string
+          enum: [ready, degraded]
+        version:
+          type: string
+          examples: [0.1.0]
+        capabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/FactoryCapability"

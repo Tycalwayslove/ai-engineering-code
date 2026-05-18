@@ -19,3 +19,9 @@
 
 - 只有类型代表稳定跨包概念时，才添加类型。
 - API 契约成熟后，优先使用生成类型或契约支撑的类型。
+
+## 当前类型
+
+- `FactoryStatus` 描述 `GET /factory/status` 的状态闭环响应。
+- `HealthStatus` 描述健康检查响应。
+- `VersionInfo` 描述 API 版本响应。

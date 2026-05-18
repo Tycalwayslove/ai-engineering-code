@@ -1,17 +1,26 @@
 # OpenAPI 契约
 
 ## 所有权
+
 - API 网关所有者维护这些契约，并吸收后端和客户端消费者输入。
 - 每个 operation 必须有稳定的 `operationId`。
 
 ## 单一事实来源
+
 - `api-gateway.yaml` 是公共 HTTP API 形态的单一事实来源。
 - 生成客户端和服务器 stub 必须来自该文件。
 
 ## 依赖边界
+
 - OpenAPI 文件只描述传输形态。
 - 它们不得编码框架路由细节、数据库模型或前端视图关注点。
 
 ## 演进
+
 - 只有至少一个消费者需要时，才添加端点和响应字段。
 - 删除字段、改变响应类型或重命名 operation ID 前，必须先版本化或迁移契约。
+
+## 校验
+
+- 运行 `pnpm validate:contracts` 可确认 `api-gateway.yaml` 文件存在、可被仓库轻量 YAML 解析器读取，并包含 OpenAPI 根结构。
+- 该检查不替代完整 OpenAPI 语义校验；需要语义覆盖时，应显式引入专用 OpenAPI 校验器。

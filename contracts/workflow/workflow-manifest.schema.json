@@ -3,7 +3,15 @@
   "$id": "https://ai-code.local/contracts/workflow/workflow-manifest.schema.json",
   "title": "WorkflowManifest",
   "type": "object",
-  "required": ["id", "name", "owner", "inputs", "outputs", "states", "memoryDomains"],
+  "required": [
+    "id",
+    "name",
+    "owner",
+    "inputs",
+    "outputs",
+    "states",
+    "memoryDomains"
+  ],
   "properties": {
     "id": { "type": "string" },
     "name": { "type": "string" },

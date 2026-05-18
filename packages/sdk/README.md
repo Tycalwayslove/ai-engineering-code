@@ -19,3 +19,9 @@
 
 - 随着 API 契约稳定，一次添加一个端点方法。
 - 只有手写方法造成漂移或维护压力后，才引入生成客户端。
+
+## 当前方法
+
+- `getFactoryStatus()` 调用 `GET /factory/status`，用于 H5 和 Admin 展示工厂状态闭环。
+- `getHealth()` 调用 `GET /health`。
+- `getVersion()` 调用 `GET /version`。
