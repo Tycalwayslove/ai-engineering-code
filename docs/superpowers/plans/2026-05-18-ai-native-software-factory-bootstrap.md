@@ -190,7 +190,7 @@ dependencies = [
   "uvicorn[standard]>=0.32.0"
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
   "mypy>=1.13.0",
   "pytest>=8.3.0",
@@ -221,7 +221,12 @@ pythonpath = ["python/backend", "python/agent-runtime", "python/orchestrator"]
 Run:
 
 ```bash
-python -m tomllib pyproject.toml
+python - <<'PY'
+import pathlib
+import tomllib
+
+tomllib.loads(pathlib.Path("pyproject.toml").read_text())
+PY
 pnpm -v
 ```
 
