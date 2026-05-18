@@ -13,6 +13,7 @@
 - 复制契约、提示词、记忆或工作流定义前遵循 `source-of-truth.md`。
 - 评估新基础设施或抽象时遵循 `anti-patterns.md`。
 - 拆分服务、添加运行时、索引记忆或强制契约前遵循 `evolution.md`。
+- 提交代码或文档变更时遵循 `git-commits.md`。
 
 ## 演进
 
