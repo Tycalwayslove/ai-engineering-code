@@ -1,17 +1,17 @@
-# Spec Templates
+# 规格模板
 
-## Purpose
+## 目的
 
-This directory stores reusable templates for writing clear AI factory specs.
+该目录存放用于编写清晰 AI 工厂规格的可复用模板。
 
-## Source Of Truth
+## 单一事实来源
 
-Spec templates own the expected structure for scope, context, acceptance criteria, and verification.
+规格模板拥有范围、上下文、验收标准和验证的预期结构。
 
-## Boundaries
+## 边界
 
-Templates must not hide mandatory product or engineering decisions behind vague prompts.
+模板不得用模糊提示词隐藏必需的产品或工程决策。
 
-## Evolution
+## 演进
 
-Revise templates when reviews repeatedly ask for the same missing information.
+当评审反复询问同类缺失信息时，修订模板。

@@ -1,17 +1,17 @@
-# Design Patterns
+# 设计模式
 
-## Purpose
+## 目的
 
-This directory documents reusable interaction and layout patterns.
+该目录记录可复用交互和布局模式。
 
-## Source Of Truth
+## 单一事实来源
 
-Pattern notes own when to use a design approach, when to avoid it, and what tradeoffs it carries.
+模式说明拥有何时使用、何时避免以及相关权衡。
 
-## Boundaries
+## 边界
 
-Do not use patterns as one-off screen specs. Active screen requirements belong in specs.
+不要把模式当作一次性页面规格。活动页面需求属于规格。
 
-## Evolution
+## 演进
 
-Promote repeated design solutions into patterns after they prove useful across multiple contexts.
+重复设计方案在多个上下文中证明有用后，再提升为模式。

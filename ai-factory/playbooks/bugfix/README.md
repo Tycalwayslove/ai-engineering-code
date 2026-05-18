@@ -1,17 +1,17 @@
-# Bugfix Playbook
+# 缺陷修复作战手册
 
-## Purpose
+## 目的
 
-This directory documents the repeatable path for diagnosing and fixing defects.
+该目录记录诊断和修复缺陷的可重复路径。
 
-## Source Of Truth
+## 单一事实来源
 
-The bugfix playbook owns expected reproduction, root cause analysis, fix scope, and regression checks.
+缺陷修复作战手册拥有预期的复现、根因分析、修复范围和回归检查。
 
-## Boundaries
+## 边界
 
-Do not skip evidence gathering just because a fix appears obvious.
+不要因为修复看起来明显就跳过证据收集。
 
-## Evolution
+## 演进
 
-Update the playbook when incidents reveal better diagnostics or missing regression coverage.
+当事故揭示出更好诊断方式或缺失回归覆盖时，更新作战手册。

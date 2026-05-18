@@ -1,24 +1,20 @@
-# Infrastructure
+# 基础设施
 
-The `infra` tree owns local and future deployment infrastructure for this monorepo.
-It is intentionally small today: Docker Compose gives contributors a predictable
-way to run the H5 frontend, FastAPI backend, Postgres, and Redis on one machine.
+`infra` 目录拥有本 monorepo 的本地基础设施和未来部署基础设施。
+当前它刻意保持很小：Docker Compose 让贡献者可以在一台机器上以可预测方式运行 H5 前端、FastAPI 后端、Postgres 和 Redis。
 
-Application code stays in `apps/`, `python/`, `packages/`, and `services/`.
-Infrastructure should reference those projects but should not duplicate their
-runtime configuration, package metadata, contracts, or business logic.
+应用代码保留在 `apps/`、`python/`、`packages/` 和 `services/` 中。
+基础设施可以引用这些项目，但不应重复它们的运行时配置、包元数据、契约或业务逻辑。
 
-Dependency boundaries:
+## 依赖边界
 
-- `docker-compose.yml` defines local process wiring and published ports.
-- `infra/docker/` owns development container images.
-- Service source directories own their own application dependencies and commands.
-- Deployment platforms such as Kubernetes or hosted databases are out of scope
-  until the repository needs production environment definitions.
+- `docker-compose.yml` 定义本地进程连接方式和暴露端口。
+- `infra/docker/` 拥有开发用容器镜像。
+- 服务源码目录拥有各自的应用依赖和命令。
+- Kubernetes 或托管数据库等部署平台暂不在范围内，直到仓库需要生产环境定义。
 
-Evolution path:
+## 演进路径
 
-1. Keep local development infrastructure minimal and easy to rebuild.
-2. Add environment-specific configuration only when a real environment exists.
-3. Promote repeated operational patterns into documented templates before adding
-   platform-specific automation.
+1. 本地开发基础设施优先保持最小且易于重建。
+2. 只有真实环境存在时，才添加环境专属配置。
+3. 在添加平台专属自动化之前，先把重复运营模式提升为文档化模板。

@@ -1,17 +1,17 @@
-# Design Prompts
+# 设计提示词
 
-## Purpose
+## 目的
 
-This directory stores future prompts for design critique, generation, and consistency checks.
+该目录存放未来用于设计批判、生成和一致性检查的提示词。
 
-## Source Of Truth
+## 单一事实来源
 
-Design prompts own reusable instructions for applying the design system with AI tools.
+设计提示词拥有使用 AI 工具应用设计系统的可复用指令。
 
-## Boundaries
+## 边界
 
-Design prompts must reference accepted design guidance rather than inventing new product rules.
+设计提示词必须引用已接受的设计指南，而不是发明新的产品规则。
 
-## Evolution
+## 演进
 
-Split prompts by activity when critique, exploration, and implementation need different constraints.
+当批判、探索和实现需要不同约束时，按活动拆分提示词。

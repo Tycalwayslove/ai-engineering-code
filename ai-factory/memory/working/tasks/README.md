@@ -1,17 +1,17 @@
-# Task Memory
+# 任务记忆
 
-## Purpose
+## 目的
 
-This directory stores temporary task context for active AI factory work.
+该目录存放活动 AI 工厂工作的临时任务上下文。
 
-## Source Of Truth
+## 单一事实来源
 
-Task memory owns short-lived notes about current goals, constraints, and verification needs.
+任务记忆拥有当前目标、约束和验证需求的短期笔记。
 
-## Boundaries
+## 边界
 
-Do not treat task notes as durable product or architecture knowledge.
+不要把任务笔记当作持久产品或架构知识。
 
-## Evolution
+## 演进
 
-Archive or promote useful task learnings once the task completes.
+任务完成后，归档或提升有用的任务经验。

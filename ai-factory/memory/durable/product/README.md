@@ -1,17 +1,17 @@
-# Product Memory
+# 产品记忆
 
-## Purpose
+## 目的
 
-This directory preserves stable product intent, user needs, terminology, and scope constraints.
+该目录保留稳定产品意图、用户需求、术语和范围约束。
 
-## Source Of Truth
+## 单一事实来源
 
-Product memory owns enduring product context used to interpret specs and prioritize tradeoffs.
+产品记忆拥有用于解释规格和确定权衡优先级的持久产品上下文。
 
-## Boundaries
+## 边界
 
-Do not use this area for task status, backlog tracking, or unapproved ideas.
+不要将该区域用于任务状态、待办跟踪或未批准想法。
 
-## Evolution
+## 演进
 
-Update product memory when validated discovery or accepted roadmap changes alter the shared understanding.
+当已验证发现或已接受路线图变化改变共享理解时，更新产品记忆。

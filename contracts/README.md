@@ -1,17 +1,17 @@
-# Contracts
+# 契约
 
-## Ownership
-- Contracts are owned by the runtime boundary they describe and reviewed by every consumer before breaking changes land.
-- `contracts/openapi` owns HTTP API shapes, `contracts/events` owns event envelopes, `contracts/memory` owns memory records, and `contracts/workflow` owns workflow manifests.
+## 所有权
+- 契约由其描述的运行时边界拥有，破坏性变更落地前需由所有消费者评审。
+- `contracts/openapi` 拥有 HTTP API 形态，`contracts/events` 拥有事件信封，`contracts/memory` 拥有记忆记录，`contracts/workflow` 拥有工作流 manifest。
 
-## Source Of Truth
-- Files in this directory are the source of truth for cross-runtime agreements.
-- Runtime code may generate clients, validators, or docs from these files, but must not redefine the same shape elsewhere.
+## 单一事实来源
+- 本目录文件是跨运行时协议的单一事实来源。
+- 运行时代码可以从这些文件生成客户端、校验器或文档，但不得在其他地方重定义同一形态。
 
-## Dependency Boundaries
-- Applications, packages, Python services, and AI factory workflows may depend on contracts.
-- Contracts must not depend on runtime implementations, framework internals, generated clients, or environment-specific settings.
+## 依赖边界
+- 应用、包、Python 服务和 AI 工厂工作流可以依赖契约。
+- 契约不得依赖运行时实现、框架内部细节、生成客户端或环境专属设置。
 
-## Evolution
-- Additive changes can land with updated docs and consumers.
-- Breaking changes require a migration path, versioned contract file, or ADR when the impact crosses ownership boundaries.
+## 演进
+- 增量变更可在同步更新文档和消费者后落地。
+- 当影响跨越所有权边界时，破坏性变更需要迁移路径、版本化契约文件或 ADR。

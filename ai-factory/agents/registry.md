@@ -1,8 +1,8 @@
-# Agent Registry
+# Agent 注册表
 
-Phase 1 has no autonomous agents.
+第一阶段不包含自主 agent。
 
-Future agent entries must declare:
+未来 agent 条目必须声明：
 
 - id
 - purpose
@@ -12,4 +12,4 @@ Future agent entries must declare:
 - allowed memory domains
 - escalation path
 
-Agents must not be auto-loaded. Runtime code must load named agents through explicit configuration.
+Agent 不得被自动加载。运行时代码必须通过显式配置加载具名 agent。

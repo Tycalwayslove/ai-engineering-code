@@ -1,17 +1,17 @@
-# Prompts
+# 提示词
 
-## Purpose
+## 目的
 
-This directory stores reusable prompts for AI factory roles, tasks, workflows, and evaluation.
+该目录存放用于 AI 工厂角色、任务、工作流和评估的可复用提示词。
 
-## Source Of Truth
+## 单一事实来源
 
-Prompt subdirectories own stable prompt text by usage area and expected audience.
+提示词子目录按使用区域和预期受众拥有稳定提示词文本。
 
-## Boundaries
+## 边界
 
-Prompts are documentation assets in Phase 1. Runtime code must not auto-load prompt files.
+第一阶段中提示词是文档资产。运行时代码不得自动加载提示词文件。
 
-## Evolution
+## 演进
 
-Version or split prompts when behavior differs by role, workflow, or evaluation need.
+当行为因角色、工作流或评估需求不同而变化时，对提示词进行版本化或拆分。

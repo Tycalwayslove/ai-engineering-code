@@ -1,3 +1,3 @@
-# Layouts
+# 布局
 
-Reserved for shared application layout components.
+预留给共享应用布局组件。

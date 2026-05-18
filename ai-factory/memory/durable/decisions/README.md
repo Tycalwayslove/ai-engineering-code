@@ -1,17 +1,17 @@
-# Decision Memory
+# 决策记忆
 
-## Purpose
+## 目的
 
-This directory records durable decisions and the context behind them.
+该目录记录持久决策及其背后的上下文。
 
-## Source Of Truth
+## 单一事实来源
 
-Decision memory owns accepted choices, rejected alternatives, and the reasons those choices matter.
+决策记忆拥有已接受选择、被拒绝方案，以及这些选择重要的原因。
 
-## Boundaries
+## 边界
 
-Do not record guesses or unresolved debates as decisions. Use working memory until a decision is made.
+不要把猜测或未解决争论记录为决策。决策形成前使用工作记忆。
 
-## Evolution
+## 演进
 
-Add lightweight decision records as choices become costly to rediscover or reverse.
+当重新发现或推翻某选择的成本变高时，添加轻量决策记录。

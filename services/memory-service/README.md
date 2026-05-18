@@ -1,35 +1,35 @@
 # memory-service
 
-## Purpose
+## 目的
 
-This boundary defines durable and working memory access.
+该边界定义持久记忆和工作记忆访问。
 
-## Responsibilities
+## 职责
 
-- Own durable memory and working memory access patterns.
-- Own memory contract usage with `contracts/memory`.
-- Provide explicit memory access paths that discourage arbitrary file access from unrelated modules.
-- Route memory capabilities through the centralized Python backend during Phase 1.
+- 拥有持久记忆和工作记忆的访问模式。
+- 拥有 `contracts/memory` 的记忆契约使用方式。
+- 提供显式记忆访问路径，避免无关模块任意访问文件。
+- 第一阶段中，记忆能力通过集中式 Python 后端路由。
 
-## Non-Responsibilities
+## 非职责
 
-- Does not own a separate runtime in Phase 1.
-- Does not permit random modules to read or write memory files directly.
-- Does not own profile records, conversation lifecycle, or duplicated deployment configuration.
+- 第一阶段中不拥有独立运行时。
+- 不允许任意模块直接读写记忆文件。
+- 不拥有画像记录、会话生命周期或重复部署配置。
 
-## Contracts
+## 契约
 
-- Owns: `contracts/memory`
+- 拥有：`contracts/memory`
 
-## Extraction Triggers
+## 拆分触发条件
 
-- Independent scaling pressure.
-- Separate deployment cadence.
-- Mature API contract and operational need.
+- 出现独立扩缩容压力。
+- 需要独立部署节奏。
+- API 契约成熟且存在真实运营需求。
 
-## Non-Triggers
+## 非触发条件
 
-- Naming preference.
-- Speculative scale.
-- Organizational neatness.
-- Desire for symmetric folder structures.
+- 命名偏好。
+- 推测性规模。
+- 组织结构洁癖。
+- 追求对称目录结构。

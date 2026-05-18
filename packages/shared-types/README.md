@@ -1,21 +1,21 @@
-# Shared Types
+# 共享类型
 
-## Purpose
+## 目的
 
-- Exposes TypeScript types shared by apps, SDKs, and package consumers.
-- Provides stable convenience types for common API responses.
+- 暴露应用、SDK 和包消费者共享的 TypeScript 类型。
+- 为常见 API 响应提供稳定的便利类型。
 
-## Ownership
+## 所有权
 
-- Platform maintainers own exported type names and compatibility.
-- Contract changes should begin in `contracts/` before package types grow.
+- 平台维护者拥有导出类型名称和兼容性。
+- 包类型增长前，契约变更应先从 `contracts/` 开始。
 
-## Dependency Boundaries
+## 依赖边界
 
-- Must not depend on app packages, UI packages, SDK packages, or runtime implementations.
-- May be imported by any TypeScript workspace package.
+- 不得依赖应用包、UI 包、SDK 包或运行时实现。
+- 任意 TypeScript 工作区包都可以导入。
 
-## Evolution Path
+## 演进路径
 
-- Add types only when they represent stable cross-package concepts.
-- Prefer generated or contract-backed types once API contracts mature.
+- 只有类型代表稳定跨包概念时，才添加类型。
+- API 契约成熟后，优先使用生成类型或契约支撑的类型。

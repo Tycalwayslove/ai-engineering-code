@@ -1,20 +1,20 @@
 # Admin
 
-## Purpose
+## 目的
 
-`@ai-code/admin` is the operator surface for the AI-native software factory.
+`@ai-code/admin` 是 AI 原生软件工厂的运营管理界面。
 
-## Ownership
+## 所有权
 
-This app owns browser presentation for operational workflows and factory oversight.
+该应用拥有运营工作流和工厂监督的浏览器展示层。
 
-## Dependency Boundaries
+## 依赖边界
 
-- May import shared UI and shared types from `packages/`.
-- Must not import `services/*` or `ai-factory/*`.
-- Must not call backend endpoints directly or implement custom networking.
-- Future data access must use an explicit SDK boundary.
+- 可以从 `packages/` 导入共享 UI 和共享类型。
+- 不得导入 `services/*` 或 `ai-factory/*`。
+- 不得直接调用后端端点或实现自定义网络逻辑。
+- 未来数据访问必须使用显式 SDK 边界。
 
-## Evolution
+## 演进
 
-Grow this app around real operator workflows. Keep business orchestration in backend or workflow-owned packages, not page components.
+围绕真实运营工作流扩展该应用。业务编排保留在后端或工作流所属包中，不放在页面组件里。

@@ -1,17 +1,17 @@
-# Iteration Memory
+# 迭代记忆
 
-## Purpose
+## 目的
 
-This directory stores temporary notes about implementation iterations and checkpoints.
+该目录存放关于实施迭代和检查点的临时笔记。
 
-## Source Of Truth
+## 单一事实来源
 
-Iteration memory owns what changed during a work cycle and what remains uncertain.
+迭代记忆拥有一个工作周期中的变更内容和仍不确定事项。
 
-## Boundaries
+## 边界
 
-Do not keep permanent process policy here. Stable process guidance belongs in playbooks.
+不要在这里保存永久流程政策。稳定流程指南属于作战手册。
 
-## Evolution
+## 演进
 
-Condense repeated iteration patterns into playbooks or templates when they prove useful.
+当重复迭代模式证明有用时，将其沉淀为作战手册或模板。

@@ -1,23 +1,23 @@
-# Orchestrator
+# 编排器
 
-## Purpose
+## 目的
 
-- Reserves the Python package boundary for future workflow coordination.
-- Documents where orchestration code will live once real workflow pressure exists.
+- 为未来工作流协调预留 Python 包边界。
+- 记录真实工作流压力出现后编排代码的归属位置。
 
-## Ownership
+## 所有权
 
-- `orchestrator` will own workflow coordination, review handoffs, and replay entry points when needed.
-- Workflow definitions and playbooks remain under `ai-factory/workflows` and `ai-factory/playbooks`.
+- 需要时，`orchestrator` 将拥有工作流协调、评审交接和重放入口。
+- 工作流定义和作战手册保留在 `ai-factory/workflows` 与 `ai-factory/playbooks` 下。
 
-## Dependency Boundaries
+## 依赖边界
 
-- This package has no workflow framework dependency today.
-- Do not add orchestration runtimes until manual workflow execution creates drift or review risk.
-- Keep API gateway routes separate from orchestration internals.
+- 该包目前没有工作流框架依赖。
+- 在手动工作流执行产生漂移或评审风险之前，不添加编排运行时。
+- 保持 API 网关路由与编排内部实现分离。
 
-## Evolution Path
+## 演进路径
 
-- Add small coordination functions after repeated workflow steps stabilize.
-- Introduce durable state only when replay or audit requirements appear.
-- Record major orchestration shifts with an ADR.
+- 重复工作流步骤稳定后，添加小型协调函数。
+- 只有出现重放或审计需求后，才引入持久状态。
+- 用 ADR 记录重大编排变化。

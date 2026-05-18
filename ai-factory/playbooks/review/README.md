@@ -1,17 +1,17 @@
-# Review Playbook
+# 评审作战手册
 
-## Purpose
+## 目的
 
-This directory documents the repeatable path for reviewing code, specs, and AI factory artifacts.
+该目录记录评审代码、规格和 AI 工厂产物的可重复路径。
 
-## Source Of Truth
+## 单一事实来源
 
-The review playbook owns expected review focus, severity framing, and evidence standards.
+评审作战手册拥有预期的评审重点、严重级别框架和证据标准。
 
-## Boundaries
+## 边界
 
-Reviews should identify actionable risks and avoid becoming unrelated redesigns.
+评审应识别可行动风险，避免变成无关重设计。
 
-## Evolution
+## 演进
 
-Refine review guidance when feedback patterns show unclear severity or missing checks.
+当反馈模式显示严重级别不清或检查缺失时，完善评审指南。

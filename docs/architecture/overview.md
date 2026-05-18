@@ -1,22 +1,22 @@
-# Architecture Overview
+# 架构概览
 
-## Purpose
+## 目的
 
-- Establish the initial monorepo structure for the AI-native software factory.
-- Keep frontend, backend, shared packages, contracts, and AI factory assets coordinated.
-- Avoid premature runtime separation while boundaries are still forming.
+- 建立 AI 原生软件工厂的初始 monorepo 结构。
+- 保持前端、后端、共享包、契约和 AI 工厂资产协调一致。
+- 边界仍在形成时，避免过早运行时拆分。
 
-## Rules
+## 规则
 
-- TypeScript apps live under `apps/` and shared TypeScript packages live under `packages/`.
-- Python runtimes and libraries live under `python/`.
-- `services/` names domain ownership boundaries before they become independently deployed services.
-- `contracts/` defines cross-runtime agreements that TypeScript and Python code must honor.
-- `ai-factory/` stores agent, prompt, workflow, memory, spec, playbook, and design-system assets.
-- Architecture docs must not become a second copy of contract or prompt content.
+- TypeScript 应用位于 `apps/`，共享 TypeScript 包位于 `packages/`。
+- Python 运行时和库位于 `python/`。
+- `services/` 在服务成为独立部署单元前命名领域所有权边界。
+- `contracts/` 定义 TypeScript 和 Python 代码必须遵守的跨运行时协议。
+- `ai-factory/` 存放 agent、提示词、工作流、记忆、规格、作战手册和设计系统资产。
+- 架构文档不得成为契约或提示词内容的第二份副本。
 
-## Evolution
+## 演进
 
-- Extract deployable services only after ownership, contracts, and operational needs are clear.
-- Add orchestration runtime code only after real workflow execution needs exist.
-- Promote stable architecture decisions into ADRs when they affect multiple areas.
+- 只有所有权、契约和运营需求明确后，才拆分可部署服务。
+- 只有真实工作流执行需求存在后，才添加编排运行时代码。
+- 当稳定架构决策影响多个区域时，将其提升为 ADR。

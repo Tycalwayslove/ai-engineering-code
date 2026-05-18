@@ -1,26 +1,26 @@
-# AI-Native Software Factory Monorepo Design
+# AI 原生软件工厂单体仓库设计
 
-Date: 2026-05-18
-Status: Approved for implementation planning
+日期：2026-05-18
+状态：已批准进入实施计划
 
-## Purpose
+## 目的
 
-This repository is a long-term foundation for an AI-native software factory. It must support product applications, backend and AI runtimes, durable memory, workflow orchestration, design-system infrastructure, and stable cross-runtime contracts.
+本仓库是 AI 原生软件工厂的长期基础。 它必须支持产品应用、后端与 AI 运行时、持久记忆、工作流编排、设计系统基础设施，以及稳定的跨运行时契约。
 
-Phase 1 intentionally bootstraps a lightweight skeleton. The goal is a stable, runnable, inspectable foundation, not production sophistication or autonomous agent behavior.
+第一阶段有意只启动一个轻量骨架。目标是稳定、可运行、可检查的基础，而不是生产级复杂度或自主 agent 行为。
 
-## Design Principles
+## 设计原则
 
-- Optimize for AI readability, deterministic navigation, predictable ownership, and low cognitive load.
-- Prefer explicit structure over hidden abstractions.
-- Keep local development simple and transparent.
-- Keep workflows manual-first during Phase 1.
-- Treat specs, memory, prompts, workflows, contracts, and design-system files as first-class infrastructure.
-- Implement before abstracting. Do not add plugin systems, generators, event systems, framework adapters, infrastructure layers, or registries beyond necessity until real pressure exists.
-- Preserve human inspectability. Humans must be able to inspect contracts, prompts, memory, orchestration paths, and workflow state.
-- Record major architectural shifts with ADRs, migration reasoning, source-of-truth updates, and dependency impact review.
+- 优化 AI 可读性、确定性导航、可预测所有权和低认知负担。
+- 优先显式结构，而不是隐藏抽象。
+- 保持本地开发简单透明。
+- 第一阶段中工作流以手动优先。
+- 将规格、记忆、提示词、工作流、契约和设计系统文件视为一等基础设施。
+- 先实现再抽象。没有真实压力前，不添加插件系统、生成器、事件系统、框架适配器、基础设施层或超出必要的注册表。
+- 保持人类可检查性。人必须能检查契约、提示词、记忆、编排路径和工作流状态。
+- 重大架构变化必须记录 ADR、迁移理由、单一事实来源更新和依赖影响评审。
 
-## Top-Level Structure
+## 顶层结构
 
 ```text
 /
@@ -36,33 +36,33 @@ Phase 1 intentionally bootstraps a lightweight skeleton. The goal is a stable, r
   .github/
 ```
 
-`apps/` contains user-facing clients.
+`apps/` 包含面向用户的客户端。
 
-`services/` contains service boundary definitions, not separate runtimes in Phase 1.
+`services/` 包含服务边界定义；第一阶段中不是独立运行时。
 
-`python/` contains executable backend and AI runtime foundations.
+`python/` 包含可执行后端和 AI 运行时基础。
 
-`packages/` contains TypeScript packages shared by frontend apps and tooling.
+`packages/` 包含前端应用和工具共享的 TypeScript 包。
 
-`contracts/` contains machine-readable cross-runtime agreements.
+`contracts/` 包含机器可读的跨运行时协议。
 
-`ai-factory/` contains AI-native operating infrastructure.
+`ai-factory/` 包含 AI 原生运行基础设施。
 
-`infra/` contains local development and deployment scaffolding.
+`infra/` 包含本地开发和部署脚手架。
 
-`docs/` contains human-facing architecture, conventions, onboarding, and ADRs.
+`docs/` 包含面向人的架构、约定、上手指南和 ADR。
 
-`scripts/` contains explicit automation entrypoints.
+`scripts/` 包含显式自动化入口。
 
-`.github/` contains CI/CD workflow baselines.
+`.github/` 包含 CI/CD 工作流基线。
 
-Every major directory must include a `README.md` that states ownership purpose, runtime responsibility, dependency boundaries, and intended evolution path.
+每个主要目录都必须包含 `README.md`，说明所有权目的、运行时职责、依赖边界和预期演进路径。
 
-## Workspace And Runtime Setup
+## 工作区与运行时设置
 
-The repository uses two clean ecosystems under one monorepo.
+仓库在一个 monorepo 下使用两个清晰生态。
 
-TypeScript workspace:
+TypeScript 工作区：
 
 ```text
 package.json
@@ -71,16 +71,16 @@ turbo.json
 tsconfig.base.json
 ```
 
-Python workspace:
+Python 工作区：
 
 ```text
 pyproject.toml
 .python-version
 ```
 
-`uv.lock` should be generated only after dependencies resolve.
+`uv.lock` 只应在依赖解析完成后生成。
 
-Local development must remain transparent:
+本地开发必须保持透明：
 
 ```bash
 pnpm dev
@@ -93,7 +93,7 @@ pnpm test
 pnpm format
 ```
 
-Python runtime commands remain visible:
+Python 运行时命令保持可见：
 
 ```bash
 uvicorn backend.app.main:app --app-dir python/backend --reload
@@ -103,9 +103,9 @@ mypy python
 pytest python
 ```
 
-`pnpm dev` starts frontend workspaces. Python runtime commands stay explicit and visible. Early bootstrap should avoid hidden orchestration wrappers.
+`pnpm dev` 启动前端工作区。Python 运行时命令保持显式可见。早期启动应避免隐藏式编排包装器。
 
-## Applications
+## 应用
 
 ```text
 apps/
@@ -124,15 +124,15 @@ apps/
     README.md
 ```
 
-`apps/h5` is the mobile-first web surface.
+`apps/h5` 是移动优先的 Web 界面。
 
-`apps/admin` is the internal operator/admin surface.
+`apps/admin` 是内部运营/管理界面。
 
-`apps/ios` and `apps/android` are ownership placeholders only during Phase 1.
+`apps/ios` 和 `apps/android` 在第一阶段中仅作为所有权占位。
 
-Frontend apps must stay thin. Business logic should move toward `packages/sdk`, backend services, orchestrator interfaces, and workflow-driven backend behavior. Apps must not contain frontend orchestration logic, duplicated state machines, scattered business logic, direct endpoint calls, service imports, or direct AI factory reads.
+前端应用必须保持很薄。业务逻辑应逐步移动到 `packages/sdk`、后端服务、编排器接口和工作流驱动的后端行为中。应用不得包含前端编排逻辑、重复状态机、散落业务逻辑、直接端点调用、服务导入或直接读取 AI 工厂。
 
-## TypeScript Packages
+## TypeScript 包
 
 ```text
 packages/
@@ -155,17 +155,17 @@ packages/
     src/
 ```
 
-`packages/shared-ui` owns reusable UI primitives, composites, and layouts.
+`packages/shared-ui` 拥有可复用 UI 基础组件、组合组件和布局。
 
-`packages/shared-types` owns TypeScript-facing types. It may mirror `/contracts`, but it is not the cross-runtime source of truth.
+`packages/shared-types` 拥有面向 TypeScript 的类型。它可以镜像 `/contracts`，但不是跨运行时单一事实来源。
 
-`packages/config` owns shared TypeScript tooling configuration.
+`packages/config` 拥有共享 TypeScript 工具配置。
 
-`packages/sdk` owns frontend API access. It is the only approved frontend path to backend capabilities.
+`packages/sdk` 拥有前端 API 访问能力。它是前端访问后端能力的唯一批准路径。
 
-The SDK owns request handling, retry policy, auth token handling, API typing, and transport abstraction. Apps must not implement custom networking behavior.
+SDK 拥有请求处理、重试策略、认证 token 处理、API 类型和传输抽象。应用不得实现自定义网络行为。
 
-Dependency direction:
+依赖方向：
 
 ```text
 apps/* -> packages/sdk
@@ -176,9 +176,9 @@ packages/sdk -> packages/shared-types
 packages/shared-ui -> packages/shared-types when needed
 ```
 
-No package should import from an app.
+任何包都不应从应用导入。
 
-## Python Runtime
+## Python 运行时
 
 ```text
 python/
@@ -196,13 +196,13 @@ python/
     orchestrator/
 ```
 
-`python/backend` owns the first runnable FastAPI application. It exposes health and version routes at bootstrap.
+`python/backend` 拥有第一个可运行的 FastAPI 应用。启动阶段暴露健康检查和版本路由。
 
-`python/agent-runtime` owns agent execution primitives. It remains framework-light until real workflow needs justify LangGraph or similar tooling.
+`python/agent-runtime` 拥有 agent 执行基础能力。在真实工作流需求证明 LangGraph 或类似工具合理之前，保持轻框架。
 
-`python/orchestrator` owns explicit workflow execution, named registrations, declared inputs, and visible state transitions.
+`python/orchestrator` 拥有显式工作流执行、具名注册、声明式输入和可见状态转换。
 
-Backend layering:
+后端分层：
 
 ```text
 routes
@@ -211,9 +211,9 @@ routes
       -> agent-runtime or memory interfaces
 ```
 
-Routes must not call workflows directly, load prompts directly, or access memory files directly.
+路由不得直接调用工作流、直接加载提示词或直接访问记忆文件。
 
-Python dependency direction:
+Python 依赖方向：
 
 ```text
 backend -> orchestrator
@@ -222,9 +222,9 @@ orchestrator -> explicit workflow definitions
 agent-runtime -> explicit prompt and memory inputs
 ```
 
-Avoid circular imports, runtime magic, implicit dependency injection, deep inheritance, and dynamic discovery.
+避免循环导入、运行时魔法、隐式依赖注入、深继承和动态发现。
 
-## Service Boundaries
+## 服务边界
 
 ```text
 services/
@@ -239,27 +239,27 @@ services/
     README.md
 ```
 
-`services/*` are ownership and contract boundaries during Phase 1. They are not independent runtimes, and they must not duplicate configs, infra, Dockerfiles, dependency trees, or hidden service scaffolds.
+`services/*` 在第一阶段中是所有权和契约边界。它们不是独立运行时，也不得重复配置、基础设施、Dockerfile、依赖树或隐藏服务脚手架。
 
-Each service README must define:
+每个服务 README 必须定义：
 
-- why the boundary exists
-- responsibilities
-- non-responsibilities
-- contracts it owns or consumes
-- pressure that would justify extraction
-- pressure that should not justify extraction
+- 边界存在的原因
+- 职责
+- 非职责
+- 它拥有或消费的契约
+- 足以证明拆分合理的压力
+- 不应证明拆分合理的压力
 
-Initial boundaries:
+初始边界：
 
-- `api-gateway`: public backend entry boundary
-- `conversation-service`: conversation and session domain boundary
-- `memory-service`: durable and working memory access boundary
-- `profile-service`: user, profile, and context boundary
+- `api-gateway`：公共后端入口边界
+- `conversation-service`：会话和会话状态领域边界
+- `memory-service`：持久记忆和工作记忆访问边界
+- `profile-service`：用户、画像和上下文边界
 
-Extraction is allowed only after clear operational pressure exists, such as independent scaling needs, separate data ownership, separate deployment cadence, mature contracts, or a real operational requirement.
+只有出现明确运营压力后才允许拆分，例如独立扩缩容需求、独立数据所有权、独立部署节奏、成熟契约或真实运营要求。
 
-## Contracts
+## 契约
 
 ```text
 contracts/
@@ -277,21 +277,21 @@ contracts/
     workflow-manifest.schema.json
 ```
 
-`contracts/` owns machine-readable cross-runtime agreements.
+`contracts/` 拥有机器可读的跨运行时协议。
 
-Source-of-truth rules:
+单一事实来源规则：
 
-- `/contracts/openapi` defines HTTP API shape.
-- `/contracts/events` defines event payloads when events exist.
-- `/contracts/memory` defines durable and working memory metadata.
-- `/contracts/workflow` defines workflow manifest shape.
-- `packages/shared-types` may mirror contracts for TypeScript use.
-- Python models may mirror contracts for backend use.
-- Runtime code must not silently redefine contracts.
+- `/contracts/openapi` 定义 HTTP API 形态。
+- `/contracts/events` 在事件存在时定义事件载荷。
+- `/contracts/memory` 定义持久记忆和工作记忆元数据。
+- `/contracts/workflow` 定义工作流 manifest 形态。
+- `packages/shared-types` 可以为 TypeScript 使用镜像契约。
+- Python 模型可以为后端使用镜像契约。
+- 运行时代码不得静默重定义契约。
 
-Contracts should start minimal and readable. Enforcement can grow later.
+契约应从最小且可读开始。强制执行可以稍后增长。
 
-## AI Factory
+## AI 工厂
 
 ```text
 ai-factory/
@@ -345,15 +345,15 @@ ai-factory/
     release/
 ```
 
-`ai-factory/` is structured operating context for AI-native development.
+`ai-factory/` 是 AI 原生开发的结构化运行上下文。
 
-`agents/` stores explicit agent definitions: purpose, inputs, outputs, allowed tools, memory access rules, and escalation paths.
+`agents/` 存放显式 agent 定义：目的、输入、输出、允许工具、记忆访问规则和升级路径。
 
-`workflows/` stores workflow definitions, templates, states, and registries. Workflows must declare inputs, outputs, state transitions, and memory domains used.
+`workflows/` 存放工作流定义、模板、状态和注册表。工作流必须声明输入、输出、状态转换和使用的记忆领域。
 
-`memory/` separates durable memory from working memory.
+`memory/` 分离持久记忆和工作记忆。
 
-Durable memory stores stable project knowledge:
+持久记忆存放稳定项目知识：
 
 ```text
 memory/durable/architecture
@@ -363,7 +363,7 @@ memory/durable/decisions
 memory/durable/api
 ```
 
-Working memory stores temporary execution context:
+工作记忆存放临时执行上下文：
 
 ```text
 memory/working/tasks
@@ -372,19 +372,19 @@ memory/working/active-context
 memory/working/retrospectives
 ```
 
-`specs/` stores implementation intent.
+`specs/` 存放实施意图。
 
-`prompts/` stores layered prompt infrastructure. Avoid giant universal prompts. Use system prompts, role prompts, workflow prompts, task prompts, evaluation prompts, and Goal Mode prompts separately.
+`prompts/` 存放分层提示词基础设施。避免巨型万能提示词。系统提示词、角色提示词、工作流提示词、任务提示词、评估提示词和 Goal Mode 提示词应分开使用。
 
-`design-system/` stores UI generation rules, design rationale, tokens, component guidance, patterns, Figma references, and design prompts.
+`design-system/` 存放 UI 生成规则、设计理由、令牌、组件指南、模式、Figma 引用和设计提示词。
 
-`playbooks/` stores operational guidance for humans and agents.
+`playbooks/` 存放人和 agent 的运营指南。
 
-Markdown remains the source of truth during Phase 1. Do not introduce databases, registries, vector infrastructure, schema engines, or automation until operational pressure exists.
+第一阶段中 Markdown 保持单一事实来源。没有运营压力前，不引入数据库、注册表、向量基础设施、schema 引擎或自动化。
 
-Runtime code may read AI factory files only through explicit paths, loaders, or registries. No dynamic auto-loading of agents, workflows, prompts, tools, or memory.
+运行时代码只能通过显式路径、加载器或注册表读取 AI 工厂文件。不得动态自动加载 agent、工作流、提示词、工具或记忆。
 
-## Source Of Truth
+## 单一事实来源
 
 ```text
 contracts/                  runtime agreements
@@ -400,29 +400,29 @@ services/                   service ownership boundaries
 docs/adr                    architectural reasoning
 ```
 
-Runtime code must not silently redefine source-of-truth content.
+运行时代码不得静默重定义单一事实来源内容。
 
-## Workflow Discipline
+## 工作流纪律
 
-Phase 1 workflows are manual-first. There are no autonomous loops, self-modifying workflows, auto-executing agents, hidden prompt injection, magical runtime scanning, or invisible workflow behavior.
+第一阶段工作流以手动优先。不存在自主循环、自修改工作流、自动执行 agent、隐藏提示词注入、魔法式运行时扫描或不可见工作流行为。
 
-Workflow execution should eventually support logging, state inspection, replayability, and deterministic tracing. Bootstrap only needs the directory and convention foundation.
+工作流执行最终应支持日志、状态检查、可重放性和确定性追踪。启动阶段只需要目录和约定基础。
 
-## Memory Discipline
+## 记忆纪律
 
-Memory access should eventually flow through explicit interfaces, repositories, and loaders. Avoid arbitrary file access across the system.
+记忆访问最终应通过显式接口、仓储和加载器流动。避免系统内任意文件访问。
 
-Human-readable Markdown remains the source of truth. Indexed memory or RAG systems can appear later only when needed.
+人类可读 Markdown 保持单一事实来源。索引记忆或 RAG 系统只有需要时才出现。
 
-## Design-System Discipline
+## 设计系统纪律
 
-`ai-factory/design-system` owns design intent and AI generation rules.
+`ai-factory/design-system` 拥有设计意图和 AI 生成规则。
 
-`packages/shared-ui` owns implemented UI code.
+`packages/shared-ui` 拥有已实现 UI 代码。
 
-Design tokens may later emit CSS variables, Tailwind configuration, or platform tokens, but bootstrap should keep this readable and explicit.
+设计令牌未来可以输出 CSS 变量、Tailwind 配置或平台令牌，但启动阶段应保持可读且显式。
 
-## Local Development Infrastructure
+## 本地开发基础设施
 
 ```text
 docker-compose.yml
@@ -434,16 +434,16 @@ infra/
     frontend.Dockerfile
 ```
 
-Initial Docker Compose services:
+初始 Docker Compose 服务：
 
 - `frontend`
 - `backend`
 - `postgres`
 - `redis`
 
-No Kubernetes. No vector database until memory/RAG implementation needs one. No separate service containers for `services/*` during Phase 1.
+不包含 Kubernetes。直到记忆/RAG 实现需要前，不添加向量数据库。第一阶段中不为 `services/*` 添加独立服务容器。
 
-## CI/CD Baseline
+## CI/CD 基线
 
 ```text
 .github/
@@ -451,21 +451,21 @@ No Kubernetes. No vector database until memory/RAG implementation needs one. No 
     ci.yml
 ```
 
-Initial CI quality gates:
+初始 CI 质量门禁：
 
-- install pnpm dependencies
+- 安装 pnpm 依赖
 - TypeScript lint
 - TypeScript typecheck
-- TypeScript test placeholder
-- Python ruff check
-- Python format check
+- TypeScript 测试占位
+- Python ruff 检查
+- Python 格式检查
 - Python mypy
-- Python pytest placeholder
-- Docker Compose syntax check when feasible
+- Python pytest 占位
+- 可行时检查 Docker Compose 语法
 
-CI validates skeleton health. It does not simulate production.
+CI 验证骨架健康度，不模拟生产环境。
 
-## Documentation
+## 文档
 
 ```text
 docs/
@@ -488,100 +488,100 @@ docs/
     local-development.md
 ```
 
-`docs/architecture` explains the system shape.
+`docs/architecture` 解释系统形态。
 
-`docs/adr` records architectural decisions and reasoning.
+`docs/adr` 记录架构决策和理由。
 
-`docs/conventions` defines stable rules for humans and agents.
+`docs/conventions` 定义人和 agent 的稳定规则。
 
-`docs/onboarding` explains how to run the repo.
+`docs/onboarding` 解释如何运行仓库。
 
-`docs/conventions/anti-patterns.md` must prohibit premature microservices, hidden runtime discovery, prompt duplication, context duplication, magical abstractions, frontend business orchestration, and direct memory access from random modules.
+`docs/conventions/anti-patterns.md` 必须禁止过早微服务化、隐藏式运行时发现、提示词重复、上下文重复、魔法式抽象、前端业务编排，以及任意模块直接访问记忆。
 
-`docs/conventions/evolution.md` must define when extraction is allowed, when abstraction is justified, when workflows become runtimes, when memory becomes indexed, and when contracts become enforced.
+`docs/conventions/evolution.md` 必须定义何时允许拆分、何时抽象合理、何时工作流成为运行时、何时记忆可被索引，以及何时强制执行契约。
 
-## Anti-Patterns
+## 反模式
 
-Avoid:
+避免：
 
-- premature microservices
-- hidden runtime discovery
-- prompt duplication
-- context duplication
-- magical abstractions
-- frontend business orchestration
-- direct memory access from random modules
-- dynamic auto-loading of agents, workflows, prompts, tools, or memory
-- production infrastructure before product pressure
-- LangGraph integration before the first real workflow
-- event systems before real event pressure
-- deep inheritance and meta-programming
-- hidden dependency injection
-- duplicate source-of-truth definitions
+- 过早微服务化
+- 隐藏式运行时发现
+- 提示词重复
+- 上下文重复
+- 魔法式抽象
+- 前端业务编排
+- 任意模块直接访问记忆
+- 动态自动加载 agent、工作流、提示词、工具或记忆
+- 产品压力出现前的生产基础设施
+- 在第一个真实工作流前集成 LangGraph
+- 真实事件压力出现前的事件系统
+- 深继承和元编程
+- 隐藏式依赖注入
+- 重复的单一事实来源定义
 
-## Evolution Rules
+## 演进规则
 
-Abstraction is justified only when implementation shows repeated, stable patterns.
+只有实现呈现重复且稳定的模式时，抽象才合理。
 
-Service extraction is justified only by operational pressure and mature contracts.
+只有运营压力和成熟契约能证明服务拆分合理。
 
-Workflow definitions become runtimes only after real workflows need execution, state, logging, replay, or human review.
+只有真实工作流需要执行、状态、日志、重放或人工评审后，工作流定义才成为运行时。
 
-Memory becomes indexed only after file-based memory becomes insufficient for real retrieval tasks.
+只有基于文件的记忆不足以支撑真实检索任务后，记忆才应被索引。
 
-Contracts become enforced after hand-maintained contracts begin creating drift or integration risk.
+只有手工维护契约开始造成漂移或集成风险后，才强制执行契约。
 
-Every major architectural shift requires an ADR, migration reasoning, source-of-truth updates, and dependency impact review.
+每次重大架构变化都需要 ADR、迁移理由、单一事实来源更新和依赖影响评审。
 
-## Implementation Scope
+## 实施范围
 
-Phase 1 should produce:
+第一阶段应产出：
 
-- stable repository skeleton
-- runnable frontend foundations
-- runnable FastAPI foundation
-- explicit AI factory directories
-- explicit service boundary READMEs
-- minimal contracts
-- Docker Compose baseline
-- CI baseline
-- architecture and convention documentation
+- 稳定的仓库骨架
+- 可运行的前端基础
+- 可运行的 FastAPI 基础
+- 显式 AI 工厂目录
+- 显式服务边界 README
+- 最小契约
+- Docker Compose 基线
+- CI 基线
+- 架构和约定文档
 
-Phase 1 should not produce:
+第一阶段不应产出：
 
-- production distributed systems
+- 生产级分布式系统
 - Kubernetes
-- autonomous agents
-- self-modifying workflows
-- vector memory infrastructure
-- workflow automation
-- premature microservice runtimes
-- LangGraph integration without a real workflow
+- 自主 agent
+- 自修改工作流
+- 向量记忆基础设施
+- 工作流自动化
+- 过早微服务运行时
+- 没有真实工作流时集成 LangGraph
 
-## Open Risks To Watch
+## 需要关注的风险
 
-The design includes many first-class directories. Implementation must keep each directory shallow and purposeful so the skeleton remains readable.
+该设计包含许多一等目录。实施必须让每个目录保持浅层且目的明确，以保证骨架可读。
 
-The AI factory structure can become ceremonial if files do not state ownership and evolution paths clearly.
+如果文件没有清楚说明所有权和演进路径，AI 工厂结构可能变成仪式化目录。
 
-The contract layer can drift from implementation unless later work adds deliberate validation or generation.
+如果后续不添加有意的校验或生成流程，契约层可能与实现漂移。
 
-The service boundary layer can invite premature extraction unless service READMEs explicitly define non-triggers.
+如果服务 README 没有明确非触发条件，服务边界层可能诱发过早拆分。
 
-The SDK boundary can erode if apps are allowed to add ad hoc networking.
+如果允许应用添加临时网络逻辑，SDK 边界会被侵蚀。
 
-## Self-Review Findings
+## 自检发现
 
-No placeholders remain in this spec.
+该规格中没有遗留占位内容。
 
-No contradiction remains between the service boundary model and the Phase 1 runtime model. `services/*` defines ownership and contracts only; `python/backend` remains the centralized runnable backend.
+服务边界模型与第一阶段运行时模型之间不再存在矛盾。`services/*` 只定义所有权和契约；`python/backend` 保持集中式可运行后端。
 
-No contradiction remains between workflow readiness and framework-light implementation. The repository reserves workflow, state, and registry locations, but it does not install orchestration frameworks before a real workflow exists.
+工作流就绪性与轻框架实现之间不再存在矛盾。仓库预留工作流、状态和注册表位置，但在真实工作流出现前不安装编排框架。
 
-No contradiction remains between machine-readable contracts and Markdown-first operation. `/contracts` holds minimal schemas and OpenAPI files; AI factory memory, prompts, playbooks, and specs remain readable Markdown sources of truth.
+机器可读契约与 Markdown 优先运行方式之间不再存在矛盾。`/contracts` 保存最小 schema 和 OpenAPI 文件；AI 工厂记忆、提示词、作战手册和规格保持为可读的 Markdown 单一事实来源。
 
-The largest overengineering risk is directory count. The implementation plan must create shallow READMEs and minimal placeholder files rather than deep scaffolds.
+最大的过度工程化风险是目录数量。实施计划必须创建浅层 README 和最小占位文件，而不是深层脚手架。
 
-The second overengineering risk is accidental runtime duplication. The implementation plan must avoid separate service dependency trees, per-service Dockerfiles, and premature framework adapters.
+第二个过度工程化风险是意外的运行时重复。实施计划必须避免独立服务依赖树、逐服务 Dockerfile 和过早框架适配器。
 
-The third overengineering risk is ceremonial AI infrastructure. Each AI factory README must explain when the directory is used and what should not live there.
+第三个过度工程化风险是仪式化 AI 基础设施。每个 AI 工厂 README 必须说明该目录何时使用，以及什么不应放在其中。

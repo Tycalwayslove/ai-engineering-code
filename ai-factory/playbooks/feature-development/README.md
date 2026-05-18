@@ -1,17 +1,17 @@
-# Feature Development Playbook
+# 功能开发作战手册
 
-## Purpose
+## 目的
 
-This directory documents the repeatable path for delivering new features.
+该目录记录交付新功能的可重复路径。
 
-## Source Of Truth
+## 单一事实来源
 
-The feature playbook owns expected planning, implementation, validation, and review checkpoints.
+功能开发作战手册拥有预期的计划、实施、验证和评审检查点。
 
-## Boundaries
+## 边界
 
-Do not use the playbook as a substitute for a feature spec with concrete acceptance criteria.
+不要用作战手册替代带具体验收标准的功能规格。
 
-## Evolution
+## 演进
 
-Refine the playbook when feature work repeatedly misses context, tests, or handoffs.
+当功能工作反复缺少上下文、测试或交接时，完善作战手册。

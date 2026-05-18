@@ -1,21 +1,21 @@
 # SDK
 
-## Purpose
+## 目的
 
-- Provides a small TypeScript client for AI Code HTTP APIs.
-- Centralizes base URL handling, authentication headers, and response error handling.
+- 为 AI Code HTTP API 提供小型 TypeScript 客户端。
+- 集中处理 base URL、认证头和响应错误。
 
-## Ownership
+## 所有权
 
-- Platform maintainers own client behavior and public method names.
-- API consumers may request new methods after the related endpoint exists in `contracts/openapi`.
+- 平台维护者拥有客户端行为和公共方法命名。
+- 相关端点存在于 `contracts/openapi` 后，API 消费者可以请求新增方法。
 
-## Dependency Boundaries
+## 依赖边界
 
 - May depend on `@ai-code/shared-types` for response types.
-- Must not depend on apps, UI packages, service internals, or backend implementation files.
+- 不得依赖应用、UI 包、服务内部实现或后端实现文件。
 
-## Evolution Path
+## 演进路径
 
-- Add endpoint methods one at a time as API contracts stabilize.
-- Introduce generated clients only after manual methods create drift or maintenance pressure.
+- 随着 API 契约稳定，一次添加一个端点方法。
+- 只有手写方法造成漂移或维护压力后，才引入生成客户端。

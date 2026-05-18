@@ -1,21 +1,21 @@
 # AI Code
 
-## Purpose
+## 目的
 
-- Define the repository as a polyglot AI-native software factory.
-- Keep product code, contracts, AI factory assets, and governance docs in one monorepo.
-- Make ownership and source-of-truth decisions explicit before runtime code grows.
+- 将仓库定义为多语言 AI 原生软件工厂。
+- 把产品代码、契约、AI 工厂资产和治理文档放在同一个 monorepo 中。
+- 在运行时代码增长之前，先明确所有权和单一事实来源。
 
-## Rules
+## 规则
 
-- Use `docs/adr` for major architectural decisions.
-- Use `contracts/` for cross-runtime API, event, memory, and workflow agreements.
-- Use `ai-factory/` for specs, prompts, memory, workflows, agents, playbooks, and design-system inputs.
-- Keep `services/*` as ownership boundaries until operational pressure justifies runtime extraction.
-- Follow the repository conventions in `docs/conventions/` before adding new packages, services, workflows, or memory systems.
+- 重大架构决策使用 `docs/adr` 记录。
+- 跨运行时 API、事件、记忆和工作流协议使用 `contracts/`。
+- 规格、提示词、记忆、工作流、agent、作战手册和设计系统输入使用 `ai-factory/`。
+- 在出现足够运营压力之前，`services/*` 只作为所有权边界。
+- 新增包、服务、工作流或记忆系统之前，先遵循 `docs/conventions/` 中的仓库约定。
 
-## Evolution
+## 演进
 
-- Add runtime infrastructure only when a concrete workflow or service needs it.
-- Update governance docs in the same change that changes repository structure.
-- Record major direction changes with an ADR before implementation spreads across the monorepo.
+- 只有具体工作流或服务需要时，才添加运行时基础设施。
+- 改变仓库结构时，必须在同一变更中更新治理文档。
+- 重大方向变化在扩散到 monorepo 实施前，必须先用 ADR 记录。

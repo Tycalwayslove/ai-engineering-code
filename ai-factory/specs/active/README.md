@@ -1,17 +1,17 @@
-# Active Specs
+# 活动规格
 
-## Purpose
+## 目的
 
-This directory stores specs currently guiding implementation or review.
+该目录存放当前指导实施或评审的规格。
 
-## Source Of Truth
+## 单一事实来源
 
-Active specs own the accepted problem framing, scope, and success criteria for in-flight work.
+活动规格拥有进行中工作的已接受问题框架、范围和成功标准。
 
-## Boundaries
+## 边界
 
-Do not keep completed or abandoned specs here after their status is resolved.
+状态已解决后，不要把完成或放弃的规格留在这里。
 
-## Evolution
+## 演进
 
-Move specs to the archive once implementation and validation are complete or the work is canceled.
+实现和验证完成或工作取消后，将规格移入归档。

@@ -1,21 +1,21 @@
-# Conventions
+# 约定
 
-## Purpose
+## 目的
 
-- Define repository-wide rules that apply across apps, packages, Python code, services, contracts, and AI factory assets.
-- Make the codebase readable to humans and AI agents.
-- Reduce drift by naming authoritative locations for common responsibilities.
+- 定义适用于应用、包、Python 代码、服务、契约和 AI 工厂资产的仓库级规则。
+- 让代码库对人和 AI agent 都可读。
+- 通过明确常见职责的权威位置来减少漂移。
 
-## Rules
+## 规则
 
-- Follow `ai-readability.md` for code and workflow shape.
-- Follow `naming.md` before creating packages, directories, modules, or service boundaries.
-- Follow `source-of-truth.md` before copying contracts, prompts, memory, or workflow definitions.
-- Follow `anti-patterns.md` when evaluating new infrastructure or abstractions.
-- Follow `evolution.md` before extracting services, adding runtimes, indexing memory, or enforcing contracts.
+- 代码和工作流形态遵循 `ai-readability.md`。
+- 创建包、目录、模块或服务边界前遵循 `naming.md`。
+- 复制契约、提示词、记忆或工作流定义前遵循 `source-of-truth.md`。
+- 评估新基础设施或抽象时遵循 `anti-patterns.md`。
+- 拆分服务、添加运行时、索引记忆或强制契约前遵循 `evolution.md`。
 
-## Evolution
+## 演进
 
-- Add conventions when repeated review comments expose a stable rule.
-- Keep conventions short enough to enforce during normal code review.
-- Prefer updating an existing convention over creating overlapping guidance.
+- 当重复评审意见暴露稳定规则时，添加约定。
+- 保持约定足够短，使其能在日常代码评审中执行。
+- 优先更新现有约定，而不是创建重叠指南。

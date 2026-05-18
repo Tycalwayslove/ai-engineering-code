@@ -1,17 +1,17 @@
-# Archived Specs
+# 归档规格
 
-## Purpose
+## 目的
 
-This directory preserves completed, canceled, or superseded specs for historical reference.
+该目录保留已完成、已取消或被取代的规格，供历史参考。
 
-## Source Of Truth
+## 单一事实来源
 
-Archived specs own prior intent and context, not current implementation authority.
+归档规格拥有历史意图和上下文，不拥有当前实现权威。
 
-## Boundaries
+## 边界
 
-Do not revive archived guidance without creating or updating an active spec.
+未创建或更新活动规格前，不要恢复归档指南。
 
-## Evolution
+## 演进
 
-Group archives by date or initiative when the directory becomes hard to scan.
+当目录难以扫描时，按日期或项目对归档分组。

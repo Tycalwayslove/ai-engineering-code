@@ -1,17 +1,17 @@
-# API Memory
+# API 记忆
 
-## Purpose
+## 目的
 
-This directory preserves stable API contracts, integration expectations, and compatibility notes.
+该目录保留稳定 API 契约、集成预期和兼容性说明。
 
-## Source Of Truth
+## 单一事实来源
 
-API memory owns durable interface knowledge that complements formal contract files.
+API 记忆拥有补充正式契约文件的持久接口知识。
 
-## Boundaries
+## 边界
 
-Do not duplicate generated schemas or replace source contract definitions.
+不要重复生成的 schema，也不要替代源契约定义。
 
-## Evolution
+## 演进
 
-Update API memory when contract behavior or integration guidance changes in a reviewed way.
+当契约行为或集成指南经过评审发生变化时，更新 API 记忆。

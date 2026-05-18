@@ -1,17 +1,17 @@
-# Figma Design System
+# Figma 设计系统
 
-## Purpose
+## 目的
 
-This directory documents how Figma assets relate to the repository design system.
+该目录记录 Figma 资产如何关联到仓库设计系统。
 
-## Source Of Truth
+## 单一事实来源
 
-Figma notes own file links, library expectations, and design-to-code alignment guidance.
+Figma 说明拥有文件链接、库预期和设计到代码对齐指南。
 
-## Boundaries
+## 边界
 
-Do not store exported binary design assets here. Keep this Markdown-only in Phase 1.
+不要在这里存放导出的二进制设计资产。第一阶段保持为仅 Markdown。
 
-## Evolution
+## 演进
 
-Add synchronization rules when Figma libraries and code components need formal mapping.
+当 Figma 库和代码组件需要正式映射时，添加同步规则。

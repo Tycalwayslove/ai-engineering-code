@@ -1,17 +1,17 @@
-# Workflows
+# 工作流
 
-## Purpose
+## 目的
 
-This directory describes repeatable AI factory workflows for planning, execution, review, and release coordination.
+该目录描述用于计划、执行、评审和发布协调的可重复 AI 工厂工作流。
 
-## Source Of Truth
+## 单一事实来源
 
-Registries describe future workflow declarations, states describe workflow progress models, and templates describe reusable workflow documents.
+注册表描述未来工作流声明，状态描述工作流进度模型，模板描述可复用工作流文档。
 
-## Boundaries
+## 边界
 
-Workflow documents are not executable registries in Phase 1. Runtime systems must not auto-discover workflows from this tree.
+第一阶段中，工作流记录不是可执行注册表。运行时系统不得从该目录树自动发现工作流。
 
-## Evolution
+## 演进
 
-Promote a workflow toward automation only after its owner, trigger, states, memory domains, and failure handling are explicit.
+只有所有者、触发器、状态、记忆领域和失败处理都明确后，才推动工作流自动化。

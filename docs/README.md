@@ -1,21 +1,21 @@
-# Documentation
+# 文档
 
-## Purpose
+## 目的
 
-- Keep repository governance, architecture, conventions, and onboarding material in one place.
-- Separate stable decisions from task plans and temporary implementation notes.
-- Give future agents and maintainers a small map before they modify the monorepo.
+- 将仓库治理、架构、约定和上手材料集中在一个位置。
+- 将稳定决策与任务计划、临时实施笔记分开。
+- 在未来 agent 和维护者修改 monorepo 前，先提供一个小地图。
 
-## Rules
+## 规则
 
-- Put architecture summaries in `docs/architecture/`.
-- Put accepted architectural decisions in `docs/adr/`.
-- Put repository-wide working rules in `docs/conventions/`.
-- Put setup and first-run instructions in `docs/onboarding/`.
-- Do not duplicate contract, prompt, workflow, or memory content here; link to the authoritative source.
+- 架构摘要放在 `docs/architecture/`。
+- 已接受的架构决策放在 `docs/adr/`。
+- 仓库级工作规则放在 `docs/conventions/`。
+- 设置和首次运行说明放在 `docs/onboarding/`。
+- 不要在这里重复契约、提示词、工作流或记忆内容；应链接到权威来源。
 
-## Evolution
+## 演进
 
-- Update this index when a new documentation area is created.
-- Prefer short documents with clear ownership over broad catch-all guides.
-- Move repeated setup or governance explanations into conventions when they become stable.
+- 创建新文档区域时更新此索引。
+- 优先使用所有权清晰的短记录，而不是宽泛的大而全指南。
+- 重复出现的设置或治理说明稳定后，移入约定文档。

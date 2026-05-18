@@ -1,22 +1,22 @@
-# Evolution
+# 演进
 
-## Purpose
+## 目的
 
-- Define when the repository may grow new runtimes, abstractions, indexing, or enforcement.
-- Keep early implementation direct until repeated pressure proves a need.
-- Make architecture changes deliberate and reviewable.
+- 定义仓库何时可以增长新的运行时、抽象、索引或强制执行机制。
+- 在重复压力证明必要之前，保持早期实现直接明确。
+- 让架构变化保持有意图、可评审。
 
-## Rules
+## 规则
 
-- Extract services only after operational pressure and mature contracts exist.
-- Add abstractions only after repeated implementation patterns stabilize.
-- Turn workflows into runtimes only after real execution, state, replay, or review needs exist.
-- Index memory only after Markdown file retrieval becomes insufficient.
-- Enforce contracts only after manual contracts create drift or integration risk.
-- Record major architectural shifts with an ADR.
+- 只有运营压力和成熟契约同时存在后，才拆分服务。
+- 只有重复实现模式稳定后，才添加抽象。
+- 只有真实执行、状态、重放或评审需求存在后，才将工作流变成运行时。
+- 只有 Markdown 文件检索不足时，才索引记忆。
+- 只有手工契约造成漂移或集成风险后，才强制执行契约。
+- 用 ADR 记录重大架构变化。
 
-## Evolution
+## 演进
 
-- Recheck this document before adding infrastructure that changes how code is built, run, or reviewed.
-- Tighten rules when the repository shows repeated drift.
-- Move stable exceptions into ADRs instead of leaving them as tribal knowledge.
+- 添加会改变构建、运行或评审方式的基础设施前，重新检查本文档。
+- 仓库反复出现漂移时，收紧规则。
+- 将稳定例外写入 ADR，而不是留作口口相传的隐性知识。

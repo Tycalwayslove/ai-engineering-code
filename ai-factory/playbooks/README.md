@@ -1,17 +1,17 @@
-# Playbooks
+# 作战手册
 
-## Purpose
+## 目的
 
-This directory stores repeatable human-readable procedures for common AI factory work.
+该目录存放常见 AI 工厂工作的可重复、人类可读流程。
 
-## Source Of Truth
+## 单一事实来源
 
-Each playbook owns the recommended steps, checks, and handoffs for its work type.
+每个作战手册拥有其工作类型的推荐步骤、检查和交接。
 
-## Boundaries
+## 边界
 
-Playbooks guide execution but do not replace project plans, specs, tests, or review requirements.
+作战手册指导执行，但不替代项目计划、规格、测试或评审要求。
 
-## Evolution
+## 演进
 
-Update playbooks after retrospectives reveal recurring friction or better practices.
+当复盘揭示重复摩擦或更好实践后，更新作战手册。

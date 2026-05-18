@@ -1,17 +1,17 @@
-# Design Tokens
+# 设计令牌
 
-## Purpose
+## 目的
 
-This directory documents future design tokens such as color, type, spacing, and motion.
+该目录记录未来设计令牌，例如颜色、字体、间距和动效。
 
-## Source Of Truth
+## 单一事实来源
 
-Token notes own the intended meaning and usage of shared design values.
+令牌说明拥有共享设计值的预期含义和用法。
 
-## Boundaries
+## 边界
 
-Do not treat Markdown token notes as runtime token definitions without an explicit build process.
+没有显式构建流程时，不要把 Markdown 令牌说明当作运行时令牌定义。
 
-## Evolution
+## 演进
 
-Introduce machine-readable tokens only after naming, ownership, and synchronization rules are defined.
+只有定义命名、所有权和同步规则后，才引入机器可读令牌。

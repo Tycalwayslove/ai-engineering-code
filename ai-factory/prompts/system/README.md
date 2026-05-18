@@ -1,17 +1,17 @@
-# System Prompts
+# 系统提示词
 
-## Purpose
+## 目的
 
-This directory stores future system-level prompt guidance for AI factory behavior.
+该目录存放未来用于 AI 工厂行为的系统级提示词指南。
 
-## Source Of Truth
+## 单一事实来源
 
-System prompts own broad operating constraints that apply across roles or workflows.
+系统提示词拥有跨角色或工作流适用的广泛运行约束。
 
-## Boundaries
+## 边界
 
-Do not place task-specific instructions here. Keep narrow guidance in task or workflow prompts.
+不要把任务专属指令放在这里。狭窄指南应放在任务或工作流提示词中。
 
-## Evolution
+## 演进
 
-Add system prompts only when the guidance is stable, reviewed, and broadly applicable.
+只有指南稳定、经过评审且广泛适用时，才添加系统提示词。

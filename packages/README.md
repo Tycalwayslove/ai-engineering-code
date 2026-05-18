@@ -1,23 +1,23 @@
 # Packages
 
-## Purpose
+## 目的
 
-- Holds shared TypeScript packages for apps and service clients.
-- Keeps reusable contracts, UI primitives, SDK code, and configuration helpers outside app ownership.
+- 存放应用和服务客户端共享的 TypeScript 包。
+- 将可复用契约、UI 基础组件、SDK 代码和配置辅助能力放在应用所有权之外。
 
-## Ownership
+## 所有权
 
-- Platform maintainers own package boundaries, exports, and dependency policy.
-- App teams may propose additions when two or more consumers need the same capability.
+- 平台维护者拥有包边界、导出和依赖策略。
+- 当两个或更多消费者需要同一能力时，应用团队可以提议新增内容。
 
-## Dependency Boundaries
+## 依赖边界
 
-- Packages may depend on lower-level shared packages.
-- Packages must not depend on apps, Python runtimes, service internals, or AI factory runtime files.
-- Keep cross-runtime contracts in `contracts/`; mirror only TypeScript convenience types here.
+- 包可以依赖更低层共享包。
+- 包不得依赖应用、Python 运行时、服务内部实现或 AI 工厂运行时文件。
+- 跨运行时契约保留在 `contracts/`；这里只镜像 TypeScript 便利类型。
 
-## Evolution Path
+## 演进路径
 
-- Start with small explicit exports.
-- Add modules after repeated usage appears in apps or SDK consumers.
-- Split packages only when ownership, release cadence, or dependency pressure makes the current package unclear.
+- 从小而明确的导出开始。
+- 当应用或 SDK 消费者出现重复使用后，才添加模块。
+- 只有当所有权、发布节奏或依赖压力让当前包变得不清晰时，才拆分包。

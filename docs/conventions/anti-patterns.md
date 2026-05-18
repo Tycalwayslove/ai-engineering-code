@@ -1,26 +1,26 @@
-# Anti-Patterns
+# 反模式
 
-## Purpose
+## 目的
 
-- Name decisions that are prohibited during the bootstrap phase.
-- Keep the monorepo simple until real pressure justifies infrastructure.
-- Give reviewers concrete reasons to reject complexity early.
+- 命名启动阶段禁止的决策。
+- 在真实压力证明基础设施合理之前，保持 monorepo 简单。
+- 给评审者提供早期拒绝复杂度的具体理由。
 
-## Rules
+## 规则
 
-- Prohibit premature microservices.
-- Prohibit hidden runtime discovery.
-- Prohibit prompt duplication.
-- Prohibit context duplication.
-- Prohibit magical abstractions.
-- Prohibit frontend business orchestration.
-- Prohibit direct memory access from random modules.
-- Prohibit dynamic auto-loading of agents, workflows, prompts, tools, or memory.
-- Prohibit LangGraph integration before the first real workflow.
-- Prohibit vector infrastructure before memory retrieval pressure exists.
+- 禁止过早微服务化。
+- 禁止隐藏式运行时发现。
+- 禁止提示词重复。
+- 禁止上下文重复。
+- 禁止魔法式抽象。
+- 禁止前端承载业务编排。
+- 禁止任意模块直接访问记忆。
+- 禁止动态自动加载 agent、工作流、提示词、工具或记忆。
+- 禁止在第一个真实工作流之前集成 LangGraph。
+- 禁止在出现记忆检索压力之前引入向量基础设施。
 
-## Evolution
+## 演进
 
-- Remove an anti-pattern only with an ADR that explains the pressure that changed.
-- Add new anti-patterns when repeated review comments identify avoidable drift.
-- Keep each prohibited pattern tied to a concrete repository risk.
+- 只有通过 ADR 说明压力变化后，才能移除反模式。
+- 当重复评审意见识别出可避免漂移时，添加新的反模式。
+- 每个禁止模式都必须绑定到具体仓库风险。

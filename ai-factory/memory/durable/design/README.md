@@ -1,17 +1,17 @@
-# Design Memory
+# 设计记忆
 
-## Purpose
+## 目的
 
-This directory preserves stable UX, interaction, and visual design rationale.
+该目录保留稳定 UX、交互和视觉设计理由。
 
-## Source Of Truth
+## 单一事实来源
 
-Design memory owns accepted design principles and product experience constraints.
+设计记忆拥有已接受的设计原则和产品体验约束。
 
-## Boundaries
+## 边界
 
-Component implementation details belong in the design system. Temporary explorations belong in working memory.
+组件实现细节属于设计系统，临时探索属于工作记忆。
 
-## Evolution
+## 演进
 
-Promote design rationale here after review confirms it should guide future work.
+评审确认某设计理由应指导未来工作后，将其提升到这里。

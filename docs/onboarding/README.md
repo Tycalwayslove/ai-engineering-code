@@ -1,21 +1,21 @@
-# Onboarding
+# 上手指南
 
-## Purpose
+## 目的
 
-- Help new maintainers and agents find the documents that govern repository changes.
-- Keep setup instructions separate from architectural decisions.
-- Point first-time contributors toward the source-of-truth map before implementation.
+- 帮助新的维护者和 agent 找到治理仓库变更的记录。
+- 将设置说明与架构决策分开。
+- 让首次贡献者在实施前先查看单一事实来源地图。
 
-## Rules
+## 规则
 
-- Read the root `README.md` before adding top-level areas.
-- Read `docs/conventions/source-of-truth.md` before creating or moving contracts, prompts, memory, workflows, packages, or services.
-- Read `docs/conventions/anti-patterns.md` before adding infrastructure or orchestration.
-- Read `docs/adr/` before changing architecture or service boundaries.
-- Use `local-development.md` for local setup commands once runtime foundations exist.
+- 添加顶层区域前先阅读根 `README.md`。
+- 创建或移动契约、提示词、记忆、工作流、包或服务前，先阅读 `docs/conventions/source-of-truth.md`。
+- 添加基础设施或编排前，先阅读 `docs/conventions/anti-patterns.md`。
+- 改变架构或服务边界前，先阅读 `docs/adr/`。
+- 运行时基础存在后，使用 `local-development.md` 记录本地设置命令。
 
-## Evolution
+## 演进
 
-- Add onboarding steps only when they are required to make the repository run or stay governable.
-- Remove stale setup commands when tooling changes.
-- Link to task-specific guides instead of duplicating them here.
+- 只有当步骤对仓库运行或保持可治理是必要的，才添加上手步骤。
+- 工具变化时移除过期设置命令。
+- 链接到任务专属指南，而不是在这里重复。

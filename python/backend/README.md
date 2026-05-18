@@ -1,24 +1,24 @@
-# Backend API Gateway
+# 后端 API 网关
 
-## Purpose
+## 目的
 
-- Hosts the Python FastAPI gateway for AI Code.
-- Exposes health and version endpoints used by local development, CI, and service contracts.
+- 承载 AI Code 的 Python FastAPI 网关。
+- 暴露本地开发、CI 和服务契约使用的健康检查与版本端点。
 
-## Ownership
+## 所有权
 
-- `backend.app.main` owns application assembly.
-- `backend.app.routes` owns HTTP route modules.
-- Tests under `python/backend/tests` verify gateway behavior.
+- `backend.app.main` 拥有应用组装。
+- `backend.app.routes` 拥有 HTTP 路由模块。
+- `python/backend/tests` 下的测试验证网关行为。
 
-## Dependency Boundaries
+## 依赖边界
 
-- Route modules return explicit response dictionaries and avoid hidden runtime discovery.
-- Business orchestration stays out of the gateway until contracts and ownership boundaries are mature.
-- Shared behavior should move to a named Python package only when multiple modules need it.
+- 路由模块返回显式响应字典，并避免隐藏式运行时发现。
+- 在契约和所有权边界成熟之前，业务编排不进入网关。
+- 只有多个模块需要时，共享行为才移动到具名 Python 包。
 
-## Evolution Path
+## 演进路径
 
-- Add routers alongside matching OpenAPI contract changes.
-- Introduce service clients only after stable contract boundaries exist.
-- Keep the gateway thin; extract domain services only after operational pressure appears.
+- 随匹配的 OpenAPI 契约变更一起添加路由。
+- 只有稳定契约边界存在后，才引入服务客户端。
+- 保持网关很薄；只有出现运营压力后才抽取领域服务。

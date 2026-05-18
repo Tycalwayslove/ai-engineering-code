@@ -1,17 +1,17 @@
-# Active Context Memory
+# 活动上下文记忆
 
-## Purpose
+## 目的
 
-This directory stores temporary active context needed to resume current work.
+该目录存放恢复当前工作所需的临时活动上下文。
 
-## Source Of Truth
+## 单一事实来源
 
-Active context memory owns the near-term state that would otherwise live only in conversation.
+活动上下文记忆拥有原本只会存在于对话中的近期状态。
 
-## Boundaries
+## 边界
 
-Do not store secrets, credentials, or broad workspace dumps here.
+不要在这里存放密钥、凭据或大范围工作区转储。
 
-## Evolution
+## 演进
 
-Prune stale context aggressively and promote only durable facts to durable memory.
+主动清理过期上下文，只将持久事实提升到持久记忆。

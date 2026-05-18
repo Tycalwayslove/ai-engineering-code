@@ -1,17 +1,17 @@
-# OpenAPI Contracts
+# OpenAPI 契约
 
-## Ownership
-- API gateway owners maintain these contracts with input from backend and client consumers.
-- Each operation must have a stable `operationId`.
+## 所有权
+- API 网关所有者维护这些契约，并吸收后端和客户端消费者输入。
+- 每个 operation 必须有稳定的 `operationId`。
 
-## Source Of Truth
-- `api-gateway.yaml` is the source of truth for public HTTP API shape.
-- Generated clients and server stubs must derive from this file.
+## 单一事实来源
+- `api-gateway.yaml` 是公共 HTTP API 形态的单一事实来源。
+- 生成客户端和服务器 stub 必须来自该文件。
 
-## Dependency Boundaries
-- OpenAPI files describe transport shape only.
-- They must not encode framework routing details, database models, or frontend view concerns.
+## 依赖边界
+- OpenAPI 文件只描述传输形态。
+- 它们不得编码框架路由细节、数据库模型或前端视图关注点。
 
-## Evolution
-- Add endpoints and response fields only when at least one consumer needs them.
-- Version or migrate contracts before removing fields, changing response types, or renaming operation IDs.
+## 演进
+- 只有至少一个消费者需要时，才添加端点和响应字段。
+- 删除字段、改变响应类型或重命名 operation ID 前，必须先版本化或迁移契约。

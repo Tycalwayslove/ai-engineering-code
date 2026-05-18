@@ -1,17 +1,17 @@
-# Release Playbook
+# 发布作战手册
 
-## Purpose
+## 目的
 
-This directory documents the repeatable path for preparing and validating releases.
+该目录记录准备和验证发布的可重复路径。
 
-## Source Of Truth
+## 单一事实来源
 
-The release playbook owns expected readiness checks, communication points, and rollback considerations.
+发布作战手册拥有预期的就绪检查、沟通点和回滚考虑。
 
-## Boundaries
+## 边界
 
-Do not treat release notes as proof of release safety. Verification evidence remains required.
+不要把发布说明当作发布安全证明。仍然需要验证证据。
 
-## Evolution
+## 演进
 
-Update release guidance after post-release findings or process changes.
+发布后发现问题或流程变化后，更新发布指南。

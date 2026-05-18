@@ -1,17 +1,17 @@
-# Design Components
+# 设计组件
 
-## Purpose
+## 目的
 
-This directory documents reusable UI component intent, anatomy, and behavior.
+该目录记录可复用 UI 组件意图、结构和行为。
 
-## Source Of Truth
+## 单一事实来源
 
-Component notes own design rationale and usage guidance that complements source components.
+组件说明拥有补充源组件的设计理由和使用指南。
 
-## Boundaries
+## 边界
 
-Do not duplicate full implementation details here. Source code remains authoritative for shipped behavior.
+不要在这里复制完整实现细节。已发布行为仍以源代码为准。
 
-## Evolution
+## 演进
 
-Add component guidance when a pattern is reused enough to need shared expectations.
+当某个模式被复用到需要共享预期时，添加组件指南。

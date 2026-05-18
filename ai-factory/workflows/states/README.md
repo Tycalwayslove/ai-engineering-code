@@ -1,17 +1,17 @@
-# Workflow States
+# 工作流状态
 
-## Purpose
+## 目的
 
-This directory records state models for future workflow progress, checkpoints, and handoffs.
+该目录记录未来工作流进度、检查点和交接的状态模型。
 
-## Source Of Truth
+## 单一事实来源
 
-State documents own the allowed labels, transitions, and completion criteria for workflow execution.
+状态记录拥有工作流执行允许的标签、转换和完成标准。
 
-## Boundaries
+## 边界
 
-Do not use these notes as live state storage. Active execution context belongs in working memory or task systems.
+不要将这些说明作为实时状态存储。活动执行上下文应放在工作记忆或任务系统中。
 
-## Evolution
+## 演进
 
-Add state schemas only when repeated workflow runs need consistent tracking across humans and tools.
+只有重复工作流运行需要在人与工具之间一致跟踪时，才添加状态 schema。

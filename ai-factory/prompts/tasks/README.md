@@ -1,17 +1,17 @@
-# Task Prompts
+# 任务提示词
 
-## Purpose
+## 目的
 
-This directory stores future prompts for bounded implementation, review, and documentation tasks.
+该目录存放未来用于有界实施、评审和文档任务的提示词。
 
-## Source Of Truth
+## 单一事实来源
 
-Task prompts own reusable instructions for narrow work units and expected outputs.
+任务提示词拥有狭窄工作单元和预期输出的可复用指令。
 
-## Boundaries
+## 边界
 
-Do not store active task status here. Use working memory or the project tracker for live state.
+不要在这里存储活动任务状态。实时状态使用工作记忆或项目跟踪器。
 
-## Evolution
+## 演进
 
-Promote repeated task prompts into workflow prompts when they become part of a larger process.
+当重复任务提示词成为更大流程的一部分时，将其提升为工作流提示词。

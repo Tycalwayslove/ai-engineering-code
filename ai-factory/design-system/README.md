@@ -1,17 +1,17 @@
-# Design System
+# 设计系统
 
-## Purpose
+## 目的
 
-This directory stores AI factory design system guidance for product UI consistency.
+该目录存放用于产品 UI 一致性的 AI 工厂设计系统指南。
 
-## Source Of Truth
+## 单一事实来源
 
-Tokens, components, patterns, Figma notes, and prompts own their respective design system knowledge.
+令牌、组件、模式、Figma 说明和提示词分别拥有各自的设计系统知识。
 
-## Boundaries
+## 边界
 
-This Markdown area documents design guidance. It does not replace source UI components or generated design assets.
+该 Markdown 区域记录设计指南，不替代源 UI 组件或生成的设计资产。
 
-## Evolution
+## 演进
 
-Add structure as design decisions become reusable across screens, platforms, or tools.
+当设计决策可跨屏幕、平台或工具复用时，再添加结构。

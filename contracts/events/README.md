@@ -1,17 +1,17 @@
-# Event Contracts
+# 事件契约
 
-## Ownership
-- Event producers own event shape proposals and consumers review changes that affect processing.
-- Shared event naming and envelope rules belong here before any runtime-specific bus exists.
+## 所有权
+- 事件生产者拥有事件形态提案，消费者评审会影响处理逻辑的变更。
+- 在任何运行时专属总线出现之前，共享事件命名和信封规则归这里所有。
 
-## Source Of Truth
-- This directory is the source of truth for cross-runtime event contracts.
-- Runtime publishers and subscribers must reference these contracts instead of local copies.
+## 单一事实来源
+- 该目录是跨运行时事件契约的单一事实来源。
+- 运行时发布者和订阅者必须引用这些契约，而不是维护本地副本。
 
-## Dependency Boundaries
-- Event contracts describe payloads and delivery assumptions only.
-- They must not depend on queue providers, retry libraries, or service implementation details.
+## 依赖边界
+- 事件契约只描述载荷和投递假设。
+- 它们不得依赖队列提供商、重试库或服务实现细节。
 
-## Evolution
-- Start with documented envelopes before adding schema files.
-- Add schema validation when event drift or integration risk appears.
+## 演进
+- 添加 schema 文件前，先从已记录的信封格式开始。
+- 当事件漂移或集成风险出现时，添加 schema 校验。

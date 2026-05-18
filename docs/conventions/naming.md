@@ -1,23 +1,23 @@
-# Naming
+# 命名
 
-## Purpose
+## 目的
 
-- Keep repository names predictable across TypeScript, Python, services, contracts, and AI factory assets.
-- Make ownership clear from paths and package names.
-- Avoid names that imply runtime maturity before it exists.
+- 保持 TypeScript、Python、服务边界、契约和 AI 工厂资产中的仓库命名可预测。
+- 通过路径和包名明确所有权。
+- 避免使用暗示运行时成熟度的名称，除非对应能力已经存在。
 
-## Rules
+## 规则
 
-- Use kebab-case for directories.
-- Use scoped TypeScript package names under `@ai-code/*`.
-- Use Python package names with underscores.
-- Use `-service` suffixes only when the name describes a domain boundary.
-- Do not use `-service` for generic utilities, SDKs, UI packages, or infrastructure folders.
-- Name contracts by the boundary they govern.
-- Name prompts, workflows, and memory documents by their domain and task.
+- 目录使用 kebab-case。
+- TypeScript 包名使用 `@ai-code/*` 作用域。
+- Python 包名使用下划线。
+- 只有当名称描述领域边界时，才使用 `-service` 后缀。
+- 不要给通用工具、SDK、UI 包或基础设施目录使用 `-service`。
+- 契约按其治理的边界命名。
+- 按领域和任务命名提示词、工作流和记忆记录。
 
-## Evolution
+## 演进
 
-- Rename early when a name misstates ownership or runtime status.
-- Prefer specific domain names over generic platform names.
-- Record large naming changes in an ADR when they affect multiple areas.
+- 当名称误导所有权或运行时状态时，尽早重命名。
+- 优先使用具体领域名称，而不是泛化平台名称。
+- 当大型命名变更影响多个区域时，用 ADR 记录。

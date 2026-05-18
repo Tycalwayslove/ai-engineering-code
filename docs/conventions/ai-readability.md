@@ -1,23 +1,23 @@
-# AI Readability
+# AI 可读性
 
-## Purpose
+## 目的
 
-- Make repository code and artifacts easy for humans and AI agents to inspect, modify, and verify.
-- Reduce hidden behavior that forces broad searches before safe edits.
-- Keep ownership and execution flow visible from names and file locations.
+- 让仓库代码和产物易于人类与 AI agent 检查、修改和验证。
+- 减少隐藏行为，避免安全编辑前必须大范围搜索。
+- 让所有权和执行流能从名称与文件位置中看见。
 
-## Rules
+## 规则
 
-- Use explicit naming for files, modules, functions, workflows, prompts, and memory documents.
-- Keep call chains shallow; avoid routing simple behavior through several helper layers.
-- Preserve predictable ownership; put behavior near the package, service boundary, or AI factory area that owns it.
-- Keep hidden behavior low; avoid implicit side effects in imports, decorators, registries, and module initialization.
-- Keep indirection low; introduce wrappers only when they remove repeated, stable complexity.
-- Prefer direct imports from known modules over runtime discovery.
-- Name orchestration code by the business process it coordinates.
+- 文件、模块、函数、工作流、提示词和记忆文档使用显式命名。
+- 保持调用链浅；避免让简单行为穿过多层 helper。
+- 保持可预测所有权；将行为放在拥有它的包、服务边界或 AI 工厂区域附近。
+- 降低隐藏行为；避免在导入、装饰器、注册表和模块初始化中产生隐式副作用。
+- 降低间接层；只有包装器能移除重复且稳定的复杂度时才引入。
+- 优先从已知模块直接导入，而不是运行时发现。
+- 编排代码按其协调的业务流程命名。
 
-## Evolution
+## 演进
 
-- Add indirection only after repeated implementation patterns stabilize.
-- Split files when ownership or scanability becomes unclear.
-- Remove clever helpers when they hide behavior that reviewers need to verify.
+- 只有重复实现模式稳定后，才添加间接层。
+- 当所有权或可扫描性不清晰时拆分文件。
+- 当聪明的 helper 隐藏了评审者需要验证的行为时，移除它。

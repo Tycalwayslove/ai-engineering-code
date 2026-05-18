@@ -1,21 +1,21 @@
-# Architecture
+# 架构
 
-## Purpose
+## 目的
 
-- Describe the shape of the monorepo and its intended runtime boundaries.
-- Explain how TypeScript, Python, contracts, and AI factory assets relate.
-- Provide context for ADRs without replacing them.
+- 描述 monorepo 的形态及预期运行时边界。
+- 说明 TypeScript、Python、契约和 AI 工厂资产之间的关系。
+- 为 ADR 提供上下文，但不替代 ADR。
 
-## Rules
+## 规则
 
-- Keep architecture documents descriptive and current.
-- Put final decisions with tradeoffs in `docs/adr/`.
-- Reference contracts instead of restating schemas.
-- Name ownership boundaries separately from deployable services.
-- Treat diagrams and overviews as documentation, not source of truth for executable contracts.
+- 保持架构记录具备描述性并及时更新。
+- 将包含权衡的最终决策放入 `docs/adr/`。
+- 引用契约，而不是重述 schema。
+- 将所有权边界与可部署服务分开命名。
+- 将图表和概览视为文档，而不是可执行契约的事实来源。
 
-## Evolution
+## 演进
 
-- Update architecture docs when repository boundaries move.
-- Add new architecture pages only when one page becomes too large to scan.
-- Record major architectural shifts with an ADR.
+- 仓库边界移动时更新架构文档。
+- 只有单页过大难以扫描时，才添加新的架构页面。
+- 用 ADR 记录重大架构变化。

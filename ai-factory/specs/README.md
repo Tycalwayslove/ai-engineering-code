@@ -1,17 +1,17 @@
-# Specs
+# 规格
 
-## Purpose
+## 目的
 
-This directory stores product and technical specs that guide AI-assisted implementation.
+该目录存放指导 AI 辅助实施的产品和技术规格。
 
-## Source Of Truth
+## 单一事实来源
 
-Active specs guide current work, archived specs preserve history, and templates standardize new specs.
+活动规格指导当前工作，归档规格保留历史，模板标准化新规格。
 
-## Boundaries
+## 边界
 
-Specs describe intent and acceptance criteria. Source code and contract files remain authoritative for implemented behavior.
+规格描述意图和验收标准。已实现行为仍以源代码和契约文件为准。
 
-## Evolution
+## 演进
 
-Refine templates when completed specs reveal recurring missing context or review questions.
+当已完成规格暴露出反复缺失的上下文或评审问题时，完善模板。

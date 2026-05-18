@@ -1,3 +1,3 @@
-# Composites
+# 组合组件
 
-Reserved for reusable UI assemblies built from primitives.
+预留给由基础组件组合而成的可复用 UI 组合。

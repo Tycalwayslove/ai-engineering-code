@@ -1,17 +1,17 @@
-# Workflow Prompts
+# 工作流提示词
 
-## Purpose
+## 目的
 
-This directory stores future prompts used to run or review workflow steps.
+该目录存放未来用于运行或评审工作流步骤的提示词。
 
-## Source Of Truth
+## 单一事实来源
 
-Workflow prompts own step-level instructions that support declared workflow templates.
+工作流提示词拥有支持已声明工作流模板的步骤级指令。
 
-## Boundaries
+## 边界
 
-Do not make workflow prompts the only place where workflow requirements are defined.
+不要让工作流提示词成为定义工作流需求的唯一位置。
 
-## Evolution
+## 演进
 
-Split prompts by workflow phase when one prompt starts mixing planning, execution, and review.
+当一个提示词开始混合计划、执行和评审时，按工作流阶段拆分。

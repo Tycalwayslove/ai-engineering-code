@@ -1,25 +1,25 @@
-# Services
+# 服务边界
 
-## Purpose
+## 目的
 
-This directory defines service ownership boundaries for the AI-native software factory.
+该目录定义 AI 原生软件工厂的服务所有权边界。
 
-## Rules
+## 规则
 
-- Service directories are boundary definitions only during Phase 1.
-- Runtime implementation stays in the centralized Python backend unless extraction triggers are met.
-- Cross-runtime agreements live in `contracts/`.
-- Do not add Docker, dependency, deployment, worker, queue, or server files here during Phase 1.
+- 第一阶段中，服务目录仅是边界定义。
+- 除非满足拆分触发条件，运行时实现保留在集中式 Python 后端。
+- 跨运行时协议位于 `contracts/`。
+- 第一阶段中不要在这里添加 Docker、依赖、部署、worker、队列或服务器文件。
 
-## Boundaries
+## 边界
 
-- `api-gateway`: public backend entrypoint and HTTP API contract boundary.
-- `conversation-service`: conversation and session domain boundary.
-- `memory-service`: durable and working memory access boundary.
-- `profile-service`: user, profile, and context boundary.
+- `api-gateway`：公共后端入口和 HTTP API 契约边界。
+- `conversation-service`：会话和会话状态领域边界。
+- `memory-service`：持久记忆和工作记忆访问边界。
+- `profile-service`：用户、画像和上下文边界。
 
-## Extraction
+## 拆分
 
-- Extract a boundary only after operational pressure and mature contracts exist.
-- Prefer explicit ownership documentation before runtime separation.
-- Record major boundary changes with an ADR.
+- 只有在运营压力和成熟契约同时存在后，才拆分边界。
+- 在运行时拆分之前，优先补齐显式所有权文档。
+- 用 ADR 记录重大边界变化。

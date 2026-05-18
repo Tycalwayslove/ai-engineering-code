@@ -1,34 +1,34 @@
 # conversation-service
 
-## Purpose
+## 目的
 
-This boundary defines the conversation and session domain.
+该边界定义会话和会话状态领域。
 
-## Responsibilities
+## 职责
 
-- Own conversation lifecycle, session state, and message-thread semantics.
-- Define conversation-facing domain contracts used by the centralized Python backend during Phase 1.
-- Coordinate with `api-gateway` for public HTTP exposure without becoming a separate runtime.
+- 拥有会话生命周期、会话状态和消息线程语义。
+- 定义第一阶段中集中式 Python 后端使用的会话侧领域契约。
+- 与 `api-gateway` 协调公共 HTTP 暴露，但不成为独立运行时。
 
-## Non-Responsibilities
+## 非职责
 
-- Does not own a separate runtime in Phase 1.
-- Does not own public HTTP API shape.
-- Does not own durable memory storage, profile records, or duplicated deployment configuration.
+- 第一阶段中不拥有独立运行时。
+- 不拥有公共 HTTP API 形态。
+- 不拥有持久记忆存储、画像记录或重复部署配置。
 
-## Contracts
+## 契约
 
-- Owns: conversation and session domain contracts when they are added under `contracts/`.
+- 拥有：未来添加到 `contracts/` 下的会话和会话状态领域契约。
 
-## Extraction Triggers
+## 拆分触发条件
 
-- Independent scaling pressure.
-- Separate deployment cadence.
-- Mature API contract and operational need.
+- 出现独立扩缩容压力。
+- 需要独立部署节奏。
+- API 契约成熟且存在真实运营需求。
 
-## Non-Triggers
+## 非触发条件
 
-- Naming preference.
-- Speculative scale.
-- Organizational neatness.
-- Desire for symmetric folder structures.
+- 命名偏好。
+- 推测性规模。
+- 组织结构洁癖。
+- 追求对称目录结构。

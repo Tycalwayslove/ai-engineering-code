@@ -1,14 +1,14 @@
-# Workflow Registries
+# 工作流注册表
 
-## Purpose
+## 目的
 
-This directory will document named workflow declarations when executable workflows are introduced.
+该目录将在引入可执行工作流时记录具名工作流声明。
 
-## Source Of Truth
+## 单一事实来源
 
-Phase 1 has no executable workflow registry.
+第一阶段不包含可执行工作流注册表。
 
-Future workflows must declare:
+未来工作流必须声明：
 
 - id
 - owner
@@ -18,10 +18,10 @@ Future workflows must declare:
 - states
 - memory domains
 
-## Boundaries
+## 边界
 
-Workflows must not be auto-discovered. Runtime code must load named workflows through explicit configuration.
+工作流不得被自动发现。运行时代码必须通过显式配置加载具名工作流。
 
-## Evolution
+## 演进
 
-Add registry structure only when workflow ownership, review expectations, and runtime loading rules are defined.
+只有工作流所有权、评审预期和运行时加载规则都定义清楚后，才添加注册表结构。

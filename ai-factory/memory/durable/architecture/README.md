@@ -1,17 +1,17 @@
-# Architecture Memory
+# 架构记忆
 
-## Purpose
+## 目的
 
-This directory preserves stable architecture knowledge, system boundaries, and structural tradeoffs.
+该目录保留稳定架构知识、系统边界和结构权衡。
 
-## Source Of Truth
+## 单一事实来源
 
-Architecture memory owns long-lived technical context that should outlast an individual task or branch.
+架构记忆拥有应超越单个任务或分支生命周期的长期技术上下文。
 
-## Boundaries
+## 边界
 
-Do not store transient implementation notes here. Active experiments belong in working memory until accepted.
+不要在这里存放临时实现笔记。活动实验在被接受前属于工作记忆。
 
-## Evolution
+## 演进
 
-Promote new architecture facts here after they are validated by code, docs, or accepted decisions.
+新的架构事实经代码、文档或已接受决策验证后，再提升到这里。

@@ -1,19 +1,19 @@
 # Android
 
-## Purpose
+## 目的
 
-This directory reserves ownership for a future native Android surface.
+该目录为未来 Android 原生界面保留所有权。
 
-## Ownership
+## 所有权
 
-No native app is scaffolded in Phase 1. The directory exists only to document the intended boundary.
+第一阶段不搭建原生应用。该目录仅用于记录预期边界。
 
-## Dependency Boundaries
+## 依赖边界
 
-- Do not add native runtime code until there is a real product requirement.
-- Future native code must use explicit shared contracts or SDKs.
-- Native code must not read `services/*` or `ai-factory/*` directly.
+- 在出现真实产品需求之前，不添加原生运行时代码。
+- 未来原生代码必须使用显式共享契约或 SDK。
+- 原生代码不得直接读取 `services/*` 或 `ai-factory/*`。
 
-## Evolution
+## 演进
 
-Create the native project only after the H5 and admin surfaces expose a clear workflow that requires native capabilities.
+只有当 H5 和管理界面暴露出需要原生能力的清晰工作流后，才创建原生项目。

@@ -1,17 +1,17 @@
-# Evaluation Prompts
+# 评估提示词
 
-## Purpose
+## 目的
 
-This directory stores future prompts for checking quality, safety, correctness, and completeness.
+该目录存放未来用于检查质量、安全性、正确性和完整性的提示词。
 
-## Source Of Truth
+## 单一事实来源
 
-Evaluation prompts own review criteria and expected evidence for AI factory outputs.
+评估提示词拥有 AI 工厂输出的评审标准和预期证据。
 
-## Boundaries
+## 边界
 
-Prompt-based evaluation must not replace tests, type checks, or human approval where those are required.
+基于提示词的评估不得替代必需的测试、类型检查或人工批准。
 
-## Evolution
+## 演进
 
-Add evaluation prompts after the artifact being evaluated has clear acceptance criteria.
+当被评估产物具备清晰验收标准后，添加评估提示词。

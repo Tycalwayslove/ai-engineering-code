@@ -1,17 +1,17 @@
-# Retrospective Memory
+# 复盘记忆
 
-## Purpose
+## 目的
 
-This directory stores temporary retrospectives from AI factory work sessions.
+该目录存放 AI 工厂工作会话的临时复盘。
 
-## Source Of Truth
+## 单一事实来源
 
-Retrospective memory owns lessons, friction points, and follow-up ideas from completed iterations.
+复盘记忆拥有已完成迭代中的经验、摩擦点和后续想法。
 
-## Boundaries
+## 边界
 
-Do not use retrospectives as authoritative requirements or decisions without promotion.
+未经提升，不要把复盘当作权威需求或决策。
 
-## Evolution
+## 演进
 
-Turn repeated lessons into playbooks, workflow templates, or durable decisions.
+将重复经验转化为作战手册、工作流模板或持久决策。

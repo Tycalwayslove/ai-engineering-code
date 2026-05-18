@@ -1,32 +1,32 @@
 # ADR 0001: Polyglot AI-Native Monorepo
 
-## Status
+## 状态
 
-- Accepted
+- 已接受
 
-## Purpose
+## 目的
 
-- Establish one monorepo for TypeScript applications, Python services, shared contracts, and AI factory assets.
-- Keep early development coordinated while product, runtime, and AI workflows are still forming.
-- Avoid premature service extraction before contracts and operational needs mature.
+- 为 TypeScript 应用、Python 服务、共享契约和 AI 工厂资产建立一个 monorepo。
+- 在产品、运行时和 AI 工作流仍在形成时，保持早期开发协调。
+- 在契约和运营需求成熟前，避免过早服务拆分。
 
-## Rules
+## 规则
 
-- Use TypeScript for frontend apps and shared web-facing packages.
-- Use Python for backend APIs, agent runtime foundations, orchestration, and AI-adjacent services.
-- Use `contracts/` as the shared agreement layer between runtimes.
-- Use `ai-factory/` as the source for specs, prompts, workflows, memory, agents, playbooks, and design-system inputs.
-- Keep `services/*` as domain ownership boundaries during Phase 1.
-- Do not introduce independent deployment boundaries until contracts and operational pressure justify them.
+- 前端应用和面向 Web 的共享包使用 TypeScript。
+- 后端 API、agent 运行时基础、编排和 AI 相邻服务使用 Python。
+- 使用 `contracts/` 作为运行时之间的共享协议层。
+- 使用 `ai-factory/` 作为规格、提示词、工作流、记忆、agent、作战手册和设计系统输入的来源。
+- 第一阶段中保持 `services/*` 作为领域所有权边界。
+- 在契约和运营压力证明合理之前，不引入独立部署边界。
 
-## Consequences
+## 影响
 
-- Repository governance must be explicit because multiple runtimes share one workspace.
-- Cross-runtime changes must start from contracts instead of direct implementation coupling.
-- AI assets must have stable ownership so prompts, memory, and workflows do not drift.
+- 因为多个运行时共享一个工作区，仓库治理必须显式。
+- 跨运行时变更必须从契约开始，而不是直接耦合实现。
+- AI 资产必须有稳定所有权，避免提示词、记忆和工作流漂移。
 
-## Evolution
+## 演进
 
-- Revisit this decision when service boundaries need independent scaling, deployment, or ownership.
-- Record runtime extraction decisions in follow-up ADRs.
-- Keep the monorepo unless coordination cost exceeds the benefit of shared contracts and governance.
+- 当服务边界需要独立扩缩容、部署或所有权时，重新审视该决策。
+- 在后续 ADR 中记录运行时拆分决策。
+- 保持 monorepo，除非协调成本超过共享契约和治理带来的收益。

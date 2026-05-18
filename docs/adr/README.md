@@ -1,21 +1,21 @@
-# Architecture Decision Records
+# 架构决策记录
 
-## Purpose
+## 目的
 
-- Store decisions that change repository structure, runtime boundaries, or source-of-truth ownership.
-- Preserve context, tradeoffs, and consequences for future maintainers and agents.
-- Keep architectural decisions separate from implementation checklists.
+- 存放改变仓库结构、运行时边界或单一事实来源所有权的决策。
+- 为未来维护者和 agent 保留上下文、权衡和影响。
+- 将架构决策与实施清单分开。
 
-## Rules
+## 规则
 
-- Number ADRs with four digits and a short kebab-case title.
-- Use one ADR per major decision.
-- Mark superseded decisions instead of deleting them.
-- Link related contracts, conventions, and architecture pages when they exist.
-- Do not use ADRs for routine task notes or temporary experiments.
+- ADR 使用四位数字和简短 kebab-case 标题编号。
+- 每个重大决策使用一个 ADR。
+- 标记被取代的决策，而不是删除它们。
+- 相关契约、约定和架构页面存在时进行链接。
+- 不要用 ADR 记录日常任务笔记或临时实验。
 
-## Evolution
+## 演进
 
-- Add an ADR before a major architectural shift spreads across the repository.
-- Update an ADR only to clarify status, links, or consequences.
-- Create a new ADR when a decision materially changes.
+- 重大架构变化扩散到仓库前，先添加 ADR。
+- 只有为澄清状态、链接或影响时才更新 ADR。
+- 当决策发生实质变化时，创建新 ADR。

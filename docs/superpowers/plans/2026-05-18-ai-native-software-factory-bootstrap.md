@@ -1,87 +1,87 @@
-# AI-Native Software Factory Bootstrap Implementation Plan
+# AI 原生软件工厂启动实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给智能体工作者：** 必须使用子技能：`superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans`，按任务逐步执行本计划。步骤使用复选框（`- [ ]`）语法跟踪。
 
-**Goal:** Bootstrap a polyglot AI-native software factory monorepo with runnable TypeScript frontend foundations, a runnable Python/FastAPI backend foundation, explicit AI factory infrastructure, stable contracts, local Docker development, CI quality gates, and repository governance documentation.
+**目标：** 启动一个多语言 AI 原生软件工厂 monorepo，包含可运行的 TypeScript 前端基础、Python/FastAPI 后端基础、显式 AI 工厂基础设施、稳定契约、本地 Docker 开发、CI 质量门禁和仓库治理文档。
 
-**Architecture:** Use a thin polyglot skeleton: TypeScript/pnpm/Turborepo for frontend apps and shared packages, Python/FastAPI for backend and AI runtime foundations, `/contracts` for cross-runtime agreements, and `/ai-factory` for memory, prompts, workflows, playbooks, specs, and design-system infrastructure. Keep `services/*` as ownership boundaries only during Phase 1; do not create premature microservice runtimes.
+**架构：** 使用薄多语言骨架：TypeScript/pnpm/Turborepo 负责前端应用和共享包，Python/FastAPI 负责后端与 AI 运行时基础，`/contracts` 负责跨运行时协议，`/ai-factory` 负责记忆、提示词、工作流、作战手册、规格和设计系统基础设施。`services/*` 在第一阶段只作为所有权边界，不创建过早的微服务运行时。
 
-**Tech Stack:** pnpm, Turborepo, TypeScript, Next.js, React, FastAPI, Pydantic, Uvicorn, pytest, ruff, mypy, Docker Compose, GitHub Actions, Markdown, JSON Schema, OpenAPI.
+**技术栈：** pnpm, Turborepo, TypeScript, Next.js, React, FastAPI, Pydantic, Uvicorn, pytest, ruff, mypy, Docker Compose, GitHub Actions, Markdown, JSON Schema, OpenAPI.
 
 ---
 
-## File Map
+## 文件清单
 
-Create or modify these areas:
+创建或修改以下区域：
 
-- Root workspace: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, `.gitignore`, `.env.example`, `.python-version`, `pyproject.toml`, `docker-compose.yml`
-- Apps: `apps/README.md`, `apps/h5`, `apps/admin`, `apps/ios/README.md`, `apps/android/README.md`
-- Packages: `packages/shared-ui`, `packages/shared-types`, `packages/config`, `packages/sdk`
-- Python: `python/README.md`, `python/backend`, `python/agent-runtime`, `python/orchestrator`
-- Boundaries: `services/api-gateway`, `services/conversation-service`, `services/memory-service`, `services/profile-service`
-- Contracts: `contracts/openapi`, `contracts/events`, `contracts/memory`, `contracts/workflow`
-- AI factory: `ai-factory/agents`, `ai-factory/workflows`, `ai-factory/memory`, `ai-factory/specs`, `ai-factory/prompts`, `ai-factory/design-system`, `ai-factory/playbooks`
-- Infrastructure: `infra/docker`
-- Documentation: `docs/architecture`, `docs/adr`, `docs/conventions`, `docs/onboarding`
-- CI: `.github/workflows/ci.yml`
+- 根工作区： `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, `.gitignore`, `.env.example`, `.python-version`, `pyproject.toml`, `docker-compose.yml`
+- 应用： `apps/README.md`, `apps/h5`, `apps/admin`, `apps/ios/README.md`, `apps/android/README.md`
+- 包： `packages/shared-ui`, `packages/shared-types`, `packages/config`, `packages/sdk`
+- Python： `python/README.md`, `python/backend`, `python/agent-runtime`, `python/orchestrator`
+- 边界： `services/api-gateway`, `services/conversation-service`, `services/memory-service`, `services/profile-service`
+- 契约： `contracts/openapi`, `contracts/events`, `contracts/memory`, `contracts/workflow`
+- AI 工厂： `ai-factory/agents`, `ai-factory/workflows`, `ai-factory/memory`, `ai-factory/specs`, `ai-factory/prompts`, `ai-factory/design-system`, `ai-factory/playbooks`
+- 基础设施： `infra/docker`
+- 文档： `docs/architecture`, `docs/adr`, `docs/conventions`, `docs/onboarding`
+- CI： `.github/workflows/ci.yml`
 
-## Task 1: Repository Governance Documentation
+## 任务 1：仓库治理文档
 
-**Files:**
-- Create: `README.md`
-- Create: `docs/README.md`
-- Create: `docs/architecture/README.md`
-- Create: `docs/architecture/overview.md`
-- Create: `docs/adr/README.md`
-- Create: `docs/adr/0001-polyglot-ai-native-monorepo.md`
-- Create: `docs/conventions/README.md`
-- Create: `docs/conventions/ai-readability.md`
-- Create: `docs/conventions/naming.md`
-- Create: `docs/conventions/source-of-truth.md`
-- Create: `docs/conventions/anti-patterns.md`
-- Create: `docs/conventions/evolution.md`
-- Create: `docs/onboarding/README.md`
-- Create: `docs/onboarding/local-development.md`
+**文件：**
+- 创建： `README.md`
+- 创建： `docs/README.md`
+- 创建： `docs/architecture/README.md`
+- 创建： `docs/architecture/overview.md`
+- 创建： `docs/adr/README.md`
+- 创建： `docs/adr/0001-polyglot-ai-native-monorepo.md`
+- 创建： `docs/conventions/README.md`
+- 创建： `docs/conventions/ai-readability.md`
+- 创建： `docs/conventions/naming.md`
+- 创建： `docs/conventions/source-of-truth.md`
+- 创建： `docs/conventions/anti-patterns.md`
+- 创建： `docs/conventions/evolution.md`
+- 创建： `docs/onboarding/README.md`
+- 创建： `docs/onboarding/local-development.md`
 
-- [ ] **Step 1: Create governance docs**
+- [ ] **步骤 1：创建治理文档**
 
-Use `apply_patch` to add the files above. Each file uses its subject as the H1 and includes concrete `Purpose`, `Rules`, and `Evolution` sections. Use short bullets. Do not add aspirational prose without a rule attached.
+使用 `apply_patch` 添加上述文件。每个文件使用自身主题作为 H1，并包含具体的“目的”“规则”“演进”章节。使用短条目，不要添加没有规则支撑的愿景式文字。
 
-`docs/conventions/ai-readability.md` must require explicit naming, shallow call chains, predictable ownership, low hidden behavior, and low indirection.
+`docs/conventions/ai-readability.md` 必须要求显式命名、浅调用链、可预测所有权、低隐藏行为和低间接层。
 
-`docs/conventions/naming.md` must require kebab-case directories, scoped package names under `@ai-code/*`, Python package names that use underscores, and service boundary names that end in `-service` only when they describe a domain boundary.
+`docs/conventions/naming.md` 必须要求目录使用 kebab-case，包名使用 `@ai-code/*` 作用域，Python 包名使用下划线，并且只有描述领域边界的服务边界名称才以 `-service` 结尾。
 
-`docs/conventions/source-of-truth.md` must map `contracts/`, `ai-factory/specs`, `ai-factory/memory`, `ai-factory/prompts`, `ai-factory/workflows`, `ai-factory/design-system`, `packages/`, `python/`, `services/`, and `docs/adr` to their authoritative responsibilities.
+`docs/conventions/source-of-truth.md` 必须将 `contracts/`、`ai-factory/specs`、`ai-factory/memory`、`ai-factory/prompts`、`ai-factory/workflows`、`ai-factory/design-system`、`packages/`、`python/`、`services/` 和 `docs/adr` 映射到各自权威职责。
 
-`docs/conventions/anti-patterns.md` must explicitly prohibit:
-
-```markdown
-- premature microservices
-- hidden runtime discovery
-- prompt duplication
-- context duplication
-- magical abstractions
-- frontend business orchestration
-- direct memory access from random modules
-- dynamic auto-loading of agents, workflows, prompts, tools, or memory
-- LangGraph integration before the first real workflow
-- vector infrastructure before memory retrieval pressure exists
-```
-
-`docs/conventions/evolution.md` must state:
+`docs/conventions/anti-patterns.md` 必须明确禁止：
 
 ```markdown
-- Extract services only after operational pressure and mature contracts exist.
-- Add abstractions only after repeated implementation patterns stabilize.
-- Turn workflows into runtimes only after real execution, state, replay, or review needs exist.
-- Index memory only after Markdown file retrieval becomes insufficient.
-- Enforce contracts only after manual contracts create drift or integration risk.
-- Record major architectural shifts with an ADR.
+- 过早微服务化
+- 隐藏式运行时发现
+- 提示词重复
+- 上下文重复
+- 魔法式抽象
+- 前端业务编排
+- 随机模块直接访问记忆
+- 动态自动加载 agent、工作流、提示词、工具或记忆
+- 在第一个真实工作流之前集成 LangGraph
+- 在出现记忆检索压力之前引入向量基础设施
 ```
 
-- [ ] **Step 2: Verify governance docs exist**
+`docs/conventions/evolution.md` 必须说明：
 
-Run:
+```markdown
+- 只有出现运营压力且契约成熟后，才拆分服务。
+- 只有重复实现模式稳定后，才添加抽象。
+- 只有出现真实执行、状态、重放或评审需求后，才把工作流升级为运行时。
+- 只有 Markdown 文件检索不足时，才索引记忆。
+- 只有人工维护契约造成漂移或集成风险后，才强制契约校验。
+- 重大架构变化必须用 ADR 记录。
+```
+
+- [ ] **步骤 2：验证治理文档存在**
+
+运行：
 
 ```bash
 test -f docs/conventions/anti-patterns.md
@@ -89,30 +89,30 @@ test -f docs/conventions/evolution.md
 test -f docs/adr/0001-polyglot-ai-native-monorepo.md
 ```
 
-Expected: all commands exit with status `0`.
+预期：所有命令均以状态码 `0` 退出。
 
-- [ ] **Step 3: Commit governance docs**
+- [ ] **步骤 3：提交治理文档**
 
 ```bash
 git add README.md docs
 git commit -m "docs: add repository governance"
 ```
 
-## Task 2: Root Workspace Configuration
+## 任务 2：根工作区配置
 
-**Files:**
-- Create: `.gitignore`
-- Create: `.env.example`
-- Create: `.python-version`
-- Create: `package.json`
-- Create: `pnpm-workspace.yaml`
-- Create: `turbo.json`
-- Create: `tsconfig.base.json`
-- Create: `pyproject.toml`
+**文件：**
+- 创建： `.gitignore`
+- 创建： `.env.example`
+- 创建： `.python-version`
+- 创建： `package.json`
+- 创建： `pnpm-workspace.yaml`
+- 创建： `turbo.json`
+- 创建： `tsconfig.base.json`
+- 创建： `pyproject.toml`
 
-- [ ] **Step 1: Create root JavaScript workspace files**
+- [ ] **步骤 1：创建根 JavaScript 工作区文件**
 
-`package.json` must include these scripts:
+`package.json` 必须包含这些脚本：
 
 ```json
 {
@@ -168,7 +168,7 @@ packages:
 }
 ```
 
-- [ ] **Step 2: Create root Python configuration**
+- [ ] **步骤 2：创建根 Python 配置**
 
 `.python-version`:
 
@@ -176,7 +176,7 @@ packages:
 3.12
 ```
 
-`pyproject.toml` must include:
+`pyproject.toml` 必须包含：
 
 ```toml
 [project]
@@ -216,9 +216,9 @@ testpaths = ["python"]
 pythonpath = ["python/backend", "python/agent-runtime", "python/orchestrator"]
 ```
 
-- [ ] **Step 3: Verify root config syntax**
+- [ ] **步骤 3：验证根配置语法**
 
-Run:
+运行：
 
 ```bash
 python - <<'PY'
@@ -230,30 +230,30 @@ PY
 pnpm -v
 ```
 
-Expected: `tomllib` exits `0`; `pnpm -v` prints a version.
+预期：`tomllib` 以 `0` 退出；`pnpm -v` 打印版本号。
 
-- [ ] **Step 4: Commit root workspace config**
+- [ ] **步骤 4：提交根工作区配置**
 
 ```bash
 git add .gitignore .env.example .python-version package.json pnpm-workspace.yaml turbo.json tsconfig.base.json pyproject.toml
 git commit -m "chore: add root workspace configuration"
 ```
 
-## Task 3: Contracts Layer
+## 任务 3：契约层
 
-**Files:**
-- Create: `contracts/README.md`
-- Create: `contracts/openapi/README.md`
-- Create: `contracts/openapi/api-gateway.yaml`
-- Create: `contracts/events/README.md`
-- Create: `contracts/memory/README.md`
-- Create: `contracts/memory/memory-document.schema.json`
-- Create: `contracts/workflow/README.md`
-- Create: `contracts/workflow/workflow-manifest.schema.json`
+**文件：**
+- 创建： `contracts/README.md`
+- 创建： `contracts/openapi/README.md`
+- 创建： `contracts/openapi/api-gateway.yaml`
+- 创建： `contracts/events/README.md`
+- 创建： `contracts/memory/README.md`
+- 创建： `contracts/memory/memory-document.schema.json`
+- 创建： `contracts/workflow/README.md`
+- 创建： `contracts/workflow/workflow-manifest.schema.json`
 
-- [ ] **Step 1: Add minimal OpenAPI contract**
+- [ ] **步骤 1：添加最小 OpenAPI 契约**
 
-`contracts/openapi/api-gateway.yaml` must define `GET /health` and `GET /version`:
+`contracts/openapi/api-gateway.yaml` 必须定义 `GET /health` 和 `GET /version`：
 
 ```yaml
 openapi: 3.1.0
@@ -294,9 +294,9 @@ paths:
                     type: string
 ```
 
-- [ ] **Step 2: Add memory document schema**
+- [ ] **步骤 2：添加记忆文档 schema**
 
-`contracts/memory/memory-document.schema.json` must define:
+`contracts/memory/memory-document.schema.json` 必须定义：
 
 ```json
 {
@@ -326,9 +326,9 @@ paths:
 }
 ```
 
-- [ ] **Step 3: Add workflow manifest schema**
+- [ ] **步骤 3：添加工作流 manifest schema**
 
-`contracts/workflow/workflow-manifest.schema.json` must define:
+`contracts/workflow/workflow-manifest.schema.json` 必须定义：
 
 ```json
 {
@@ -362,181 +362,181 @@ paths:
 }
 ```
 
-- [ ] **Step 4: Commit contracts**
+- [ ] **步骤 4：提交契约**
 
 ```bash
 git add contracts
 git commit -m "chore: add cross-runtime contracts"
 ```
 
-## Task 4: AI Factory Skeleton
+## 任务 4：AI 工厂骨架
 
-**Files:**
-- Create all directories listed under `ai-factory/` in the design spec.
-- Create `README.md` in every major directory.
-- Create: `ai-factory/agents/registry.md`
-- Create: `ai-factory/workflows/registries/README.md`
-- Create: `ai-factory/workflows/states/README.md`
-- Create: `ai-factory/workflows/templates/README.md`
+**文件：**
+- 创建设计规格中 `ai-factory/` 下列出的所有目录。
+- 在每个主要目录中创建 `README.md`。
+- 创建： `ai-factory/agents/registry.md`
+- 创建： `ai-factory/workflows/registries/README.md`
+- 创建： `ai-factory/workflows/states/README.md`
+- 创建： `ai-factory/workflows/templates/README.md`
 
-- [ ] **Step 1: Create AI factory directories**
+- [ ] **步骤 1：创建 AI 工厂目录**
 
-Run:
+运行：
 
 ```bash
 mkdir -p ai-factory/{agents,workflows/{registries,states,templates},memory/{durable/{architecture,product,design,decisions,api},working/{tasks,iterations,active-context,retrospectives}},specs/{active,archived,templates},prompts/{system,roles,workflows,tasks,evaluation,goal-mode},design-system/{tokens,components,patterns,figma,prompts},playbooks/{feature-development,bugfix,review,release}}
 ```
 
-Expected: command exits `0`.
+预期：命令以状态码 `0` 退出。
 
-- [ ] **Step 2: Add AI factory READMEs**
+- [ ] **步骤 2：添加 AI 工厂 README**
 
-Use this README pattern for each major AI factory area. Replace the H1 with the actual directory subject, such as `# Memory`, `# Prompts`, or `# Design System`.
+每个主要 AI 工厂区域使用该 README 模式。将 H1 替换为实际目录主题，例如 `# Memory`、`# Prompts` 或 `# Design System`。
 
 ```markdown
 # Memory
 
-## Purpose
+## 目的
 
-This directory stores explicit AI factory memory for human and agent collaboration.
+该目录存放人类和 agent 协作所需的显式 AI 工厂记忆。
 
-## Source Of Truth
+## 单一事实来源
 
-Durable memory owns stable project knowledge. Working memory owns temporary execution context.
+持久记忆拥有稳定项目知识。工作记忆拥有临时执行上下文。
 
-## Boundaries
+## 边界
 
-Runtime code must not read arbitrary memory files directly. Future runtime access must use explicit loaders or repositories.
+运行时代码不得随意直接读取记忆文件。未来运行时访问必须使用显式加载器或仓储。
 
-## Evolution
+## 演进
 
-Add indexing only after Markdown retrieval becomes insufficient for real work.
+只有 Markdown 检索不足以支撑真实工作后，才添加索引。
 ```
 
-For non-memory directories, keep the same headings and adapt the ownership sentence to the directory's actual responsibility: agents, workflows, specs, prompts, design-system, or playbooks.
+对于非记忆目录，保留相同标题，并按目录的实际职责调整所有权描述：agents、workflows、specs、prompts、design-system 或 playbooks。
 
-- [ ] **Step 3: Add explicit registry notes**
+- [ ] **步骤 3：添加显式注册说明**
 
 `ai-factory/agents/registry.md`:
 
 ```markdown
-# Agent Registry
+# Agent 注册表
 
-Phase 1 has no autonomous agents.
+第一阶段不包含自主 agent。
 
-Future agent entries must declare:
+未来 agent 条目必须声明：
 
 - id
-- purpose
-- inputs
-- outputs
-- allowed tools
-- allowed memory domains
-- escalation path
+- 目的
+- 输入
+- 输出
+- 允许的工具
+- 允许的记忆领域
+- 升级路径
 
-Agents must not be auto-loaded. Runtime code must load named agents through explicit configuration.
+Agent 不得被自动加载。运行时代码必须通过显式配置加载具名 agent。
 ```
 
 `ai-factory/workflows/registries/README.md`:
 
 ```markdown
-# Workflow Registries
+# 工作流注册表
 
-Phase 1 has no executable workflow registry.
+第一阶段不包含可执行工作流注册表。
 
-Future workflows must declare:
+未来工作流必须声明：
 
 - id
-- owner
-- trigger
-- inputs
-- outputs
-- states
-- memory domains
+- 所有者
+- 触发方式
+- 输入
+- 输出
+- 状态
+- 记忆领域
 
-Workflows must not be auto-discovered.
+工作流不得被自动发现。
 ```
 
-- [ ] **Step 4: Commit AI factory skeleton**
+- [ ] **步骤 4：提交 AI 工厂骨架**
 
 ```bash
 git add ai-factory
 git commit -m "chore: add AI factory skeleton"
 ```
 
-## Task 5: Service Boundary Documentation
+## 任务 5：服务边界文档
 
-**Files:**
-- Create: `services/README.md`
-- Create: `services/api-gateway/README.md`
-- Create: `services/conversation-service/README.md`
-- Create: `services/memory-service/README.md`
-- Create: `services/profile-service/README.md`
+**文件：**
+- 创建： `services/README.md`
+- 创建： `services/api-gateway/README.md`
+- 创建： `services/conversation-service/README.md`
+- 创建： `services/memory-service/README.md`
+- 创建： `services/profile-service/README.md`
 
-- [ ] **Step 1: Create service boundary READMEs**
+- [ ] **步骤 1：创建服务边界 README**
 
-Each service README must include this concrete structure, with the H1 changed to the exact boundary name.
+每个服务 README 必须包含该具体结构，并将 H1 改为准确的边界名称。
 
 ```markdown
 # api-gateway
 
-## Purpose
+## 目的
 
-This boundary defines the public backend entrypoint.
+该边界定义公共后端入口。
 
-## Responsibilities
+## 职责
 
-- Own public HTTP API shape with `contracts/openapi/api-gateway.yaml`.
-- Route frontend-facing capabilities through the centralized Python backend during Phase 1.
+- 拥有 `contracts/openapi/api-gateway.yaml` 中的公共 HTTP API 形态。
+- 第一阶段中，面向前端的能力通过集中式 Python 后端路由。
 
-## Non-Responsibilities
+## 非职责
 
-- Does not own a separate runtime in Phase 1.
-- Does not own duplicated Docker, dependency, or deployment configuration.
+- 第一阶段中不拥有独立运行时。
+- 不拥有重复的 Docker、依赖或部署配置。
 
-## Contracts
+## 契约
 
-- Owns: `contracts/openapi/api-gateway.yaml`
+- 拥有：`contracts/openapi/api-gateway.yaml`
 
-## Extraction Triggers
+## 拆分触发条件
 
-- Independent scaling pressure.
-- Separate deployment cadence.
-- Mature API contract and operational need.
+- 独立扩缩容压力。
+- 独立部署节奏。
+- 成熟 API 契约和运营需求。
 
-## Non-Triggers
+## 非触发条件
 
-- Naming preference.
-- Speculative scale.
-- Organizational neatness.
-- Desire for symmetric folder structures.
+- 命名偏好。
+- 推测性规模。
+- 组织结构整齐感。
+- 追求对称目录结构。
 ```
 
-Adapt the responsibility bullets for `conversation-service`, `memory-service`, and `profile-service` while preserving the same extraction and non-trigger rules.
+为 `conversation-service`、`memory-service` 和 `profile-service` 调整职责条目，同时保留相同的拆分触发与非触发规则。
 
-- [ ] **Step 2: Verify no runtime files exist under services**
+- [ ] **步骤 2：验证 services 下不存在运行时文件**
 
-Run:
+运行：
 
 ```bash
 find services -type f ! -name README.md
 ```
 
-Expected: no output.
+预期：无输出。
 
-- [ ] **Step 3: Commit service boundaries**
+- [ ] **步骤 3：提交服务边界**
 
 ```bash
 git add services
 git commit -m "docs: add service boundary definitions"
 ```
 
-## Task 6: TypeScript Packages
+## 任务 6：TypeScript 包
 
-**Files:**
-- Create package files under `packages/shared-types`, `packages/shared-ui`, `packages/config`, and `packages/sdk`.
+**文件：**
+- 在 `packages/shared-types`、`packages/shared-ui`、`packages/config` 和 `packages/sdk` 下创建包文件。
 
-- [ ] **Step 1: Create shared type package**
+- [ ] **步骤 1：创建共享类型包**
 
 `packages/shared-types/src/index.ts`:
 
@@ -551,7 +551,7 @@ export type VersionInfo = {
 };
 ```
 
-- [ ] **Step 2: Create SDK package**
+- [ ] **步骤 2：创建 SDK 包**
 
 `packages/sdk/src/index.ts`:
 
@@ -600,7 +600,7 @@ export class ApiClient {
 }
 ```
 
-- [ ] **Step 3: Create shared UI package**
+- [ ] **步骤 3：创建共享 UI 包**
 
 `packages/shared-ui/src/primitives/Button.tsx`:
 
@@ -627,33 +627,33 @@ export { Button } from "./primitives/Button";
 export type { ButtonProps } from "./primitives/Button";
 ```
 
-- [ ] **Step 4: Verify package typecheck**
+- [ ] **步骤 4：验证包类型检查**
 
-Run:
+运行：
 
 ```bash
 pnpm install
 pnpm typecheck
 ```
 
-Expected: install succeeds and typecheck exits `0`.
+预期：安装成功，类型检查以 `0` 退出。
 
-- [ ] **Step 5: Commit TypeScript packages**
+- [ ] **步骤 5：提交 TypeScript 包**
 
 ```bash
 git add packages pnpm-lock.yaml
 git commit -m "feat: add TypeScript shared packages"
 ```
 
-## Task 7: Thin Next.js Apps
+## 任务 7：薄 Next.js 应用
 
-**Files:**
-- Create minimal Next.js apps under `apps/h5` and `apps/admin`.
-- Create placeholder READMEs under `apps/ios` and `apps/android`.
+**文件：**
+- 在 `apps/h5` 和 `apps/admin` 下创建最小 Next.js 应用。
+- 在 `apps/ios` 和 `apps/android` 下创建占位 README。
 
-- [ ] **Step 1: Create h5 and admin app pages**
+- [ ] **步骤 1：创建 h5 和 admin 应用页面**
 
-Each app should expose a single page that imports shared UI and does not call backend endpoints directly.
+每个应用应暴露一个单页，导入共享 UI，且不直接调用后端端点。
 
 `apps/h5/src/app/page.tsx`:
 
@@ -687,9 +687,9 @@ export default function AdminPage() {
 }
 ```
 
-- [ ] **Step 2: Verify frontend build**
+- [ ] **步骤 2：验证前端构建**
 
-Run:
+运行：
 
 ```bash
 pnpm build
@@ -697,30 +697,30 @@ pnpm lint
 pnpm typecheck
 ```
 
-Expected: all commands exit `0`.
+预期：所有命令以 `0` 退出。
 
-- [ ] **Step 3: Commit apps**
+- [ ] **步骤 3：提交应用**
 
 ```bash
 git add apps
 git commit -m "feat: add thin Next.js app foundations"
 ```
 
-## Task 8: Python Backend And AI Runtime Foundations
+## 任务 8：Python 后端与 AI 运行时基础
 
-**Files:**
-- Create: `python/README.md`
-- Create: `python/backend/README.md`
-- Create: `python/backend/backend/app/main.py`
-- Create: `python/backend/backend/app/routes/health.py`
-- Create: `python/backend/backend/app/routes/version.py`
-- Create: `python/backend/tests/test_health.py`
-- Create: `python/agent-runtime/README.md`
-- Create: `python/agent-runtime/agent_runtime/__init__.py`
-- Create: `python/orchestrator/README.md`
-- Create: `python/orchestrator/orchestrator/__init__.py`
+**文件：**
+- 创建： `python/README.md`
+- 创建： `python/backend/README.md`
+- 创建： `python/backend/backend/app/main.py`
+- 创建： `python/backend/backend/app/routes/health.py`
+- 创建： `python/backend/backend/app/routes/version.py`
+- 创建： `python/backend/tests/test_health.py`
+- 创建： `python/agent-runtime/README.md`
+- 创建： `python/agent-runtime/agent_runtime/__init__.py`
+- 创建： `python/orchestrator/README.md`
+- 创建： `python/orchestrator/orchestrator/__init__.py`
 
-- [ ] **Step 1: Add FastAPI app**
+- [ ] **步骤 1：添加 FastAPI 应用**
 
 `python/backend/backend/app/main.py`:
 
@@ -761,7 +761,7 @@ def get_version() -> dict[str, str]:
     return {"name": "ai-code-api", "version": "0.1.0"}
 ```
 
-- [ ] **Step 2: Add backend health test**
+- [ ] **步骤 2：添加后端健康检查测试**
 
 `python/backend/tests/test_health.py`:
 
@@ -779,9 +779,9 @@ def test_health_returns_ok() -> None:
     assert response.json() == {"status": "ok"}
 ```
 
-- [ ] **Step 3: Verify Python checks**
+- [ ] **步骤 3：验证 Python 检查**
 
-Run:
+运行：
 
 ```bash
 ruff check python
@@ -790,27 +790,27 @@ mypy python
 pytest python
 ```
 
-Expected: all commands exit `0`.
+预期：所有命令以 `0` 退出。
 
-- [ ] **Step 4: Commit Python foundations**
+- [ ] **步骤 4：提交 Python 基础**
 
 ```bash
 git add python
 git commit -m "feat: add Python backend foundation"
 ```
 
-## Task 9: Docker And Local Infrastructure
+## 任务 9：Docker 与本地基础设施
 
-**Files:**
-- Create: `docker-compose.yml`
-- Create: `infra/README.md`
-- Create: `infra/docker/README.md`
-- Create: `infra/docker/backend.Dockerfile`
-- Create: `infra/docker/frontend.Dockerfile`
+**文件：**
+- 创建： `docker-compose.yml`
+- 创建： `infra/README.md`
+- 创建： `infra/docker/README.md`
+- 创建： `infra/docker/backend.Dockerfile`
+- 创建： `infra/docker/frontend.Dockerfile`
 
-- [ ] **Step 1: Add Docker Compose baseline**
+- [ ] **步骤 1：添加 Docker Compose 基线**
 
-`docker-compose.yml` must define only:
+`docker-compose.yml` 只应定义：
 
 ```yaml
 services:
@@ -847,31 +847,31 @@ services:
       - "6379:6379"
 ```
 
-- [ ] **Step 2: Verify Compose syntax**
+- [ ] **步骤 2：验证 Compose 语法**
 
-Run:
+运行：
 
 ```bash
 docker compose config
 ```
 
-Expected: Compose renders the four services and exits `0`.
+预期：Compose 渲染四个服务并以 `0` 退出。
 
-- [ ] **Step 3: Commit local infrastructure**
+- [ ] **步骤 3：提交本地基础设施**
 
 ```bash
 git add docker-compose.yml infra
 git commit -m "chore: add local Docker infrastructure"
 ```
 
-## Task 10: CI Baseline
+## 任务 10：CI 基线
 
-**Files:**
-- Create: `.github/workflows/ci.yml`
+**文件：**
+- 创建： `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Add CI workflow**
+- [ ] **步骤 1：添加 CI 工作流**
 
-`.github/workflows/ci.yml` must run:
+`.github/workflows/ci.yml`必须run:
 
 ```yaml
 name: CI
@@ -908,21 +908,21 @@ jobs:
       - run: docker compose config
 ```
 
-- [ ] **Step 2: Commit CI**
+- [ ] **步骤 2：提交 CI**
 
 ```bash
 git add .github/workflows/ci.yml
 git commit -m "ci: add baseline quality gates"
 ```
 
-## Task 11: Final Verification
+## 任务 11：最终验证
 
-**Files:**
-- Modify only if verification reveals a concrete defect.
+**文件：**
+- 只有验证发现具体缺陷时才修改。
 
-- [ ] **Step 1: Run complete local verification**
+- [ ] **步骤 1：运行完整本地验证**
 
-Run:
+运行：
 
 ```bash
 pnpm install
@@ -937,64 +937,64 @@ pytest python
 docker compose config
 ```
 
-Expected: all commands exit `0`.
+预期：所有命令以 `0` 退出。
 
-- [ ] **Step 2: Confirm no unintended service runtimes exist**
+- [ ] **步骤 2：确认不存在非预期服务运行时**
 
-Run:
+运行：
 
 ```bash
 find services -type f ! -name README.md
 ```
 
-Expected: no output.
+预期：无输出。
 
-- [ ] **Step 3: Confirm no hidden AI runtime registries exist**
+- [ ] **步骤 3：确认不存在隐藏 AI 运行时注册表**
 
-Run:
+运行：
 
 ```bash
 find ai-factory -type f \( -name "*.py" -o -name "*.ts" -o -name "*.js" \)
 ```
 
-Expected: no output.
+预期：无输出。
 
-- [ ] **Step 4: Commit verification fixes if needed**
+- [ ] **步骤 4：按需提交验证修复**
 
-If fixes were required:
+如果需要修复：
 
 ```bash
 git add .
 git commit -m "fix: stabilize bootstrap verification"
 ```
 
-If no fixes were required, do not create an empty commit.
+如果不需要修复，不要创建空提交。
 
-## Self-Review
+## 自检
 
-Spec coverage:
+规格覆盖：
 
-- Top-level repository structure: Task 1, Task 2, Task 4, Task 5
-- TypeScript workspace: Task 2, Task 6, Task 7
-- Python workspace: Task 2, Task 8
-- Contracts: Task 3
-- AI factory: Task 4
-- Service boundaries: Task 5
-- Docker/local development: Task 9
-- CI quality gates: Task 10
-- Documentation and governance: Task 1
-- Final validation: Task 11
+- 顶层仓库结构：任务 1、任务 2、任务 4、任务 5
+- TypeScript 工作区：任务 2、任务 6、任务 7
+- Python 工作区：任务 2、任务 8
+- 契约：任务 3
+- AI 工厂：任务 4
+- 服务边界：任务 5
+- Docker/本地开发：任务 9
+- CI 质量门禁：任务 10
+- 文档和治理：任务 1
+- 最终验证：任务 11
 
-Placeholder scan:
+占位内容扫描：
 
-- No red-flag placeholder language remains.
-- Every code-producing task includes concrete file paths and starter contents.
+- 不遗留红旗占位语言。
+- 每个产出代码的任务都包含具体文件路径和起始内容。
 
-Overengineering controls:
+过度工程化控制：
 
-- `services/*` remains README-only.
-- `ai-factory/*` remains Markdown-only.
-- No LangGraph dependency is installed.
-- No vector database is introduced.
-- No Kubernetes files are created.
-- No dynamic runtime discovery is introduced.
+- `services/*` 保持为仅 README。
+- `ai-factory/*` 保持为仅 Markdown。
+- 不安装 LangGraph 依赖。
+- 不引入向量数据库。
+- 不创建 Kubernetes 文件。
+- 不引入动态运行时发现。

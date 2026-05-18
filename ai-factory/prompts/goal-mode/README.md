@@ -1,17 +1,17 @@
-# Goal Mode Prompts
+# 目标模式提示词
 
-## Purpose
+## 目的
 
-This directory stores future prompts for goal-oriented planning and progress tracking.
+该目录存放未来用于目标导向计划和进度跟踪的提示词。
 
-## Source Of Truth
+## 单一事实来源
 
-Goal mode prompts own how broad goals are clarified, decomposed, and checked for completion.
+目标模式提示词拥有宽泛目标如何澄清、拆解和完成检查。
 
-## Boundaries
+## 边界
 
-Do not use goal prompts to bypass explicit specs, review gates, or escalation paths.
+不要用目标提示词绕过显式规格、评审门禁或升级路径。
 
-## Evolution
+## 演进
 
-Refine goal prompts when planning failures reveal missing constraints or decision checkpoints.
+当计划失败暴露缺失约束或决策检查点时，完善目标提示词。

@@ -1,17 +1,17 @@
 # Agents
 
-## Purpose
+## 目的
 
-This directory documents future agent roles and their collaboration boundaries.
+该目录记录未来 agent 角色及其协作边界。
 
-## Source Of Truth
+## 单一事实来源
 
-The registry defines which agents may exist and what each declared agent is allowed to do.
+注册表定义哪些 agent 可以存在，以及每个已声明 agent 被允许做什么。
 
-## Boundaries
+## 边界
 
-Phase 1 has no autonomous agents. Do not place executable agent code or auto-loading configuration here.
+第一阶段不包含自主 agent。不要在这里放置可执行 agent 代码或自动加载配置。
 
-## Evolution
+## 演进
 
-Introduce agent entries only after the role, tools, memory access, and escalation path are reviewed.
+只有角色、工具、记忆访问和升级路径完成评审后，才引入 agent 条目。

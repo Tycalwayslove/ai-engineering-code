@@ -1,17 +1,17 @@
-# Memory
+# 记忆
 
-## Purpose
+## 目的
 
-This directory stores explicit AI factory memory for human and agent collaboration.
+该目录存放人类和 agent 协作所需的显式 AI 工厂记忆。
 
-## Source Of Truth
+## 单一事实来源
 
-Durable memory owns stable project knowledge. Working memory owns temporary execution context.
+持久记忆拥有稳定项目知识。工作记忆拥有临时执行上下文。
 
-## Boundaries
+## 边界
 
-Runtime code must not read arbitrary memory files directly. Future runtime access must use explicit loaders or repositories.
+运行时代码不得直接读取任意记忆文件。未来运行时访问必须使用显式加载器或仓储。
 
-## Evolution
+## 演进
 
-Add indexing only after Markdown retrieval becomes insufficient for real work.
+只有 Markdown 检索不足以支撑真实工作后，才添加索引。

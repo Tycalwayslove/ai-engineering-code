@@ -1,21 +1,21 @@
 # Config
 
-## Purpose
+## 目的
 
-- Provides a small home for shared TypeScript configuration helpers.
-- Starts with explicit runtime environment names instead of a framework.
+- 为共享 TypeScript 配置辅助能力提供小型归属位置。
+- 从显式运行环境名称开始，而不是引入框架。
 
-## Ownership
+## 所有权
 
-- Platform maintainers own exported names and cross-package configuration conventions.
-- Consumers should keep application-specific settings inside their app package.
+- 平台维护者拥有导出名称和跨包配置约定。
+- 消费方应将应用专属设置保留在自己的应用包内。
 
-## Dependency Boundaries
+## 依赖边界
 
-- Must not depend on apps, SDK clients, UI packages, service internals, or runtime files.
-- May be imported by TypeScript workspace packages that need shared configuration constants.
+- 不得依赖应用、SDK 客户端、UI 包、服务内部实现或运行时文件。
+- 需要共享配置常量的 TypeScript 工作区包可以导入它。
 
-## Evolution Path
+## 演进路径
 
-- Add only stable configuration primitives shared by multiple packages.
-- Move toward schema validation only after repeated configuration drift appears.
+- 只添加多个包共享的稳定配置基础能力。
+- 只有反复出现配置漂移后，才引入 schema 校验。

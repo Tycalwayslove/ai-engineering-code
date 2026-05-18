@@ -1,23 +1,23 @@
-# Shared UI
+# 共享 UI
 
-## Purpose
+## 目的
 
-- Provides reusable React UI primitives for TypeScript apps.
-- Starts with a minimal button primitive that apps can style at the call site.
+- 为 TypeScript 应用提供可复用 React UI 基础组件。
+- 从最小按钮基础组件开始，应用可在调用处自行设置样式。
 
-## Ownership
+## 所有权
 
-- Design system maintainers own exported components and prop compatibility.
-- Product app teams may propose additions after repeated UI patterns appear.
+- 设计系统维护者拥有导出组件和属性兼容性。
+- 产品应用团队可在重复 UI 模式出现后提议新增内容。
 
-## Dependency Boundaries
+## 依赖边界
 
-- May depend on React as a peer dependency.
-- Must not depend on apps, SDK clients, backend services, or AI factory runtime files.
-- Primitives must stay lower-level than composites and layouts.
+- 可以将 React 作为 peer dependency。
+- 不得依赖应用、SDK 客户端、后端服务或 AI 工厂运行时文件。
+- 基础组件必须比组合组件和布局更低层。
 
-## Evolution Path
+## 演进路径
 
-- Add primitives first, then promote repeated assemblies into composites.
-- Add layouts only after app shells repeat across products.
-- Move design tokens here after `ai-factory/design-system` defines stable token names.
+- 先添加基础组件，再将重复组合提升为组合组件。
+- 只有应用壳在多个产品中重复出现后，才添加布局。
+- `ai-factory/design-system` 定义稳定令牌名称后，再将设计令牌移动到这里。

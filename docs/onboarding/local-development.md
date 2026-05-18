@@ -1,21 +1,21 @@
-# Local Development
+# 本地开发
 
-## Purpose
+## 目的
 
-- Provide the local development entry point for the monorepo.
-- Keep setup expectations visible before apps, Python runtimes, and Docker services are added.
-- Avoid inventing commands before the relevant tooling exists.
+- 提供 monorepo 的本地开发入口。
+- 在添加应用、Python 运行时和 Docker 服务之前，保持设置预期可见。
+- 避免在相关工具存在前发明命令。
 
-## Rules
+## 规则
 
-- Use the root workspace commands once `package.json` exists.
-- Use Python commands from the root once `pyproject.toml` exists.
-- Use Docker Compose only after `docker-compose.yml` is added.
-- Keep local environment values in `.env.example`; do not document secrets.
-- Update this file when setup commands or required tool versions change.
+- `package.json` 存在后，使用根工作区命令。
+- `pyproject.toml` 存在后，从仓库根目录运行 Python 命令。
+- 只有添加 `docker-compose.yml` 后，才使用 Docker Compose。
+- 本地环境值保留在 `.env.example`；不要记录密钥。
+- 设置命令或所需工具版本变化时更新此文件。
 
-## Evolution
+## 演进
 
-- Add exact install, run, test, and lint commands as each runtime foundation lands.
-- Keep this file focused on local setup; put architecture decisions in ADRs.
-- Remove obsolete commands in the same change that removes the underlying tooling.
+- 每个运行时基础落地时，添加准确的安装、运行、测试和 lint 命令。
+- 让本文档专注本地设置；架构决策放入 ADR。
+- 删除底层工具时，在同一变更中移除废弃命令。

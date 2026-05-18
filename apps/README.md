@@ -1,22 +1,22 @@
 # Apps
 
-## Purpose
+## 目的
 
-`apps/` contains user-facing product surfaces for the AI-native software factory.
+`apps/` 包含 AI 原生软件工厂面向用户的产品界面。
 
-## Ownership
+## 所有权
 
-- `h5` owns the mobile-first web surface.
-- `admin` owns the operator web surface.
-- `ios` and `android` are placeholders for future native surfaces.
+- `h5` 拥有移动优先的 Web 界面。
+- `admin` 拥有运营管理 Web 界面。
+- `ios` 和 `android` 是未来原生界面的占位边界。
 
-## Dependency Boundaries
+## 依赖边界
 
-- Apps may depend on shared packages under `packages/`.
-- Apps must not import `services/*` or `ai-factory/*`.
-- Apps must not call backend endpoints directly or implement custom networking.
-- Future backend access must flow through an explicit SDK or gateway package.
+- 应用可以依赖 `packages/` 下的共享包。
+- 应用不得导入 `services/*` 或 `ai-factory/*`。
+- 应用不得直接调用后端端点或实现自定义网络。
+- 未来后端访问必须通过显式 SDK 或网关包流动。
 
-## Evolution
+## 演进
 
-Add app-specific features only after contracts and shared package ownership are clear. Native apps should start from a real product need, not placeholder scaffolding.
+只有当契约和共享包所有权明确后，才添加应用专属能力。原生应用应来自真实产品需求，而不是占位脚手架。

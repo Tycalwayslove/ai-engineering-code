@@ -1,34 +1,34 @@
 # profile-service
 
-## Purpose
+## 目的
 
-This boundary defines user, profile, and context ownership.
+该边界定义用户、画像和上下文所有权。
 
-## Responsibilities
+## 职责
 
-- Own user profile, preference, and context domain semantics.
-- Define profile-facing contracts used by the centralized Python backend during Phase 1.
-- Coordinate profile context with conversation and memory boundaries through explicit contracts.
+- 拥有用户画像、偏好和上下文领域语义。
+- 定义第一阶段中集中式 Python 后端使用的画像侧契约。
+- 通过显式契约协调画像上下文与会话、记忆边界。
 
-## Non-Responsibilities
+## 非职责
 
-- Does not own a separate runtime in Phase 1.
-- Does not create a premature auth platform.
-- Does not own conversation lifecycle, memory storage, or duplicated deployment configuration.
+- 第一阶段中不拥有独立运行时。
+- 不创建过早的认证平台。
+- 不拥有会话生命周期、记忆存储或重复部署配置。
 
-## Contracts
+## 契约
 
-- Owns: profile and context domain contracts when they are added under `contracts/`.
+- 拥有：未来添加到 `contracts/` 下的画像和上下文领域契约。
 
-## Extraction Triggers
+## 拆分触发条件
 
-- Independent scaling pressure.
-- Separate deployment cadence.
-- Mature API contract and operational need.
+- 出现独立扩缩容压力。
+- 需要独立部署节奏。
+- API 契约成熟且存在真实运营需求。
 
-## Non-Triggers
+## 非触发条件
 
-- Naming preference.
-- Speculative scale.
-- Organizational neatness.
-- Desire for symmetric folder structures.
+- 命名偏好。
+- 推测性规模。
+- 组织结构洁癖。
+- 追求对称目录结构。

@@ -1,17 +1,17 @@
-# Workflow Templates
+# 工作流模板
 
-## Purpose
+## 目的
 
-This directory stores reusable Markdown templates for planning and running AI factory workflows.
+该目录存放用于计划和运行 AI 工厂工作流的可复用 Markdown 模板。
 
-## Source Of Truth
+## 单一事实来源
 
-Each template owns its expected sections, inputs, outputs, and review checkpoints.
+每个模板拥有其预期章节、输入、输出和评审检查点。
 
-## Boundaries
+## 边界
 
-Templates are starting points, not hidden policy. Workflow requirements must remain visible in the generated document.
+模板是起点，不是隐藏政策。工作流需求必须在生成文档中保持可见。
 
-## Evolution
+## 演进
 
-Split templates by workflow type when shared sections start obscuring domain-specific decisions.
+当共享章节开始遮蔽领域专属决策时，按工作流类型拆分模板。

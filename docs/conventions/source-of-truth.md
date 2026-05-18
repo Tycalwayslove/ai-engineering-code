@@ -1,27 +1,27 @@
-# Source Of Truth
+# 单一事实来源
 
-## Purpose
+## 目的
 
-- Prevent duplicate definitions of contracts, specs, prompts, memory, workflows, packages, and service boundaries.
-- Tell maintainers where authoritative changes must start.
-- Keep docs as guidance instead of shadow copies of executable assets.
+- 防止契约、规格、提示词、记忆、工作流、包和服务边界出现重复定义。
+- 告诉维护者权威变更必须从哪里开始。
+- 让文档作为指南，而不是可执行资产的影子副本。
 
-## Rules
+## 规则
 
-- `contracts/` is authoritative for cross-runtime API, event, memory, and workflow agreements.
-- `ai-factory/specs` is authoritative for product, agent, and workflow specifications before implementation.
-- `ai-factory/memory` is authoritative for durable AI-readable memory documents.
-- `ai-factory/prompts` is authoritative for reusable prompt templates and prompt policy.
-- `ai-factory/workflows` is authoritative for workflow definitions, manifests, and process steps.
-- `ai-factory/design-system` is authoritative for AI-readable design-system inputs and generated design guidance.
-- `packages/` is authoritative for shared TypeScript libraries and SDK-facing TypeScript types.
-- `python/` is authoritative for Python runtime code, backend modules, agent runtime code, and orchestrator foundations.
-- `services/` is authoritative for domain ownership boundaries before service extraction.
-- `docs/adr` is authoritative for accepted architectural decisions and their consequences.
-- Do not copy authoritative content into another area; link or generate from the source instead.
+- `contracts/` 是跨运行时 API、事件、记忆和工作流协议的权威来源。
+- `ai-factory/specs` 是实施前产品、agent 和工作流规格的权威来源。
+- `ai-factory/memory` 是持久 AI 可读记忆文档的权威来源。
+- `ai-factory/prompts` 是可复用提示词模板和提示词策略的权威来源。
+- `ai-factory/workflows` 是工作流定义、manifest 和流程步骤的权威来源。
+- `ai-factory/design-system` 是 AI 可读设计系统输入和生成式设计指南的权威来源。
+- `packages/` 是共享 TypeScript 库和面向 SDK 的 TypeScript 类型的权威来源。
+- `python/` 是 Python 运行时代码、后端模块、agent 运行时代码和编排器基础的权威来源。
+- `services/` 是服务拆分前领域所有权边界的权威来源。
+- `docs/adr` 是已接受架构决策及其影响的权威来源。
+- 不要把权威内容复制到另一区域；应链接或从源生成。
 
-## Evolution
+## 演进
 
-- Move source-of-truth ownership with the code or asset it governs.
-- Add a convention entry when a new top-level area becomes authoritative.
-- Record major source-of-truth changes with an ADR.
+- 单一事实来源所有权随其治理的代码或资产一起移动。
+- 当新的顶层区域成为权威来源时，添加约定条目。
+- 用 ADR 记录重大单一事实来源变化。

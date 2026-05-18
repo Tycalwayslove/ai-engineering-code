@@ -1,17 +1,17 @@
-# AI Factory
+# AI 工厂
 
-## Purpose
+## 目的
 
-This directory holds the Markdown operating system for AI-assisted software delivery in this repository.
+该目录保存本仓库用于 AI 辅助软件交付的 Markdown 操作系统。
 
-## Source Of Truth
+## 单一事实来源
 
-Subdirectories own their domain rules, memory, prompts, workflows, specs, design system notes, and playbooks.
+子目录分别拥有各自领域的规则、记忆、提示词、工作流、规格、设计系统说明和作战手册。
 
-## Boundaries
+## 边界
 
-Keep this area documentation-first and Markdown-only during Phase 1. Runtime code must not auto-discover or execute content from here.
+第一阶段中该区域以文档为先，并保持为仅 Markdown。运行时代码不得自动发现或执行这里的内容。
 
-## Evolution
+## 演进
 
-Add executable loaders or structured indexes only after a written contract defines ownership, review, and safety controls.
+只有书面契约定义所有权、评审和安全控制后，才可添加可执行加载器或结构化索引。

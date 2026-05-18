@@ -1,17 +1,17 @@
-# Role Prompts
+# 角色提示词
 
-## Purpose
+## 目的
 
-This directory stores future prompts for named human or AI collaboration roles.
+该目录存放未来用于具名人类或 AI 协作角色的提示词。
 
-## Source Of Truth
+## 单一事实来源
 
-Role prompts own persona, responsibilities, inputs, and handoff expectations for a role.
+角色提示词拥有某角色的人设、职责、输入和交接预期。
 
-## Boundaries
+## 边界
 
-Role prompts must not grant tool or memory access beyond the agent registry.
+角色提示词不得授予超出 agent 注册表的工具或记忆访问权限。
 
-## Evolution
+## 演进
 
-Create role prompts when repeated work benefits from consistent responsibility framing.
+当重复工作受益于一致职责框架时，创建角色提示词。

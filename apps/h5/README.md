@@ -1,20 +1,20 @@
 # H5
 
-## Purpose
+## 目的
 
-`@ai-code/h5` is the mobile-first web surface for the AI-native software factory.
+`@ai-code/h5` 是 AI 原生软件工厂移动优先的 Web 界面。
 
-## Ownership
+## 所有权
 
-This app owns browser presentation for small screens and responsive web entry points.
+该应用拥有小屏幕和响应式 Web 入口的浏览器展示层。
 
-## Dependency Boundaries
+## 依赖边界
 
-- May import shared UI and shared types from `packages/`.
-- Must not import `services/*` or `ai-factory/*`.
-- Must not call backend endpoints directly or implement custom networking.
-- Future data access must use an explicit SDK boundary.
+- 可以从 `packages/` 导入共享 UI 和共享类型。
+- 不得导入 `services/*` 或 `ai-factory/*`。
+- 不得直接调用后端端点或实现自定义网络逻辑。
+- 未来数据访问必须使用显式 SDK 边界。
 
-## Evolution
+## 演进
 
-Grow this app around validated mobile workflows. Keep orchestration and backend coordination outside the app shell.
+围绕已验证的移动端工作流扩展该应用。编排和后端协调保持在应用壳之外。
