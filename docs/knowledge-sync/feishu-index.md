@@ -21,6 +21,7 @@
 | 06 面试讲解稿               | https://www.feishu.cn/wiki/OXovwgsQ0iec25ksqV6cRrvPnbc | `LhswdBn3To2JuMx63XkcvRICnVh` | `docs/knowledge-sync/feishu-pages/06-interview-script.md`             |
 | 07 流程审计与待完善清单     | https://www.feishu.cn/wiki/U51dw2EJuikOuKkQJzncBfyenwh | `R7GkdKX7boP7e6xubDfcoiMcn0e` | `docs/knowledge-sync/feishu-pages/07-process-audit.md`                |
 | 08 Phase 1.1 流程稳定化成果 | https://www.feishu.cn/wiki/AJ8vwBFdSiIylGkbWQUccQoqn1b | `SUV1dcpLoooxd4xmTK3csAvRnNd` | `docs/knowledge-sync/feishu-pages/08-phase-1-1-process-foundation.md` |
+| 09 真实流程演练：Intake     | https://www.feishu.cn/wiki/CUnZwZLNZiVMBrkDq11caqOsnQd | `Vo22dRonVoVxmsxVufScXvEXnsg` | `docs/knowledge-sync/feishu-pages/09-intake-real-workflow-run.md`     |
 
 ## 同步规则
 
@@ -35,3 +36,4 @@
 - 2026-05-18：已用 `docs +fetch --scope outline` 验证根页面和面试讲解稿可读取结构。
 - 2026-05-18：已新增 `07 流程审计与待完善清单`，并更新 `03 阶段演进记录`。
 - 2026-05-18：已新增 `08 Phase 1.1 流程稳定化成果`，并再次更新 `03 阶段演进记录`。
+- 2026-05-18：已新增 `09 真实流程演练：AI Factory Intake`，并验证页面结构可读取。
