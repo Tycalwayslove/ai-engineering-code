@@ -14,9 +14,18 @@
 
 - workflow id: idea-to-product-understanding
 - run id: 2026-05-18-ai-factory-intake
+- parent run id:
+- lifecycle id: ai-factory-intake-2026-05-18
 - trigger: 用户要求挑选一个合适想法走真实流程
 - owner: 当前任务负责人
 - branch: codex/ai-native-factory-bootstrap
+
+## 流程实例边界
+
+- 主目标：验证 AI Factory Intake 如何从原始想法进入产品理解。
+- 是否延续既有目标：否，这是该目标的第一个主流程实例。
+- 如果是子流程，链接回：无。
+- revision 规则：围绕 Intake 目标的补充分类、确认和修正都记录在同一生命周期内，不按对话次数新建主流程。
 
 ## 输入来源
 

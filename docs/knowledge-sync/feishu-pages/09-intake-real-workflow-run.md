@@ -45,6 +45,14 @@ flowchart LR
 - 该需求不进入 PRD 候选池。
 - 当前只作为 AI 工厂流程基础设施沉淀。
 
+## 补充流程规则
+
+流程不按“对话次数”划分，而按“目标连续性”划分。
+
+一个想法从 Intake 到产品理解、需求、PRD、设计 brief、UI 设计图和工程规格，属于同一个主流程生命周期。中间的补充、修正、评审和设计调试，都应记录为同一流程的 revision 或状态轨迹。
+
+只有目标改变、范围结构性扩大、产生独立子方向，或已关闭流程重新启动时，才创建新流程或子流程。子流程必须链接回主流程。
+
 ## 产生的仓库资产
 
 - `ai-factory/specs/product-understanding/2026-05-18-ai-factory-intake-product-understanding.md`

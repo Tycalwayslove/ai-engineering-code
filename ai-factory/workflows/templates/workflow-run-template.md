@@ -14,9 +14,18 @@
 
 - workflow id:
 - run id:
+- parent run id:
+- lifecycle id:
 - trigger:
 - owner:
 - branch:
+
+## 流程实例边界
+
+- 主目标：
+- 是否延续既有目标：
+- 如果是子流程，链接回：
+- revision 规则：同一目标下的补充、修正、评审和调试记录为本 run 的 revision，不因对话轮次新建主流程。
 
 ## 输入来源
 

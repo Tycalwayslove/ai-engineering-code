@@ -14,9 +14,18 @@
 
 - workflow id: requirement-capture
 - run id: 2026-05-18-ai-factory-intake-requirements
+- parent run id: 2026-05-18-ai-factory-intake
+- lifecycle id: ai-factory-intake-2026-05-18
 - trigger: 用户确认产品理解方向准确，要求补充 Intake 分类，并允许进入下一步
 - owner: 当前任务负责人
 - branch: codex/ai-native-factory-bootstrap
+
+## 流程实例边界
+
+- 主目标：验证 AI Factory Intake 如何从产品理解进入需求点记录。
+- 是否延续既有目标：是，延续 `ai-factory-intake-2026-05-18`。
+- 如果是子流程，链接回：`2026-05-18-ai-factory-intake`。
+- revision 规则：需求陈述确认、分类增补和“不进入 PRD 候选池”的决策属于同一生命周期内的迭代，不新建主流程。
 
 ## 输入来源
 
