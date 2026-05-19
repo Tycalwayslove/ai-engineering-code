@@ -205,7 +205,7 @@ v0.4 的重点不是继续追求玻璃视觉，而是解决 v0.3 的信息架构
 
 因此 v0.5 作为一个独立设计系统版本，不新增产品功能，专门沉淀 v0.4 中已经稳定的 UI 模式。
 
-当前已完成代码侧第一版实施：
+当前已完成第一版实施：
 
 - `packages/shared-ui/src/tokens`：设计令牌与 CSS 变量映射。
 - `packages/shared-ui/src/icons`：React Icon 组件与本地 SVG 图标资产。
@@ -213,12 +213,17 @@ v0.4 的重点不是继续追求玻璃视觉，而是解决 v0.3 的信息架构
 - `packages/shared-ui/src/composites`：ComposerBar、ExecutionStatusBar、MessageBubble、ConfirmationCard、TimelineDrawer。
 - `packages/shared-ui/src/layouts`：MobileAgentShell。
 - `apps/h5/src/app/design-system/page.tsx`：组件库示例页。
+- Figma 页面：`AI 时间管理 Agent v0.5 Design System`
+- Figma 链接：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=46-27>
+- Figma 本地组件：Button、IconButton、StatusBadge、MessageBubble、ExecutionStatusBar、ComposerBar、ConfirmationCard、TimelineDrawer、MobileAgentShell。
+- Figma 图标组件：11 个本地 SVG 图标组件。
+- Figma 映射区：列出 Figma Component 到 `packages/shared-ui` 源码路径的对应关系。
 
 仍保留为下一步的设计资产建设：
 
-- Figma 本地组件库。
-- Figma 组件到代码组件的映射表。
 - 后续 Code Connect 候选计划。
+- 更完整的 Figma 变量绑定。
+- Lucide 图标子集替换策略。
 
 这一步的价值是让后续 AI 生成 UI 时优先复用设计系统资产，而不是每次重新画一套临时组件。
 

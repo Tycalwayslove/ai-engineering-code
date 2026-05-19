@@ -219,6 +219,10 @@ v0.4 把上一阶段确认的产品判断落成可审阅视觉资产。它不再
 - 新增 `packages/shared-ui` 的 tokens、icons、primitives、composites、layouts 分层。
 - 新增 H5 `/design-system` 示例页，用于查看组件库当前效果。
 - 通过 TypeScript、H5 build、factory validation 和 HTTP 访问验证。
+- 创建 Figma 页面 `AI 时间管理 Agent v0.5 Design System`。
+- 在 Figma 中补齐 Button、IconButton、StatusBadge、MessageBubble、ExecutionStatusBar、ComposerBar、ConfirmationCard、TimelineDrawer、MobileAgentShell 等组件。
+- 在 Figma 中补齐 11 个本地 SVG 图标组件。
+- 在 Figma 中补齐组件到 `packages/shared-ui` 源码路径的映射区。
 
 阶段价值：
 

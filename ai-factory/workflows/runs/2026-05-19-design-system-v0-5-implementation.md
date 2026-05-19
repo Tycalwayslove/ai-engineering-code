@@ -39,13 +39,14 @@
 
 ## 状态轨迹
 
-| 时间       | 状态        | 说明                                                  |
-| ---------- | ----------- | ----------------------------------------------------- |
-| 2026-05-19 | intake      | 读取 shared-ui、H5、v0.5 规划和当前包结构             |
-| 2026-05-19 | implemented | 新增 tokens、icons、primitives、composites、layouts   |
-| 2026-05-19 | showcased   | 新增 H5 `/design-system` 示例页                       |
-| 2026-05-19 | verified    | 通过 typecheck、build、factory validation 和 HTTP 200 |
-| 2026-05-19 | completed   | 同步 Obsidian 和飞书知识库                            |
+| 时间       | 状态         | 说明                                                        |
+| ---------- | ------------ | ----------------------------------------------------------- |
+| 2026-05-19 | intake       | 读取 shared-ui、H5、v0.5 规划和当前包结构                   |
+| 2026-05-19 | implemented  | 新增 tokens、icons、primitives、composites、layouts         |
+| 2026-05-19 | showcased    | 新增 H5 `/design-system` 示例页                             |
+| 2026-05-19 | verified     | 通过 typecheck、build、factory validation 和 HTTP 200       |
+| 2026-05-19 | figma_synced | 创建 Figma v0.5 Design System 页面、组件、variants 和映射区 |
+| 2026-05-19 | completed    | 同步 Obsidian 和飞书知识库                                  |
 
 ## 输出
 
@@ -55,6 +56,11 @@
 - `packages/shared-ui/src/composites`
 - `packages/shared-ui/src/layouts`
 - `apps/h5/src/app/design-system/page.tsx`
+- Figma：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=46-27>
+- Figma 页面：`AI 时间管理 Agent v0.5 Design System`
+- Figma 本地组件：Button、IconButton、StatusBadge、MessageBubble、ExecutionStatusBar、ComposerBar、ConfirmationCard、TimelineDrawer、MobileAgentShell。
+- Figma 图标组件：calendar、check、chevronRight、clock、close、keyboard、menu、mic、plus、sparkles、timeline。
+- Figma 映射区：列出 Figma Component 到 `packages/shared-ui` 源码路径的对应关系。
 
 ## 验证
 
@@ -64,6 +70,8 @@
 - `pnpm --filter @ai-code/h5 build`
 - `pnpm validate:factory`
 - `curl http://localhost:3000/design-system` 返回 `200`
+- Figma metadata 验证 v0.5 页面结构存在。
+- Figma screenshot 验证 v0.5 页面可渲染。
 
 ## 记忆更新建议
 

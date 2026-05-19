@@ -30,7 +30,7 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 
 ## 实施状态
 
-当前已完成代码侧第一版实施：
+当前已完成第一版实施：
 
 - `packages/shared-ui/src/tokens`：新增设计令牌与 CSS 变量映射。
 - `packages/shared-ui/src/icons`：新增 React Icon 组件与本地 SVG 图标资产。
@@ -38,12 +38,18 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 - `packages/shared-ui/src/composites`：新增 ComposerBar、ExecutionStatusBar、MessageBubble、ConfirmationCard、TimelineDrawer。
 - `packages/shared-ui/src/layouts`：新增 MobileAgentShell。
 - `apps/h5/src/app/design-system/page.tsx`：新增组件库示例页。
+- Figma 页面：`AI 时间管理 Agent v0.5 Design System`
+- Figma 链接：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=46-27>
+- Figma 本地样式：25 个本地 paint/text styles。
+- Figma 本地组件：Button、IconButton、StatusBadge、MessageBubble、ExecutionStatusBar、ComposerBar、ConfirmationCard、TimelineDrawer、MobileAgentShell。
+- Figma 图标组件：11 个本地 SVG 图标组件。
+- Figma 映射区：已列出 Figma Component 到 `packages/shared-ui` 源码路径的对应关系。
 
 仍待后续补齐：
 
-- Figma 本地组件库。
-- Figma 组件到代码组件的映射表。
 - Code Connect 候选计划。
+- 更完整的 Figma 变量绑定。
+- Lucide 图标子集替换策略。
 
 本阶段验证：
 
@@ -53,6 +59,8 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 - `pnpm --filter @ai-code/h5 build`
 - `pnpm validate:factory`
 - `curl http://localhost:3000/design-system` 返回 `200`
+- Figma metadata 验证 `AI 时间管理 Agent v0.5 Design System` 页面存在。
+- Figma screenshot 验证组件库页面可渲染。
 
 ## 设计系统层级
 
@@ -142,13 +150,13 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 
 v0.5 应交付：
 
-- Figma 本地组件库页面。
-- 设计令牌说明。
-- 组件命名规则。
-- 图标库选择与下载说明。
-- Figma 组件到代码组件的映射表。
-- `packages/shared-ui` 组件目录规划。
-- 后续 Code Connect 候选计划。
+- [x] Figma 本地组件库页面。
+- [x] 设计令牌说明。
+- [x] 组件命名规则。
+- [x] 图标库选择与下载说明。
+- [x] Figma 组件到代码组件的映射表。
+- [x] `packages/shared-ui` 组件目录规划。
+- [ ] 后续 Code Connect 候选计划。
 
 ## 不进入 v0.5
 
