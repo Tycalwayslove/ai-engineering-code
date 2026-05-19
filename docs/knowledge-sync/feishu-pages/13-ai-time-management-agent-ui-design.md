@@ -10,7 +10,8 @@ AI 时间管理 Agent 已从 design brief 进入 UI 设计图草案阶段。
 
 - 文件名：AI 时间管理 Agent - UI 设计图 v0.1
 - 链接：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy>
-- 当前页面：`AI 时间管理 Agent v0.3`
+- 当前页面：`AI 时间管理 Agent v0.4`
+- v0.4 页面：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=33-2>
 
 ## 覆盖画板
 
@@ -164,6 +165,40 @@ v0.3 作为历史设计证据保留。下一步建议进入 Figma v0.4 重画，
 - `ai-factory/specs/requirements/2026-05-19-ai-time-management-agent-execution-workbench-revision.md`
 - `ai-factory/specs/design/2026-05-19-ai-time-management-agent-ui-revision.md`
 
+## v0.4 重画结果
+
+2026-05-19 已使用 `ui-ux-pro-max` 的移动端 UI 规则重画 Figma v0.4。
+
+v0.4 的重点不是继续追求玻璃视觉，而是解决 v0.3 的信息架构问题：
+
+- 顶部按钮语义固定：左侧 Timeline Drawer，右侧执行记录和完整日历。
+- 首页默认是 AI 执行流，不再是日历工作台。
+- Timeline Drawer 参考 Timepage，只做日期上下文，不放连接器或设置。
+- 固定执行状态栏放在输入框上方，不随对话滚动消失。
+- 高风险操作用结构化确认卡片列出影响范围。
+- 日历只作为结果检查工具，不承担主要创建入口。
+
+覆盖画板：
+
+| 画板                               | 说明                             |
+| ---------------------------------- | -------------------------------- |
+| 00 v0.4 Design System & Flow       | 设计约束、设计令牌和执行流水线。 |
+| 01 首页默认态 / AI 执行流          | 首页主舞台。                     |
+| 02 Timeline Drawer / Timepage 风格 | 日期上下文抽屉。                 |
+| 03 信息补全 / 缺日期               | AI 追问缺失字段。                |
+| 04 单项确认 / 中风险               | 单项写入前确认。                 |
+| 05 批量确认 / 高风险               | 批量或清空操作确认。             |
+| 06 固定状态栏 / 多状态             | 展示实时执行状态。               |
+| 07 执行结果 / 已完成               | 完成结果卡片。                   |
+| 08 执行记录 / AI 操作账本          | 审计 AI 操作。                   |
+| 09 完整日历 / 结果检查             | 检查与定位。                     |
+| 10 事项详情 / 主动点开             | 主动查看详情。                   |
+| 11 v0.4 Interaction Map            | 页面关系和交互规则。             |
+
+已补充 16 个基础可点击原型入口，可演示从首页到 Timeline、执行记录、完整日历、信息补全、确认、结果和详情的主路径。
+
+当前状态：v0.4 已生成，等待用户评审。
+
 ## 仓库证据
 
 - `ai-factory/specs/design/2026-05-18-ai-time-management-agent-ui-design.md`
@@ -173,3 +208,4 @@ v0.3 作为历史设计证据保留。下一步建议进入 Figma v0.4 重画，
 - `ai-factory/workflows/registries/ui-design-draft.manifest.json`
 - `ai-factory/workflows/runs/2026-05-18-ui-design-draft-ai-time-management-agent.md`
 - `ai-factory/workflows/runs/2026-05-19-ai-time-management-agent-requirement-ui-revision.md`
+- `ai-factory/workflows/runs/2026-05-19-ui-redraw-ai-time-management-agent-v0-4.md`

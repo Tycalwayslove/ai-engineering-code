@@ -9,6 +9,10 @@
 - linkedRequirement: `ai-factory/specs/requirements/2026-05-19-ai-time-management-agent-execution-workbench-revision.md`
 - supersedesDesignDirection: `ai-factory/specs/design/2026-05-18-ai-time-management-agent-ui-design.md`
 - created: 2026-05-19
+- figmaFileKey: `HkZQagTFqRtGaoxwOGcriy`
+- figmaV04Page: `AI 时间管理 Agent v0.4`
+- figmaV04Node: `33:2`
+- figmaV04Url: <https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=33-2>
 
 ## 修订原因
 
@@ -272,6 +276,58 @@ V1 可包含：
 8. 执行记录视图。
 9. 完整日历视图。
 10. 事项详情页。
+
+## Figma v0.4 已生成
+
+2026-05-19 已按本修订方案重画 Figma v0.4。
+
+- Figma 文件：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy>
+- v0.4 页面：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=33-2>
+- 页面名：`AI 时间管理 Agent v0.4`
+- 画板数量：12
+- 原型交互入口：16
+
+v0.4 画板包括：
+
+| 画板                                 | 说明                                           |
+| ------------------------------------ | ---------------------------------------------- |
+| `00 v0.4 Design System & Flow`       | 设计约束、执行流水线和设计令牌说明。           |
+| `01 首页默认态 / AI 执行流`          | 首页默认是 AI 执行流，不是日历工作台。         |
+| `02 Timeline Drawer / Timepage 风格` | 日期上下文抽屉，展示今天 + 未来 7 天。         |
+| `03 信息补全 / 缺日期`               | 用户只输入意图时，AI 复述并追问缺失字段。      |
+| `04 单项确认 / 中风险`               | 单项创建或修改前的结构化复述确认。             |
+| `05 批量确认 / 高风险`               | 批量删除、清空、创建等高风险操作确认。         |
+| `06 固定状态栏 / 多状态`             | 输入框上方固定展示 AI 执行状态。               |
+| `07 执行结果 / 已完成`               | 操作完成后的结果卡片和可撤销提示。             |
+| `08 执行记录 / AI 操作账本`          | 记录待确认、执行中、已完成、失败和可撤销操作。 |
+| `09 完整日历 / 结果检查`             | 日历用于查看和定位，不作为主要创建入口。       |
+| `10 事项详情 / 主动点开`             | 用户主动查看某个事项时进入详情。               |
+| `11 v0.4 Interaction Map`            | 展示页面间交互关系和主路径约束。               |
+
+已绑定的主要可点击交互：
+
+- 首页 Timeline 按钮进入 Timeline Drawer。
+- 首页执行记录按钮进入执行记录。
+- 首页日历按钮进入完整日历。
+- 首页输入框进入信息补全示例。
+- 首页确认按钮进入执行结果。
+- Timeline Drawer 关闭或选择日期返回首页。
+- 信息补全卡片选择今天/明天进入单项确认。
+- 单项确认和批量确认进入执行结果。
+- 执行结果、执行记录和日历事件可进入事项详情。
+- 详情页可返回结果或继续对话回首页。
+
+## v0.4 设计约束
+
+v0.4 设计时遵循以下约束：
+
+- 顶部按钮语义固定，不再混用菜单、返回和跳转。
+- 所有主要触控入口保持至少 44pt。
+- 深色模式下主文本优先保证可读性，玻璃效果只用于控制层和状态层。
+- 固定执行状态栏必须独立于对话滚动内容。
+- Timeline Drawer 只承载日期上下文，不放连接器、设置或新建入口。
+- 日历是结果检查工具，不是主要创建入口。
+- 费用管理、图片识别和外部连接器不进入 v0.4 画板主路径。
 
 ## 不进入本阶段
 
