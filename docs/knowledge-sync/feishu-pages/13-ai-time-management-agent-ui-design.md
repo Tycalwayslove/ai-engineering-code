@@ -199,11 +199,27 @@ v0.4 的重点不是继续追求玻璃视觉，而是解决 v0.3 的信息架构
 
 当前状态：v0.4 已生成，等待用户评审。
 
+## 后续版本：v0.5 本地组件库
+
+用户补充提出：后续需要建立本地组件库，从设计风格到代码侧组件库，再到可下载 icon 图标库，都应该纳入体系。
+
+因此 v0.5 建议作为一个独立设计系统版本，不新增产品功能，专门沉淀 v0.4 中已经稳定的 UI 模式：
+
+- Figma 本地组件库。
+- 设计风格与设计令牌。
+- `packages/shared-ui` 组件分层规划。
+- 可下载、可替换、可追溯的 SVG icon 图标库。
+- Figma 组件到代码组件的映射表。
+- 后续 Code Connect 候选计划。
+
+这一步的价值是让后续 AI 生成 UI 时优先复用设计系统资产，而不是每次重新画一套临时组件。
+
 ## 仓库证据
 
 - `ai-factory/specs/design/2026-05-18-ai-time-management-agent-ui-design.md`
 - `ai-factory/specs/requirements/2026-05-19-ai-time-management-agent-execution-workbench-revision.md`
 - `ai-factory/specs/design/2026-05-19-ai-time-management-agent-ui-revision.md`
+- `ai-factory/specs/design/2026-05-19-ai-time-management-agent-design-system-v0-5-plan.md`
 - `ai-factory/workflows/ui-design-draft.md`
 - `ai-factory/workflows/registries/ui-design-draft.manifest.json`
 - `ai-factory/workflows/runs/2026-05-18-ui-design-draft-ai-time-management-agent.md`

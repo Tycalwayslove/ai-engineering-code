@@ -15,3 +15,19 @@
 ## 演进
 
 当设计决策可跨屏幕、平台或工具复用时，再添加结构。
+
+## 计划中的本地组件库
+
+`AI 时间管理 Agent v0.4` 已经形成较稳定的产品视觉方向。后续应单独用 `v0.5` 完善本地设计系统基础，而不是继续把组件散落在单个 Figma 画板里。
+
+v0.5 目标：
+
+- 建立 Figma 本地组件库。
+- 明确设计风格和设计令牌。
+- 对齐 `packages/shared-ui` 的组件分层。
+- 增加可下载、可追溯、可替换的 icon 图标库。
+- 为后续 Code Connect 和设计到代码一致性校验预留路径。
+
+详细计划见：
+
+- `ai-factory/specs/design/2026-05-19-ai-time-management-agent-design-system-v0-5-plan.md`
