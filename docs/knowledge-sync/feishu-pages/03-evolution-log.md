@@ -215,6 +215,10 @@ v0.4 把上一阶段确认的产品判断落成可审阅视觉资产。它不再
 - 新增本地设计系统规划文档，定义 tokens、Figma 组件、本地 `packages/shared-ui` 组件和图标库四层资产。
 - 在 UI 设计图记录中补充 v0.5 组件库演进方向。
 - 在 Obsidian 中记录阶段成果，方便后续回看为什么此事被单独拆版。
+- 用户确认后，将 v0.5 规划落成可运行的本地组件库。
+- 新增 `packages/shared-ui` 的 tokens、icons、primitives、composites、layouts 分层。
+- 新增 H5 `/design-system` 示例页，用于查看组件库当前效果。
+- 通过 TypeScript、H5 build、factory validation 和 HTTP 访问验证。
 
 阶段价值：
 

@@ -2,7 +2,12 @@
   color: #171717;
   background: #f7f7f5;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
 }
 
@@ -103,4 +108,169 @@ p {
 
 .status-dot-planned {
   background: #d97706;
+}
+
+.design-system-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(8, 184, 148, 0.16),
+      transparent 28rem
+    ),
+    #0e1110;
+  color: #f4f7f5;
+  display: grid;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.design-system-hero {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 56rem;
+  padding-top: 2rem;
+}
+
+.design-system-hero p,
+.design-system-hero span,
+.section-heading p {
+  color: #a5aea9;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.design-system-hero p {
+  color: #08b894;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.design-system-hero h1,
+.section-heading h2 {
+  color: #f4f7f5;
+  margin: 0;
+}
+
+.design-system-section {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 78rem);
+}
+
+.section-heading {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.token-grid,
+.icon-grid,
+.component-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.token-grid {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.token-grid article,
+.icon-grid article,
+.demo-surface,
+.phone-frame {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(29, 34, 32, 0.82);
+}
+
+.token-grid article {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.token-grid span {
+  width: 100%;
+  height: 3rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.token-grid strong,
+.icon-grid span {
+  color: #f4f7f5;
+  font-size: 0.95rem;
+}
+
+.token-grid code {
+  color: #a5aea9;
+  font-size: 0.8rem;
+}
+
+.component-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.icon-grid {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.icon-grid article {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.component-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  align-items: start;
+}
+
+.demo-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.phone-frame {
+  width: min(100%, 25rem);
+  overflow: hidden;
+}
+
+.mobile-header-demo {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mobile-header-demo div {
+  display: grid;
+  justify-items: center;
+}
+
+.mobile-header-demo strong {
+  color: #f4f7f5;
+  font-size: 1rem;
+}
+
+.mobile-header-demo span {
+  color: #a5aea9;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 820px) {
+  .design-system-page {
+    padding: 1rem;
+  }
+
+  .component-grid {
+    grid-template-columns: 1fr;
+  }
 }
