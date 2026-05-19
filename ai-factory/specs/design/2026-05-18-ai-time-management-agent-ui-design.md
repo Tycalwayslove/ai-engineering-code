@@ -11,7 +11,18 @@
 - figmaUrl: <https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy>
 - currentFigmaPage: `AI 时间管理 Agent v0.3`
 - created: 2026-05-18
-- lastUpdated: 2026-05-18
+- lastUpdated: 2026-05-19
+
+## 修订状态
+
+本文件记录 v0.1 到 v0.3 的 UI 设计图草案和原型交互。2026-05-19 用户评审后确认：v0.3 的问题不是单纯视觉问题，而是产品主路径和信息架构问题。
+
+后续 UI 方向以以下修订文档为准：
+
+- `ai-factory/specs/requirements/2026-05-19-ai-time-management-agent-execution-workbench-revision.md`
+- `ai-factory/specs/design/2026-05-19-ai-time-management-agent-ui-revision.md`
+
+下一版 Figma 应从“日历工作台 + AI 输入”改为“AI 执行流 + Timepage 风格 Timeline Drawer”，并保留 v0.3 作为历史设计证据。
 
 ## 设计目标
 
