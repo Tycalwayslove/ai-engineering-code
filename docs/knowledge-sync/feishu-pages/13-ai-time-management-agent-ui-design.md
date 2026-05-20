@@ -219,6 +219,23 @@ v0.4 的重点不是继续追求玻璃视觉，而是解决 v0.3 的信息架构
 - Figma 图标组件：11 个本地 SVG 图标组件。
 - Figma 映射区：列出 Figma Component 到 `packages/shared-ui` 源码路径的对应关系。
 
+2026-05-20 又补充了两个面向后续维护的区域：
+
+- `05 Component Gallery`：直接展示 Button、IconButton、StatusBadge、ExecutionStatusBar、MessageBubble、ComposerBar、ConfirmationCard、TimelineDrawer、MobileAgentShell 的当前样式、用途和代码来源。
+- `06 Design System Changelog`：记录组件库视觉与代码变更，说明每次组件库更新应同步到 Figma、仓库、Obsidian、飞书和 Git 提交。
+
+后续如果组件库发生修改，查看路径固定为：
+
+| 位置                 | 用途                               |
+| -------------------- | ---------------------------------- |
+| Figma v0.5 Gallery   | 直接看组件当前样式。               |
+| Figma v0.5 Changelog | 看组件库视觉和代码变更摘要。       |
+| `packages/shared-ui` | 看真实代码实现。                   |
+| workflow run         | 看这次修改为什么发生、范围是什么。 |
+| Obsidian 阶段成果    | 看过程记录和内部复盘。             |
+| 飞书 UI 设计页       | 给外部读者和面试官看项目演进。     |
+| Git 提交             | 看可验证的变更边界和中文提交说明。 |
+
 仍保留为下一步的设计资产建设：
 
 - 后续 Code Connect 候选计划。

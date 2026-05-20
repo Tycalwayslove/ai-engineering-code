@@ -219,11 +219,13 @@ v0.4 把上一阶段确认的产品判断落成可审阅视觉资产。它不再
 - 新增 `packages/shared-ui` 的 tokens、icons、primitives、composites、layouts 分层。
 - 新增 H5 `/design-system` 示例页，用于查看组件库当前效果。
 - 通过 TypeScript、H5 build、factory validation 和 HTTP 访问验证。
-- 创建 Figma 页面 `AI 时间管理 Agent v0.5 Design System`。
+- 创建 Figma `AI 时间管理 Agent v0.5 Design System` 页面，沉淀本地组件、图标组件和代码映射区。
 - 在 Figma 中补齐 Button、IconButton、StatusBadge、MessageBubble、ExecutionStatusBar、ComposerBar、ConfirmationCard、TimelineDrawer、MobileAgentShell 等组件。
 - 在 Figma 中补齐 11 个本地 SVG 图标组件。
 - 在 Figma 中补齐组件到 `packages/shared-ui` 源码路径的映射区。
+- 补充 Figma `05 Component Gallery`，让非开发者可以直接查看组件当前样式。
+- 补充 Figma `06 Design System Changelog`，固定后续组件库变化的可追踪路径。
 
 阶段价值：
 
-这个阶段把“好看的设计稿”继续推进为“可复用的设计生产系统”。后续 AI 生成界面时，不应每次从零画风格，而应从稳定 tokens、组件、图标和映射关系中生成，减少视觉漂移和实现偏差。
+这个阶段把“好看的设计稿”继续推进为“可复用、可追踪的设计生产系统”。组件库不再只存在于代码或单张设计稿里，而是形成“Figma 可看、代码可用、流程可追、知识库可讲”的设计系统证据链。后续 AI 生成界面时，不应每次从零画风格，而应从稳定 tokens、组件、图标和映射关系中生成，减少视觉漂移和实现偏差。

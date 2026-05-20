@@ -44,6 +44,9 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 - Figma 本地组件：Button、IconButton、StatusBadge、MessageBubble、ExecutionStatusBar、ComposerBar、ConfirmationCard、TimelineDrawer、MobileAgentShell。
 - Figma 图标组件：11 个本地 SVG 图标组件。
 - Figma 映射区：已列出 Figma Component 到 `packages/shared-ui` 源码路径的对应关系。
+- Figma Component Gallery：已新增面向浏览的组件样式展示区，节点 `53:19`。
+- Figma Design System Changelog：已新增组件库变更记录区，节点 `53:199`。
+- 后续组件库修改应同步更新 Figma Gallery、Figma Changelog、workflow run、Obsidian 阶段成果、飞书 UI 设计页和 Git 提交记录。
 
 仍待后续补齐：
 
@@ -61,6 +64,7 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 - `curl http://localhost:3000/design-system` 返回 `200`
 - Figma metadata 验证 `AI 时间管理 Agent v0.5 Design System` 页面存在。
 - Figma screenshot 验证组件库页面可渲染。
+- Figma metadata 验证 `05 Component Gallery` 和 `06 Design System Changelog` 存在。
 
 ## 设计系统层级
 
@@ -151,6 +155,8 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 v0.5 应交付：
 
 - [x] Figma 本地组件库页面。
+- [x] Figma 组件样式展示区。
+- [x] Figma 组件库变更记录区。
 - [x] 设计令牌说明。
 - [x] 组件命名规则。
 - [x] 图标库选择与下载说明。
