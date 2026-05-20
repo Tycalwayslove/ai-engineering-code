@@ -278,3 +278,20 @@ v0.7 让设计系统从“组件库”继续进化为“主题能力”。后续
 阶段价值：
 
 这个阶段把“看着 UI 图写代码”升级为可审计的工程转换流程。它将 Figma、设计系统、PRD、需求修订和代码边界连接起来，先定义哪些是页面组合、哪些是共享组件、哪些是 mock、哪些能力必须留给后端和 SDK。下一步进入 H5 实现时，代码不会凭聊天上下文漂移，而是沿着工程规格、实施计划和验证清单推进。
+
+## 阶段 18：H5 首屏薄切片实现
+
+完成内容：
+
+- 按 `ui-to-code-implementation` 工作流执行 H5 首屏薄切片。
+- 将 `apps/h5` 首页从工厂状态占位页替换为 AI 时间管理 Agent 主界面。
+- 新增 route-local 类型、demo 数据和轻量 TypeScript 契约测试。
+- 新增 `AgentWorkbench`、Header、ThemeSwitcher、QuickStats、ConversationPanel、ExecutionLedgerPreview 和 TimelinePanel 页面组合。
+- 复用 `packages/shared-ui` 的 MobileAgentShell、MessageBubble、ConfirmationCard、ExecutionStatusBar、ComposerBar、TimelineDrawer、IconButton 和 StatusBadge。
+- 接入 v0.7 主题 token，支持深色 / 浅色主题切换。
+- 固定执行状态栏位于底部输入栏上方，Timeline 在桌面预览区展示。
+- 通过 H5 typecheck、H5 build 和 Chrome 本地页面检查。
+
+阶段价值：
+
+这是 AI 时间管理 Agent 从设计资产进入真实代码的第一步。实现仍然保持薄切片原则：页面只展示 UI、主题和演示状态，不承担 AI 指令解析、真实日程写入、后端编排或 Native Bridge。这样既能开始看到产品形态，又不会把前端变成业务编排层。

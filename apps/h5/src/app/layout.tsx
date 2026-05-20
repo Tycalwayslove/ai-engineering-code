@@ -4,13 +4,13 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Code H5",
-  description: "Mobile-first web surface for the AI-native software factory.",
+  title: "AI 时间管理 Agent",
+  description: "通过 AI 对话完成日程理解、确认和时间管理的 H5 产品层。",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body>{children}</body>
     </html>
   );
