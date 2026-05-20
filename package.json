@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "turbo dev --filter=@ai-code/h5 --filter=@ai-code/admin",
     "dev:h5": "pnpm --filter @ai-code/h5 dev",
+    "dev:h5:host": "pnpm --filter @ai-code/h5 dev:host",
     "dev:admin": "pnpm --filter @ai-code/admin dev",
     "dev:api": "printf 'Run: uvicorn backend.app.main:app --app-dir python/backend --reload\\n'",
     "build": "turbo build",

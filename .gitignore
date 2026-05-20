@@ -18,3 +18,8 @@ env/
 !.env.example
 .DS_Store
 .superpowers/
+
+DerivedData/
+*.xcuserstate
+**/*.xcodeproj/xcuserdata/
+**/*.xcworkspace/xcuserdata/

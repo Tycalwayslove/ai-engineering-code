@@ -6,8 +6,21 @@ struct HybridShellConfiguration {
 
     static let development = HybridShellConfiguration(
         title: "AI Native Shell",
-        h5URL: URL(string: "http://127.0.0.1:3000")!
+        h5URL: URL(string: Bundle.main.h5DevServerURL)!
     )
+}
+
+private extension Bundle {
+    var h5DevServerURL: String {
+        let configuredURL = object(forInfoDictionaryKey: "H5DevServerURL") as? String
+        let fallbackURL = "http://127.0.0.1:3000"
+
+        guard let configuredURL, !configuredURL.isEmpty else {
+            return fallbackURL
+        }
+
+        return configuredURL
+    }
 }
 
 enum WebViewLoadState: Equatable {

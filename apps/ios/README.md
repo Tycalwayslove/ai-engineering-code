@@ -21,7 +21,7 @@
 - iOS 不直接读取 `services/*` 或 `ai-factory/*`。
 - iOS 不直接调用后端业务接口。
 - iOS 与 H5 的通信必须后续通过显式 Native Bridge 契约定义。
-- 本地调试默认加载 `http://127.0.0.1:3000`。
+- 本地调试默认通过 `H5_DEV_SERVER_URL` 加载 H5。
 
 ## 本地调试
 
@@ -39,7 +39,47 @@
 
 3. 选择 iPhone Simulator 运行。
 
-如果使用真机调试，需要把 `HybridShellConfiguration.development` 里的 URL 改成 Mac 的局域网地址，例如 `http://192.168.x.x:3000`。
+模拟器默认地址是：
+
+```text
+http://127.0.0.1:3000
+```
+
+如果使用真机调试，`127.0.0.1` 会指向手机自己，不会指向 Mac。此时需要：
+
+1. 启动可被局域网访问的 H5：
+
+   ```bash
+   pnpm dev:h5:host
+   ```
+
+2. 查询 Mac 的局域网 IP：
+
+   ```bash
+   ipconfig getifaddr en0
+   ```
+
+3. 在 Xcode 中打开 Target `AIEngineeringCode` 的 Build Settings，搜索 `H5_DEV_SERVER_URL`，改成：
+
+   ```text
+   http://你的-Mac-IP:3000
+   ```
+
+4. 确保 Mac 和 iPhone 在同一个 Wi-Fi，且系统防火墙没有拦截 3000 端口。
+
+也可以用命令行临时覆盖：
+
+```bash
+xcodebuild \
+  -project apps/ios/AIEngineeringCode.xcodeproj \
+  -scheme AIEngineeringCode \
+  -configuration Debug \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  H5_DEV_SERVER_URL=http://127.0.0.1:3000 \
+  build
+```
+
+真机命令行构建时，需要把 `H5_DEV_SERVER_URL` 替换成 Mac 的局域网地址，并配置签名团队。
 
 ## 文件结构
 
@@ -47,6 +87,42 @@
 - `HybridShellView.swift`：Native 壳样式、加载态和错误态。
 - `H5WebView.swift`：`WKWebView` 封装和 `NativeBridge` 占位。
 - `Info.plist`：本地 HTTP 调试权限和 App 基础配置。
+
+## xcodebuild 环境
+
+完整运行 `xcodebuild` 需要安装完整 Xcode，而不是只有 Command Line Tools。
+
+本机首次配置：
+
+```bash
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -license accept
+sudo xcodebuild -runFirstLaunch
+xcodebuild -version
+```
+
+查看项目：
+
+```bash
+xcodebuild -list -project apps/ios/AIEngineeringCode.xcodeproj
+```
+
+模拟器构建：
+
+```bash
+xcodebuild \
+  -project apps/ios/AIEngineeringCode.xcodeproj \
+  -scheme AIEngineeringCode \
+  -configuration Debug \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  build
+```
+
+如果不知道可用模拟器名称：
+
+```bash
+xcrun simctl list devices available
+```
 
 ## 后续演进
 
