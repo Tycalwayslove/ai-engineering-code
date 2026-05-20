@@ -13,7 +13,7 @@ struct HybridShellConfiguration {
 private extension Bundle {
     var h5DevServerURL: String {
         let configuredURL = object(forInfoDictionaryKey: "H5DevServerURL") as? String
-        let fallbackURL = "http://127.0.0.1:3000"
+        let fallbackURL = "http://127.0.0.1:3000/?native=ios"
 
         guard let configuredURL, !configuredURL.isEmpty else {
             return fallbackURL

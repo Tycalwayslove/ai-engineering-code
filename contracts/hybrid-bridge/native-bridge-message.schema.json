@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-code.local/contracts/hybrid-bridge/native-bridge-message.schema.json",
+  "title": "Native Bridge Message",
+  "type": "object",
+  "required": ["id", "type", "sentAt"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "h5.ready",
+        "ui.openTimeline",
+        "ui.openCalendar",
+        "ui.openExecutionLedger",
+        "input.voice.start",
+        "input.keyboard.open",
+        "native.hostContext",
+        "native.ack",
+        "native.error"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "replyTo": {
+      "type": "string"
+    },
+    "sentAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -23,3 +23,11 @@ DerivedData/
 *.xcuserstate
 **/*.xcodeproj/xcuserdata/
 **/*.xcworkspace/xcuserdata/
+
+apps/android/.gradle/
+apps/android/.idea/
+apps/android/build/
+apps/android/gradle/
+apps/android/gradlew
+apps/android/gradlew.bat
+apps/android/local.properties

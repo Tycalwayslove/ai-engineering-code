@@ -11,7 +11,7 @@
 - 启动 SwiftUI App。
 - 用 `WKWebView` 加载 H5 产品层。
 - 提供深色宿主背景、加载态和错误态。
-- 预留 `NativeBridge` 消息入口。
+- 实现 `NativeBridge` 消息入口、宿主上下文回传和 ACK / Error 回传。
 
 业务界面、AI 执行流、日程确认、Timeline 和主题系统仍由 H5 承载。
 
@@ -20,7 +20,7 @@
 - iOS 不实现日程业务逻辑。
 - iOS 不直接读取 `services/*` 或 `ai-factory/*`。
 - iOS 不直接调用后端业务接口。
-- iOS 与 H5 的通信必须后续通过显式 Native Bridge 契约定义。
+- iOS 与 H5 的通信必须通过 `contracts/hybrid-bridge` 的显式契约定义。
 - 本地调试默认通过 `H5_DEV_SERVER_URL` 加载 H5。
 
 ## 本地调试
@@ -42,7 +42,7 @@
 模拟器默认地址是：
 
 ```text
-http://127.0.0.1:3000
+http://127.0.0.1:3000/?native=ios
 ```
 
 如果使用真机调试，`127.0.0.1` 会指向手机自己，不会指向 Mac。此时需要：
@@ -62,7 +62,7 @@ http://127.0.0.1:3000
 3. 在 Xcode 中打开 Target `AIEngineeringCode` 的 Build Settings，搜索 `H5_DEV_SERVER_URL`，改成：
 
    ```text
-   http://你的-Mac-IP:3000
+   http://你的-Mac-IP:3000/?native=ios
    ```
 
 4. 确保 Mac 和 iPhone 在同一个 Wi-Fi，且系统防火墙没有拦截 3000 端口。
@@ -74,8 +74,8 @@ xcodebuild \
   -project apps/ios/AIEngineeringCode.xcodeproj \
   -scheme AIEngineeringCode \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
-  H5_DEV_SERVER_URL=http://127.0.0.1:3000 \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' \
+  H5_DEV_SERVER_URL=http://127.0.0.1:3000/?native=ios \
   build
 ```
 
@@ -85,7 +85,7 @@ xcodebuild \
 
 - `AIEngineeringCodeApp.swift`：App 入口。
 - `HybridShellView.swift`：Native 壳样式、加载态和错误态。
-- `H5WebView.swift`：`WKWebView` 封装和 `NativeBridge` 占位。
+- `H5WebView.swift`：`WKWebView` 封装、`NativeBridge` 消息解析和 Native -> H5 事件回传。
 - `Info.plist`：本地 HTTP 调试权限和 App 基础配置。
 
 ## xcodebuild 环境
@@ -114,7 +114,7 @@ xcodebuild \
   -project apps/ios/AIEngineeringCode.xcodeproj \
   -scheme AIEngineeringCode \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' \
   build
 ```
 
@@ -126,7 +126,7 @@ xcrun simctl list devices available
 
 ## 后续演进
 
-下一步应先定义 Native Bridge 契约，再接真实系统能力：
+下一步应在现有 Native Bridge 契约上接真实系统能力：
 
 - 系统日历权限。
 - 通知权限。

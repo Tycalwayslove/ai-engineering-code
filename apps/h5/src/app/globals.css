@@ -340,6 +340,21 @@ p {
   padding: clamp(1rem, 3vw, 2rem);
 }
 
+.ai-agent-page[data-native-embedded="true"] {
+  padding: 0;
+}
+
+.ai-agent-page[data-native-embedded="true"] .ai-agent-stage {
+  display: block;
+  min-height: 100vh;
+}
+
+.ai-agent-page[data-native-embedded="true"] .ai-agent-device {
+  height: 100vh;
+  min-height: 0;
+  width: 100%;
+}
+
 .ai-agent-page p,
 .ai-agent-page span,
 .ai-agent-page strong {
@@ -492,6 +507,21 @@ p {
   min-height: 0;
 }
 
+.ai-agent-timeline-view,
+.ai-agent-calendar-view,
+.ai-agent-view-card {
+  min-height: 0;
+}
+
+.ai-agent-timeline-view {
+  display: grid;
+}
+
+.ai-agent-timeline-view aside {
+  border-radius: 18px;
+  max-width: none;
+}
+
 .ai-agent-ledger,
 .ai-agent-timeline-panel {
   background: var(--ai-color-background-elevated);
@@ -501,6 +531,68 @@ p {
   display: grid;
   gap: 0.85rem;
   padding: 1rem;
+}
+
+.ai-agent-calendar-view {
+  background: var(--ai-color-background-elevated);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 20px;
+  box-shadow: var(--ai-shadow-control);
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.ai-agent-calendar-grid {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.ai-agent-calendar-weekday {
+  color: var(--ai-color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.3rem 0;
+  text-align: center;
+}
+
+.ai-agent-calendar-day {
+  aspect-ratio: 1;
+  background: var(--ai-color-background-inset);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 12px;
+  color: var(--ai-color-text);
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+  padding: 0.35rem;
+  place-content: center;
+  position: relative;
+}
+
+.ai-agent-calendar-day[data-current-month="false"] {
+  opacity: 0.28;
+}
+
+.ai-agent-calendar-day[data-selected="true"] {
+  border-color: rgba(8, 184, 148, 0.7);
+  box-shadow: 0 0 0 1px rgba(8, 184, 148, 0.32);
+}
+
+.ai-agent-calendar-day strong {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.ai-agent-calendar-day span {
+  background: var(--ai-color-primary);
+  border-radius: 999px;
+  bottom: 0.28rem;
+  height: 0.28rem;
+  position: absolute;
+  width: 0.28rem;
 }
 
 .ai-agent-section-heading {

@@ -6,7 +6,7 @@
 
 ## 所有权
 
-当前 Android 只负责稳定 Native Shell：
+当前 Android 只保留稳定 Native Shell 骨架。现阶段实际原生开发先集中在 iOS：
 
 - 启动 Android App。
 - 用 `WebView` 加载 H5 产品层。
@@ -20,8 +20,18 @@
 - Android 不实现日程业务逻辑。
 - Android 不直接读取 `services/*` 或 `ai-factory/*`。
 - Android 不直接调用后端业务接口。
-- Android 与 H5 的通信必须后续通过显式 Native Bridge 契约定义。
+- Android 后续必须复用 `contracts/hybrid-bridge`，不得另起一套 Bridge 命名。
 - Android Emulator 本地调试默认加载 `http://10.0.2.2:3000`。
+
+## 后续需求计划
+
+Android 进入开发时，以 iOS 已验证能力作为输入清单：
+
+1. 支持 `h5.ready`，并回传 `native.hostContext`。
+2. 支持 `ui.openTimeline`、`ui.openCalendar`、`ui.openExecutionLedger`，先返回 `native.ack`。
+3. 支持 `input.voice.start`、`input.keyboard.open`，未接真实系统能力前返回 `notImplemented`。
+4. H5 仍通过 `ai-native-message` 事件接收 Android 回传。
+5. Android 不承载产品业务页面，只承载系统能力和 WebView 宿主。
 
 ## 本地调试
 
@@ -50,7 +60,7 @@
 
 ## 后续演进
 
-下一步应先定义 Native Bridge 契约，再接真实系统能力：
+下一步应先对齐 iOS 已验证 Bridge 行为，再接真实系统能力：
 
 - 系统日历权限。
 - 通知权限。

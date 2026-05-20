@@ -347,3 +347,21 @@ v0.7 让设计系统从“组件库”继续进化为“主题能力”。后续
 阶段价值：
 
 项目现在具备了真正的 Hybrid App 启动骨架。Native 层不再只是目录占位，而是可以承担稳定壳、WebView、加载态、错误态和未来系统能力入口。与此同时，业务界面仍保持在 H5，避免过早把日程逻辑、AI 执行流或后端调用写入原生层。下一步应先定义 Native Bridge 契约，再接系统日历、通知、语音等真实能力。
+
+## 阶段 22：iOS Bridge 与 H5 页面拆分
+
+完成内容：
+
+- 用户确认原生 App 端当前只先开发 iOS，Android 仅保留需求计划和未来迁移路径。
+- 新增 `contracts/hybrid-bridge/`，用 JSON Schema 固定 Native Bridge 消息信封。
+- H5 新增 `apps/h5/src/app/ai-time-agent/bridge.ts`，统一封装向 Native 发送消息和接收 Native 事件。
+- iOS `WKWebView` 接入 `NativeBridge` handler，支持 `native.hostContext`、`native.ack` 和 `native.error`。
+- H5 页面按职责拆分为 AI 执行流、Timeline、完整日历和执行记录四个视图。
+- 顶部按钮不再只做视觉占位，而是切换 H5 视图并向 iOS 壳发送显式消息。
+- iOS 壳继续只负责 WebView、加载态、错误态、Bridge 和宿主上下文，不承载日程业务逻辑。
+- Android README 明确当前不继续实现运行时代码，后续按 iOS Bridge 契约迁移。
+- 新增 Hybrid Bridge 工程规格和 iOS Bridge 实施计划。
+
+阶段价值：
+
+这一步把 Hybrid 分层从“壳能打开 H5”推进到“壳和 H5 有可验证通信契约”。H5 负责产品页面和交互状态，iOS 负责稳定宿主与系统能力入口，Bridge 负责显式消息传递。后续接语音、通知、系统日历或图片识别时，不需要让 H5 直接碰系统能力，也不需要让 iOS 写产品业务。Android 暂缓实现后，工程重心更集中，后续迁移也有清晰参照。

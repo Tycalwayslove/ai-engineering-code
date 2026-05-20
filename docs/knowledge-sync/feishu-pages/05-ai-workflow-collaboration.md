@@ -129,6 +129,29 @@ AI 时间管理 Agent 的第一段具体代码开发不是业务功能，而是�
 
 这让项目的 Hybrid 架构更清楚：Native 是稳定壳和系统能力入口，H5 是产品体验和界面迭代层。后续接日历、通知、语音和图片能力前，应先写 Native Bridge 契约。
 
+## iOS Bridge 与页面拆分
+
+当前原生开发重心已经收敛到 iOS。Android 不再继续写运行时代码，只保留需求计划和迁移说明，避免双端同时推进导致边界漂移。
+
+本阶段采用三层拆分：
+
+- H5 页面层：负责 AI 执行流、Timeline、完整日历、执行记录和页面内交互状态。
+- iOS 宿主层：负责 SwiftUI 壳、WKWebView、加载态、错误态、宿主上下文和未来系统能力入口。
+- Bridge 契约层：负责 H5 与 Native 的消息信封、动作类型、ACK 和错误事件。
+
+当前 Bridge 的最小消息集：
+
+- `h5.ready`：H5 告诉 Native 页面已准备好。
+- `ui.openTimeline`：H5 请求 Native 记录或响应 Timeline 入口。
+- `ui.openCalendar`：H5 请求 Native 记录或响应完整日历入口。
+- `ui.openExecutionLedger`：H5 请求 Native 记录或响应执行记录入口。
+- `input.voice.start`：H5 请求 Native 进入语音能力，当前 iOS 返回未实现 ACK。
+- `input.keyboard.open`：H5 请求 Native 响应键盘入口。
+- `native.hostContext`：Native 向 H5 下发平台、版本、主题和安全区上下文。
+- `native.ack` / `native.error`：Native 返回处理结果或错误。
+
+这条边界的原则是：H5 不直接访问系统能力，iOS 不承载产品业务，后端后续负责指令解析、计划生成和日程执行。Bridge 只传递明确动作与结果，不变成隐藏业务总线。
+
 ## 阶段记录
 
 每个阶段完成后沉淀三类内容：

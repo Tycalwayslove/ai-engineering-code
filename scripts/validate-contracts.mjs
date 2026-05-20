@@ -8,6 +8,8 @@ const contractFiles = {
   openapi: "contracts/openapi/api-gateway.yaml",
   memorySchema: "contracts/memory/memory-document.schema.json",
   workflowSchema: "contracts/workflow/workflow-manifest.schema.json",
+  hybridBridgeSchema:
+    "contracts/hybrid-bridge/native-bridge-message.schema.json",
   sdk: "packages/sdk/src/index.ts",
   sharedTypes: "packages/shared-types/src/index.ts",
 };
@@ -374,6 +376,7 @@ function validateFactoryStatusSlice(openapiDocument) {
 const openapiDocument = validateOpenApiYaml(contractFiles.openapi);
 validateJsonSchema(contractFiles.memorySchema);
 validateJsonSchema(contractFiles.workflowSchema);
+validateJsonSchema(contractFiles.hybridBridgeSchema);
 validateFactoryStatusSlice(openapiDocument);
 
 if (failures.length > 0) {
