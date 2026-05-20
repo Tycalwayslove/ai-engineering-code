@@ -244,13 +244,50 @@ v0.4 的重点不是继续追求玻璃视觉，而是解决 v0.3 的信息架构
 
 这一步的价值是让后续 AI 生成 UI 时优先复用设计系统资产，而不是每次重新画一套临时组件。
 
+## v0.6 基于组件库重画
+
+2026-05-20，基于 v0.5 设计系统重新绘制了一版 v0.6 UI。
+
+Figma 页面：
+
+- 页面名：`AI 时间管理 Agent v0.6 Component-Based UI`
+- 链接：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=63-2>
+
+v0.6 的重点是验证设计系统能否承载真实产品界面，而不是继续堆视觉风格。它沿用 v0.5 的 tokens、组件分层和图标规则，把主界面重新组织为一套可审阅的手机画板。
+
+覆盖画板：
+
+| 画板                                   | 说明                                   |
+| -------------------------------------- | -------------------------------------- |
+| `00 v0.6 Cover / Component-Based UI`   | 本版目标和组件复用说明。               |
+| `01 首页默认态 / AI 执行流`            | 对话主舞台、补全卡片、状态栏和输入区。 |
+| `02 Timeline Drawer / Timepage 日期轴` | Timepage 风格日期上下文抽屉。          |
+| `03 信息补全后 / 单项确认`             | 单个日程创建前确认。                   |
+| `04 批量操作 / 高风险确认`             | 清空日程、请假等高风险操作确认。       |
+| `05 执行记录 / AI 操作账本`            | AI 操作审计记录。                      |
+| `06 完整日历 / 结果检查`               | 日历作为结果检查工具。                 |
+| `07 事项详情 / 主动点开`               | 用户主动点开后的事项详情。             |
+| `08 Interaction Map / v0.6`            | 页面关系和交互规则。                   |
+
+v0.6 的关键判断：
+
+- 主入口仍是用户输入，而不是传统日历表单。
+- Timeline Drawer 只负责日期上下文，不放连接器或设置。
+- 固定状态栏放在输入框上方，始终显示当前执行状态。
+- 高风险操作必须结构化列出影响范围。
+- 完整日历和详情页都是“主动检查层”，不是默认操作负担。
+
+当前状态：v0.6 已生成，等待用户评审。
+
 ## 仓库证据
 
 - `ai-factory/specs/design/2026-05-18-ai-time-management-agent-ui-design.md`
 - `ai-factory/specs/requirements/2026-05-19-ai-time-management-agent-execution-workbench-revision.md`
 - `ai-factory/specs/design/2026-05-19-ai-time-management-agent-ui-revision.md`
 - `ai-factory/specs/design/2026-05-19-ai-time-management-agent-design-system-v0-5-plan.md`
+- `ai-factory/specs/design/2026-05-20-ai-time-management-agent-ui-v0-6-component-based.md`
 - `ai-factory/workflows/runs/2026-05-19-design-system-v0-5-implementation.md`
+- `ai-factory/workflows/runs/2026-05-20-ui-redraw-ai-time-management-agent-v0-6.md`
 - `ai-factory/workflows/ui-design-draft.md`
 - `ai-factory/workflows/registries/ui-design-draft.manifest.json`
 - `ai-factory/workflows/runs/2026-05-18-ui-design-draft-ai-time-management-agent.md`
