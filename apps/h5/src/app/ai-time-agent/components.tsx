@@ -144,6 +144,12 @@ function makeInteractionElements(text: string, sequence: number) {
       role: "user",
     },
     {
+      content: `已收到：${text}`,
+      id: `${idPrefix}-received`,
+      kind: "message",
+      role: "assistant",
+    },
+    {
       content: `我已解析你的指令：创建“${draft.title}”，时间为 ${draft.time}，${draft.reminder}。你可以确认写入，也可以继续补充地点、参会人或备注。`,
       id: `${idPrefix}-assistant`,
       kind: "message",
@@ -611,6 +617,18 @@ export function AgentWorkbench() {
 
       if (nextTheme) {
         setTheme(nextTheme);
+        setElementsBySurface((current) => ({
+          ...current,
+          conversation: [
+            ...current.conversation,
+            {
+              content: `已收到主题切换消息：${themeLabels[nextTheme]}主题`,
+              id: `theme-${Date.now()}`,
+              kind: "message",
+              role: "assistant",
+            },
+          ],
+        }));
         setExecutionStatus({
           description: `已切换到${themeLabels[nextTheme]}主题`,
           status: "idle",

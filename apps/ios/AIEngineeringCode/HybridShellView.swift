@@ -270,11 +270,12 @@ struct HybridShellView: View {
     }
 
     private func toggleTheme() {
-        theme = theme.next
+        let nextTheme = theme.next
+        theme = nextTheme
         bridgeEvent = NativeBridgeOutboundEvent(
             payload: [
                 "source": "native.header.theme",
-                "theme": theme.rawValue,
+                "theme": nextTheme.rawValue,
             ],
             type: "native.themeChanged"
         )
@@ -457,7 +458,19 @@ private struct NativeDrawerOverlay: View {
 
                     Spacer()
 
-                    NativeIconButton(systemName: "xmark", theme: theme, action: onClose)
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(theme.text)
+                            .frame(width: 46, height: 46)
+                            .background(.ultraThinMaterial)
+                            .background(theme.surface)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(theme.softStroke, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Circle())
+                    .accessibilityLabel("关闭抽屉")
                 }
 
                 NativeDrawerSegmentedControl(

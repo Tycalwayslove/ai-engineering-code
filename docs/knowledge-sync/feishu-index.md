@@ -66,3 +66,4 @@
 - 2026-05-20：已根据用户反馈修正 Native 壳层 UI 归属，iOS 拥有 Header、底部输入、固定状态和 Timepage Drawer，H5 收敛为后端元素渲染区。
 - 2026-05-20：已补充执行状态条归属规则：页面内执行状态由 H5 根据接口状态渲染，并固定在 WebView 底部；Native 不同步页面状态。
 - 2026-05-20：已实现 Hybrid 可交互 Mock Demo，支持 iOS 原生输入、主题切换、Drawer 跳转、Timepage 日期选择和 H5 mock 响应。
+- 2026-05-20：已修复 Hybrid Mock Demo 的主题同步、Drawer 关闭和原生输入 H5 可见回执问题。
