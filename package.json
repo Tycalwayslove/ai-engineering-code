@@ -13,6 +13,7 @@
     "test": "turbo test",
     "validate:contracts": "node scripts/validate-contracts.mjs",
     "validate:factory": "node scripts/validate-factory.mjs",
+    "validate:native-shells": "node scripts/validate-native-shells.mjs",
     "format": "prettier --write ."
   },
   "devDependencies": {

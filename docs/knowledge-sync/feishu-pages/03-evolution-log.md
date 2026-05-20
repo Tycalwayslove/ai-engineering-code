@@ -328,3 +328,22 @@ v0.7 让设计系统从“组件库”继续进化为“主题能力”。后续
 阶段价值：
 
 这一步把“Hybrid App”从口头架构落实到可运行的前端布局基础。Native 仍然保持稳定壳的定位，H5 负责产品界面，宿主差异被限制在布局层和安全区变量中。这样后续接入真实 iOS / Android Bridge 时，不需要推翻 H5 页面结构，也不会把平台判断散落到业务组件里。
+
+## 阶段 21：原生 iOS / Android 壳启动
+
+完成内容：
+
+- 用户明确纠正方向：需要真实 iOS / Android 原生壳，而不是只在 H5 内做宿主预览。
+- 新增 iOS SwiftUI + WKWebView 项目骨架，可用 Xcode 打开。
+- 新增 Android Kotlin + WebView 项目骨架，可用 Android Studio 打开。
+- 两端默认加载本地 H5 dev server：
+  - iOS Simulator：`http://127.0.0.1:3000`
+  - Android Emulator：`http://10.0.2.2:3000`
+- 两端都提供 Native Shell 背景、加载态、错误态和 `NativeBridge` 占位。
+- H5 增加 `viewport-fit=cover`，为 WebView 安全区适配做准备。
+- 新增 `pnpm validate:native-shells` 静态校验脚本。
+- 更新 iOS / Android README，写清 Xcode / Android Studio 调试方式。
+
+阶段价值：
+
+项目现在具备了真正的 Hybrid App 启动骨架。Native 层不再只是目录占位，而是可以承担稳定壳、WebView、加载态、错误态和未来系统能力入口。与此同时，业务界面仍保持在 H5，避免过早把日程逻辑、AI 执行流或后端调用写入原生层。下一步应先定义 Native Bridge 契约，再接系统日历、通知、语音等真实能力。
