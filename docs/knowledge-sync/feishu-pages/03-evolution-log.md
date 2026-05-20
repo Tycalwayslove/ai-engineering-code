@@ -311,3 +311,20 @@ v0.7 让设计系统从“组件库”继续进化为“主题能力”。后续
 阶段价值：
 
 这一步让组件库从“已经建立的资产”变成“可以持续维护的系统”。后续新增组件、修复浅色模式、调整 token、同步 Figma 或更新图标时，都有明确入口、影响面映射、验证要求和知识库记录。这样组件库不会随着页面开发逐渐漂移，也方便向外部说明项目如何把设计系统作为 AI 原生软件工厂的一部分来管理。
+
+## 阶段 20：Hybrid H5 / iOS / Android 布局基础
+
+完成内容：
+
+- 用户确认进入具体代码开发，第一步先整合 Hybrid H5 / iOS / Android 对应布局和样式。
+- 新增 shared-ui `HybridHostShell`，声明 `h5`、`ios`、`android` 三类宿主平台。
+- `HybridHostShell` 负责宿主外框、安全区变量、iOS / Android 预览 chrome 和容器尺寸，不承载业务逻辑。
+- `MobileAgentShell` 改为消费 `--ai-host-safe-top` 与 `--ai-host-safe-bottom`，让 H5 主界面适配不同宿主。
+- H5 首页新增开发态宿主切换，可在 H5、iOS、Android 三种布局间切换。
+- 主题切换从手机 header 移到开发预览控制区，保持真实 App 顶部更稳定。
+- 设计系统示例页新增 Hybrid Host Shell 展示。
+- 新增工程规格和 workflow run，记录宿主布局分层、非目标和验证结果。
+
+阶段价值：
+
+这一步把“Hybrid App”从口头架构落实到可运行的前端布局基础。Native 仍然保持稳定壳的定位，H5 负责产品界面，宿主差异被限制在布局层和安全区变量中。这样后续接入真实 iOS / Android Bridge 时，不需要推翻 H5 页面结构，也不会把平台判断散落到业务组件里。

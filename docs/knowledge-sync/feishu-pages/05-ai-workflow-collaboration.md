@@ -88,6 +88,25 @@ AI 原生协作不是让模型无限自动执行，而是让人和 AI 在同一�
 
 这让组件库的变化既能被设计侧看到，也能被工程侧验证，还能被后续面试讲解和项目复盘复用。
 
+## Hybrid 布局实现
+
+AI 时间管理 Agent 的第一段具体代码开发不是业务功能，而是先稳定 Hybrid 宿主布局。
+
+当前实现把跨端界面拆成三层：
+
+- Native Host Frame：由 `HybridHostShell` 表达 H5、iOS、Android 三种宿主预览，负责外框、安全区和宿主差异。
+- H5 Agent Surface：由 H5 首页组合 AI 执行流、Timeline、执行状态栏和底部输入。
+- Shared UI Components：由 `packages/shared-ui` 提供稳定组件，不写入业务编排。
+
+这样做的原因是：真实 Native App 后续会提供系统能力、权限、日历接入和 Bridge，但 H5 页面不应该提前假装拥有这些能力。第一步先让页面在三类宿主下布局稳定，后续再接真实 Bridge 契约。
+
+本阶段仍然保持非目标：
+
+- 不创建真实 iOS / Android 工程。
+- 不实现真实 Native Bridge。
+- 不接真实后端。
+- 不实现 AI 指令解析或日程写入。
+
 ## 阶段记录
 
 每个阶段完成后沉淀三类内容：

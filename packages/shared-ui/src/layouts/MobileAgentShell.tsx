@@ -36,7 +36,8 @@ export function MobileAgentShell({
       {header ? (
         <div
           style={{
-            padding: "calc(env(safe-area-inset-top, 0px) + 14px) 16px 8px",
+            padding:
+              "calc(var(--ai-host-safe-top, env(safe-area-inset-top, 0px)) + 14px) 16px 8px",
             zIndex: aiTimeDesignTokens.zIndex.sticky,
           }}
         >
@@ -67,7 +68,8 @@ export function MobileAgentShell({
       {bottom ? (
         <div
           style={{
-            padding: "12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)",
+            padding:
+              "12px 16px calc(var(--ai-host-safe-bottom, env(safe-area-inset-bottom, 0px)) + 12px)",
             zIndex: aiTimeDesignTokens.zIndex.sticky,
           }}
         >

@@ -36,7 +36,7 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 - `packages/shared-ui/src/icons`：新增 React Icon 组件与本地 SVG 图标资产。
 - `packages/shared-ui/src/primitives`：新增 Button、IconButton、StatusBadge 等基础组件。
 - `packages/shared-ui/src/composites`：新增 ComposerBar、ExecutionStatusBar、MessageBubble、ConfirmationCard、TimelineDrawer。
-- `packages/shared-ui/src/layouts`：新增 MobileAgentShell。
+- `packages/shared-ui/src/layouts`：新增 MobileAgentShell 与 HybridHostShell。
 - `apps/h5/src/app/design-system/page.tsx`：新增组件库示例页。
 - Figma 页面：`AI 时间管理 Agent v0.5 Design System`
 - Figma 链接：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=46-27>
@@ -130,6 +130,7 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 | Timeline Drawer      | `TimelineDrawer`     |
 | Execution Record Row | `ExecutionRecordRow` |
 | Calendar Event Block | `CalendarEventBlock` |
+| Hybrid Host Shell    | `HybridHostShell`    |
 
 本阶段只规划组件边界，不直接实现业务逻辑。
 

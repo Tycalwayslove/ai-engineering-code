@@ -5,12 +5,15 @@ import {
   ConfirmationCard,
   createAiTimeThemeCssVariables,
   ExecutionStatusBar,
+  HybridHostShell,
+  hybridHostPlatforms,
   IconButton,
   MessageBubble,
   MobileAgentShell,
   StatusBadge,
   TimelineDrawer,
   type AiTimeThemeName,
+  type HybridHostPlatform,
 } from "@ai-code/shared-ui";
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
@@ -35,17 +38,23 @@ const themeLabels: Record<AgentTheme, string> = {
   light: "浅色",
 };
 
+const hostLabels: Record<HybridHostPlatform, string> = {
+  android: "Android",
+  h5: "H5",
+  ios: "iOS",
+};
+
+const hostDescriptions: Record<HybridHostPlatform, string> = {
+  android: "Android 原生壳 + H5 WebView",
+  h5: "浏览器 / WebView 通用布局",
+  ios: "iOS 原生壳 + H5 WebView",
+};
+
 function themeVariables(theme: AiTimeThemeName): CSSProperties {
   return createAiTimeThemeCssVariables(theme) as CSSProperties;
 }
 
-function AgentHeader({
-  theme,
-  onThemeChange,
-}: {
-  theme: AgentTheme;
-  onThemeChange: (theme: AgentTheme) => void;
-}) {
+function AgentHeader() {
   return (
     <div className="ai-agent-header">
       <IconButton icon="menu" label="打开 Timeline" />
@@ -57,7 +66,6 @@ function AgentHeader({
         <IconButton icon="clock" label="查看执行记录" />
         <IconButton icon="calendar" label="打开完整日历" />
       </div>
-      <ThemeSwitcher activeTheme={theme} onThemeChange={onThemeChange} />
     </div>
   );
 }
@@ -83,6 +91,58 @@ function ThemeSwitcher({
         </button>
       ))}
     </div>
+  );
+}
+
+function HostSwitcher({
+  activePlatform,
+  onPlatformChange,
+}: {
+  activePlatform: HybridHostPlatform;
+  onPlatformChange: (platform: HybridHostPlatform) => void;
+}) {
+  return (
+    <div className="ai-agent-segmented-control" aria-label="宿主环境切换">
+      {hybridHostPlatforms.map((platform) => (
+        <button
+          aria-pressed={activePlatform === platform}
+          className="ai-agent-segmented-button"
+          key={platform}
+          onClick={() => onPlatformChange(platform)}
+          type="button"
+        >
+          {hostLabels[platform]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PreviewControls({
+  hostPlatform,
+  onHostPlatformChange,
+  onThemeChange,
+  theme,
+}: {
+  hostPlatform: HybridHostPlatform;
+  onHostPlatformChange: (platform: HybridHostPlatform) => void;
+  onThemeChange: (theme: AgentTheme) => void;
+  theme: AgentTheme;
+}) {
+  return (
+    <section className="ai-agent-preview-controls" aria-label="开发预览控制">
+      <div>
+        <strong>{hostLabels[hostPlatform]} Hybrid Layout</strong>
+        <span>{hostDescriptions[hostPlatform]}</span>
+      </div>
+      <div className="ai-agent-control-stack">
+        <HostSwitcher
+          activePlatform={hostPlatform}
+          onPlatformChange={onHostPlatformChange}
+        />
+        <ThemeSwitcher activeTheme={theme} onThemeChange={onThemeChange} />
+      </div>
+    </section>
   );
 }
 
@@ -156,27 +216,45 @@ function TimelinePanel() {
 }
 
 export function AgentWorkbench() {
+  const [hostPlatform, setHostPlatform] = useState<HybridHostPlatform>("ios");
   const [theme, setTheme] = useState<AgentTheme>("dark");
   const style = useMemo(() => themeVariables(theme), [theme]);
 
   return (
-    <main className="ai-agent-page" style={style}>
+    <main
+      className="ai-agent-page"
+      data-hybrid-platform={hostPlatform}
+      style={style}
+    >
+      <PreviewControls
+        hostPlatform={hostPlatform}
+        onHostPlatformChange={setHostPlatform}
+        onThemeChange={setTheme}
+        theme={theme}
+      />
       <div className="ai-agent-stage">
         <div className="ai-agent-device">
-          <MobileAgentShell
-            bottom={<ComposerBar placeholder="按住说话" />}
-            header={<AgentHeader onThemeChange={setTheme} theme={theme} />}
-            status={
-              <ExecutionStatusBar
-                description={demoExecutionStatus.description}
-                status={demoExecutionStatus.status}
-              />
-            }
+          <HybridHostShell
+            platform={hostPlatform}
+            previewLabel={`${hostLabels[hostPlatform]} Hybrid H5 preview`}
+            style={{ height: "100%", minHeight: 0 }}
           >
-            <QuickStats stats={demoQuickStats} />
-            <ConversationPanel messages={demoConversation} />
-            <ExecutionLedgerPreview items={demoLedgerItems} />
-          </MobileAgentShell>
+            <MobileAgentShell
+              bottom={<ComposerBar placeholder="按住说话" />}
+              header={<AgentHeader />}
+              status={
+                <ExecutionStatusBar
+                  description={demoExecutionStatus.description}
+                  status={demoExecutionStatus.status}
+                />
+              }
+              style={{ height: "100%", minHeight: 0 }}
+            >
+              <QuickStats stats={demoQuickStats} />
+              <ConversationPanel messages={demoConversation} />
+              <ExecutionLedgerPreview items={demoLedgerItems} />
+            </MobileAgentShell>
+          </HybridHostShell>
         </div>
         <TimelinePanel />
       </div>

@@ -4,6 +4,7 @@ import {
   ConfirmationCard,
   createAiTimeThemeCssVariables,
   ExecutionStatusBar,
+  HybridHostShell,
   Icon,
   IconButton,
   MessageBubble,
@@ -251,36 +252,49 @@ export default function DesignSystemPage() {
 
       <section className="design-system-section">
         <div className="section-heading">
-          <h2>Mobile Shell</h2>
-          <p>Hybrid H5 主内容区固定 header、滚动对话区、状态栏和输入区。</p>
+          <h2>Hybrid Host Shell</h2>
+          <p>
+            H5、iOS 和 Android 共用同一套 Agent
+            Surface，宿主差异只进入安全区和外壳样式。
+          </p>
         </div>
         <div className="phone-frame">
-          <MobileAgentShell
-            bottom={<ComposerBar />}
-            header={
-              <div className="mobile-header-demo">
-                <IconButton icon="menu" label="打开 Timeline" />
-                <div>
-                  <strong>AI 日程执行</strong>
-                  <span>日程领域</span>
-                </div>
-                <IconButton icon="calendar" label="打开完整日历" />
-              </div>
-            }
-            status={
-              <ExecutionStatusBar description="后台处理中" status="executing" />
-            }
+          <HybridHostShell
+            platform="ios"
+            previewLabel="iOS Hybrid H5 preview"
+            style={{ height: 760, minHeight: 0 }}
           >
-            <MessageBubble roleTone="assistant">
-              你可以直接说时间和事项，我会在确认后创建日程。
-            </MessageBubble>
-            <MessageBubble roleTone="user">
-              明天下午三点和张伟开会。
-            </MessageBubble>
-            <MessageBubble roleTone="assistant">
-              还缺少会议时长，我建议默认 1 小时。是否确认？
-            </MessageBubble>
-          </MobileAgentShell>
+            <MobileAgentShell
+              bottom={<ComposerBar />}
+              header={
+                <div className="mobile-header-demo">
+                  <IconButton icon="menu" label="打开 Timeline" />
+                  <div>
+                    <strong>AI 日程执行</strong>
+                    <span>日程领域</span>
+                  </div>
+                  <IconButton icon="calendar" label="打开完整日历" />
+                </div>
+              }
+              status={
+                <ExecutionStatusBar
+                  description="后台处理中"
+                  status="executing"
+                />
+              }
+              style={{ height: "100%", minHeight: 0 }}
+            >
+              <MessageBubble roleTone="assistant">
+                你可以直接说时间和事项，我会在确认后创建日程。
+              </MessageBubble>
+              <MessageBubble roleTone="user">
+                明天下午三点和张伟开会。
+              </MessageBubble>
+              <MessageBubble roleTone="assistant">
+                还缺少会议时长，我建议默认 1 小时。是否确认？
+              </MessageBubble>
+            </MobileAgentShell>
+          </HybridHostShell>
         </div>
       </section>
     </main>
