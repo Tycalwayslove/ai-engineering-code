@@ -32,8 +32,10 @@ Android 进入开发时，以 iOS 已验证能力作为输入清单：
 2. 实现 Android 原生 Header、底部输入和 Timepage Drawer。
 3. 支持 `native.viewChanged`，由 Android 原生壳告诉 H5 当前要渲染哪个后端元素集合。
 4. 支持 `native.inputRequested`，由 Android 原生壳告诉 H5 当前触发语音、键盘或附件输入。
-5. H5 仍通过 `ai-native-message` 事件接收 Android 回传。
-6. Android 不承载产品业务状态机，只承载系统能力、WebView 宿主和原生壳层 UI。
+5. 支持 `native.inputSubmitted`，由 Android 原生壳提交用户文本、语音转写或图片入口 mock 文本。
+6. 支持 `native.themeChanged`，由 Android 原生壳同步深色 / 浅色主题。
+7. H5 仍通过 `ai-native-message` 事件接收 Android 回传。
+8. Android 不承载产品业务状态机，只承载系统能力、WebView 宿主和原生壳层 UI。
 
 ## 本地调试
 

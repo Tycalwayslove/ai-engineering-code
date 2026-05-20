@@ -561,6 +561,46 @@ p {
   line-height: 1;
 }
 
+.ai-agent-status-dock[data-status="understanding"] .ai-agent-status-dot,
+.ai-agent-status-dock[data-status="searching"] .ai-agent-status-dot {
+  background: var(--ai-color-info);
+  box-shadow: 0 0 18px var(--ai-color-info-soft);
+}
+
+.ai-agent-status-dock[data-status="planning"] .ai-agent-status-dot,
+.ai-agent-status-dock[data-status="confirming"] .ai-agent-status-dot {
+  background: var(--ai-color-warning);
+  box-shadow: 0 0 18px var(--ai-color-warning-soft);
+}
+
+.ai-agent-status-dock[data-status="completed"] .ai-agent-status-dot {
+  background: var(--ai-color-success);
+  box-shadow: 0 0 18px var(--ai-color-success-soft);
+}
+
+.ai-agent-status-dock[data-status="failed"] .ai-agent-status-dot {
+  background: var(--ai-color-danger);
+  box-shadow: 0 0 18px var(--ai-color-danger-soft);
+}
+
+.ai-agent-status-dock[data-status="understanding"] em,
+.ai-agent-status-dock[data-status="searching"] em {
+  color: var(--ai-color-info);
+}
+
+.ai-agent-status-dock[data-status="planning"] em,
+.ai-agent-status-dock[data-status="confirming"] em {
+  color: var(--ai-color-warning);
+}
+
+.ai-agent-status-dock[data-status="completed"] em {
+  color: var(--ai-color-success);
+}
+
+.ai-agent-status-dock[data-status="failed"] em {
+  color: var(--ai-color-danger);
+}
+
 .ai-agent-segmented-control,
 .ai-agent-theme-switcher {
   background: var(--ai-color-background-inset);

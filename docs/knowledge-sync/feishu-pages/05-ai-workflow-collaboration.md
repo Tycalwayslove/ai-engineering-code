@@ -150,9 +150,17 @@ AI 时间管理 Agent 的第一段具体代码开发不是业务功能，而是�
 - `native.hostContext`：Native 向 H5 下发平台、版本、主题和安全区上下文。
 - `native.viewChanged`：Native 告诉 H5 当前渲染哪一组后端元素。
 - `native.inputRequested`：Native 告诉 H5 当前触发语音、键盘或附件输入入口。
+- `native.inputSubmitted`：Native 把原生输入框文本、语音 mock 文本或图片 mock 文本提交给 H5。
+- `native.themeChanged`：Native 通知 H5 同步深色 / 浅色主题。
 - `native.ack` / `native.error`：Native 返回处理结果或错误。
 
 这条边界的原则是：H5 不拥有 App 壳层 UI，不直接访问系统能力，但页面内执行状态条归 H5，因为它由接口状态驱动；iOS 不承载产品业务状态机；后端后续负责指令解析、计划生成和日程执行。Bridge 只传递明确动作与结果，不变成隐藏业务总线。
+
+当前可交互 mock 版的协作方式是：
+
+- iOS 负责真实点击、Drawer、主题切换和原生输入。
+- H5 负责把原生输入转换成 mock 后端元素，并展示对话、确认卡片、执行状态和记录变化。
+- 这只是前端交互闭环，不代表真实后端解析或日历写入已经完成。
 
 ## 阶段记录
 

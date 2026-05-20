@@ -12,6 +12,8 @@ export type NativeToH5MessageType =
   | "native.hostContext"
   | "native.viewChanged"
   | "native.inputRequested"
+  | "native.inputSubmitted"
+  | "native.themeChanged"
   | "native.ack"
   | "native.error";
 

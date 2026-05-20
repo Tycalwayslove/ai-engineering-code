@@ -17,6 +17,8 @@ const nativeToH5Messages = [
   "native.hostContext",
   "native.viewChanged",
   "native.inputRequested",
+  "native.inputSubmitted",
+  "native.themeChanged",
   "native.ack",
   "native.error",
 ] as const;

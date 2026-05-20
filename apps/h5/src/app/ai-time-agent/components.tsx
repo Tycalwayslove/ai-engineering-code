@@ -6,9 +6,10 @@ import {
   MessageBubble,
   StatusBadge,
   type AiTimeThemeName,
+  type ExecutionStatus,
 } from "@ai-code/shared-ui";
-import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, RefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   getNativeHostContext,
@@ -20,6 +21,11 @@ import {
 import { demoBackendElementsBySurface } from "./demoData";
 import type { AgentSurface, AgentTheme, BackendRenderedElement } from "./types";
 
+type RuntimeExecutionStatus = {
+  description: string;
+  status: ExecutionStatus;
+};
+
 const surfaceLabels: Record<AgentSurface, string> = {
   calendar: "日程元素",
   conversation: "执行流元素",
@@ -30,6 +36,22 @@ const surfaceLabels: Record<AgentSurface, string> = {
 const themeLabels: Record<AgentTheme, string> = {
   dark: "深色",
   light: "浅色",
+};
+
+const executionStatusLabels: Record<ExecutionStatus, string> = {
+  completed: "已完成",
+  confirming: "待确认",
+  executing: "执行中",
+  failed: "需处理",
+  idle: "等待输入",
+  planning: "规划中",
+  searching: "查询中",
+  understanding: "理解中",
+};
+
+const initialExecutionStatus: RuntimeExecutionStatus = {
+  description: "等待你的下一条日程指令",
+  status: "idle",
 };
 
 function themeVariables(theme: AiTimeThemeName): CSSProperties {
@@ -59,6 +81,163 @@ function getSurfaceFromNativeMessage(message: NativeBridgeEnvelope) {
     view === "timeline"
     ? view
     : undefined;
+}
+
+function getThemeFromNativeMessage(message: NativeBridgeEnvelope) {
+  if (message.type !== "native.themeChanged") {
+    return undefined;
+  }
+
+  const theme = message.payload?.theme;
+
+  return theme === "dark" || theme === "light" ? theme : undefined;
+}
+
+function getSubmittedTextFromNativeMessage(message: NativeBridgeEnvelope) {
+  if (message.type !== "native.inputSubmitted") {
+    return undefined;
+  }
+
+  const text = message.payload?.text;
+
+  return typeof text === "string" && text.trim().length > 0
+    ? text.trim()
+    : undefined;
+}
+
+function inferScheduleDraft(text: string) {
+  const title = text.includes("规划")
+    ? "新年业务规划会"
+    : text.includes("站会")
+      ? "团队站会"
+      : text.includes("截图") || text.includes("图片")
+        ? "截图识别出的日程"
+        : text.includes("会")
+          ? "会议安排"
+          : "新的日程安排";
+
+  const time =
+    text.includes("三点") || text.includes("15")
+      ? "明天 15:00 -> 16:30"
+      : text.includes("今晚")
+        ? "今晚 20:00 -> 21:00"
+        : text.includes("上午")
+          ? "明天 10:00 -> 11:00"
+          : "明天 15:00 -> 16:00";
+
+  return {
+    reminder: "提前 30 分钟提醒",
+    time,
+    title,
+  };
+}
+
+function makeInteractionElements(text: string, sequence: number) {
+  const draft = inferScheduleDraft(text);
+  const idPrefix = `mock-${sequence}`;
+
+  const conversationElements: BackendRenderedElement[] = [
+    {
+      content: text,
+      id: `${idPrefix}-user`,
+      kind: "message",
+      role: "user",
+    },
+    {
+      content: `我已解析你的指令：创建“${draft.title}”，时间为 ${draft.time}，${draft.reminder}。你可以确认写入，也可以继续补充地点、参会人或备注。`,
+      id: `${idPrefix}-assistant`,
+      kind: "message",
+      role: "assistant",
+    },
+    {
+      actions: [
+        {
+          id: `${idPrefix}-action`,
+          label: draft.title,
+          meta: `${draft.time}，${draft.reminder}`,
+        },
+      ],
+      description:
+        "这是无后端 mock 执行流：确认后会在 H5 内更新执行记录和日程摘要。",
+      id: `${idPrefix}-confirmation`,
+      kind: "confirmation",
+      title: "确认 1 项日程操作",
+    },
+  ];
+
+  const calendarElement: BackendRenderedElement = {
+    id: `${idPrefix}-calendar`,
+    items: [
+      {
+        id: `${idPrefix}-calendar-row`,
+        label: draft.title,
+        meta: `${draft.time}，待确认`,
+        tone: "warning",
+      },
+      {
+        id: `${idPrefix}-calendar-free`,
+        label: "可用时间",
+        meta: "确认后将写入内部日历",
+        tone: "success",
+      },
+    ],
+    kind: "summary-list",
+    title: "Mock 后端返回：日程候选",
+  };
+
+  const ledgerElement: BackendRenderedElement = {
+    id: `${idPrefix}-ledger`,
+    items: [
+      {
+        completed: true,
+        id: `${idPrefix}-understand`,
+        label: "理解用户指令",
+        meta: text,
+      },
+      {
+        completed: true,
+        id: `${idPrefix}-plan`,
+        label: "生成日程草案",
+        meta: `${draft.title}｜${draft.time}`,
+      },
+      {
+        completed: false,
+        id: `${idPrefix}-confirm`,
+        label: "等待用户确认",
+        meta: "确认后写入内部日历 mock store",
+      },
+    ],
+    kind: "ledger",
+    title: "Mock 后端返回：执行步骤",
+  };
+
+  const timelineElement: BackendRenderedElement = {
+    id: `${idPrefix}-timeline`,
+    items: [
+      {
+        id: `${idPrefix}-timeline-row`,
+        label: draft.title,
+        meta: `${draft.time}｜${draft.reminder}`,
+        tone: "warning",
+      },
+      {
+        id: `${idPrefix}-timeline-context`,
+        label: "上下文关联",
+        meta: "由对话指令生成，等待确认",
+        tone: "info",
+      },
+    ],
+    kind: "summary-list",
+    title: "Mock 后端返回：Timeline 更新",
+  };
+
+  return {
+    calendarElement,
+    conversationElements,
+    draft,
+    ledgerElement,
+    timelineElement,
+  };
 }
 
 function ThemeSwitcher({
@@ -145,7 +324,15 @@ function PreviewControls({
   );
 }
 
-function BackendElementCard({ element }: { element: BackendRenderedElement }) {
+function BackendElementCard({
+  element,
+  onCancel,
+  onConfirm,
+}: {
+  element: BackendRenderedElement;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
   if (element.kind === "message") {
     return (
       <MessageBubble roleTone={element.role === "user" ? "user" : "assistant"}>
@@ -159,6 +346,8 @@ function BackendElementCard({ element }: { element: BackendRenderedElement }) {
       <ConfirmationCard
         actions={element.actions}
         description={element.description}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
         title={element.title}
       />
     );
@@ -208,46 +397,52 @@ function BackendElementCard({ element }: { element: BackendRenderedElement }) {
 
 function BackendElementSurface({
   elements,
+  onCancel,
+  onConfirm,
+  surfaceRef,
   surface,
 }: {
   elements: BackendRenderedElement[];
+  onCancel: () => void;
+  onConfirm: () => void;
+  surfaceRef: RefObject<HTMLElement | null>;
   surface: AgentSurface;
 }) {
   return (
-    <section className="ai-agent-backend-surface" aria-label="后端元素渲染区">
+    <section
+      className="ai-agent-backend-surface"
+      ref={surfaceRef}
+      aria-label="后端元素渲染区"
+    >
       <div className="ai-agent-backend-heading">
         <span>{surfaceLabels[surface]}</span>
         <strong>Backend-rendered elements</strong>
       </div>
       {elements.map((element) => (
-        <BackendElementCard element={element} key={element.id} />
+        <BackendElementCard
+          element={element}
+          key={element.id}
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+        />
       ))}
     </section>
   );
 }
 
-function ExecutionStatusDock({ surface }: { surface: AgentSurface }) {
-  const statusCopy =
-    surface === "conversation"
-      ? {
-          description: "已解析 1 项创建操作，等待确认",
-          label: "confirming",
-          title: "接口状态",
-        }
-      : {
-          description: `正在同步 ${surfaceLabels[surface]} 的后端元素`,
-          label: "synced",
-          title: "接口状态",
-        };
-
+function ExecutionStatusDock({ status }: { status: RuntimeExecutionStatus }) {
   return (
-    <section className="ai-agent-status-dock" aria-label="当前执行状态">
+    <section
+      className="ai-agent-status-dock"
+      data-status={status.status}
+      aria-label="当前执行状态"
+    >
       <span className="ai-agent-status-dot" />
       <div>
-        <strong>{statusCopy.title}</strong>
-        <span>{statusCopy.description}</span>
+        <strong>{executionStatusLabels[status.status]}</strong>
+        <span>{status.description}</span>
       </div>
-      <em>{statusCopy.label}</em>
+      <em>{status.status}</em>
     </section>
   );
 }
@@ -255,14 +450,141 @@ function ExecutionStatusDock({ surface }: { surface: AgentSurface }) {
 export function AgentWorkbench() {
   const [activeSurface, setActiveSurface] =
     useState<AgentSurface>("conversation");
+  const [elementsBySurface, setElementsBySurface] = useState(
+    demoBackendElementsBySurface,
+  );
+  const [executionStatus, setExecutionStatus] =
+    useState<RuntimeExecutionStatus>(initialExecutionStatus);
   const [hostContext, setHostContext] = useState<NativeHostContext | undefined>(
     getNativeHostContext(),
   );
   const [nativePlatform, setNativePlatform] = useState<"ios" | undefined>();
   const [theme, setTheme] = useState<AgentTheme>("dark");
+  const interactionSequenceRef = useRef(0);
+  const surfaceRef = useRef<HTMLElement | null>(null);
+  const timeoutRefs = useRef<number[]>([]);
   const style = useMemo(() => themeVariables(theme), [theme]);
   const showPreviewControls = nativePlatform === undefined;
-  const elements = demoBackendElementsBySurface[activeSurface];
+  const elements = elementsBySurface[activeSurface];
+
+  useEffect(() => {
+    if (activeSurface !== "conversation") {
+      return;
+    }
+
+    surfaceRef.current?.scrollTo({
+      behavior: "smooth",
+      top: surfaceRef.current.scrollHeight,
+    });
+  }, [activeSurface, elements.length]);
+
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach((timeoutId) =>
+        window.clearTimeout(timeoutId),
+      );
+      timeoutRefs.current = [];
+    };
+  }, []);
+
+  function scheduleStatus(status: RuntimeExecutionStatus, delay: number) {
+    const timeoutId = window.setTimeout(() => {
+      setExecutionStatus(status);
+    }, delay);
+    timeoutRefs.current.push(timeoutId);
+  }
+
+  function handleSubmittedText(text: string) {
+    interactionSequenceRef.current += 1;
+    const sequence = interactionSequenceRef.current;
+    const {
+      calendarElement,
+      conversationElements,
+      draft,
+      ledgerElement,
+      timelineElement,
+    } = makeInteractionElements(text, sequence);
+
+    setActiveSurface("conversation");
+    setExecutionStatus({
+      description: "正在理解你的自然语言指令",
+      status: "understanding",
+    });
+
+    setElementsBySurface((current) => ({
+      calendar: [calendarElement, ...current.calendar].slice(0, 4),
+      conversation: [...current.conversation, ...conversationElements],
+      ledger: [ledgerElement, ...current.ledger].slice(0, 4),
+      timeline: [timelineElement, ...current.timeline].slice(0, 4),
+    }));
+
+    scheduleStatus(
+      {
+        description: `已生成“${draft.title}”的日程草案`,
+        status: "planning",
+      },
+      420,
+    );
+    scheduleStatus(
+      {
+        description: `等待确认：${draft.time}，${draft.reminder}`,
+        status: "confirming",
+      },
+      900,
+    );
+  }
+
+  function handleConfirm() {
+    setExecutionStatus({
+      description: "已写入内部日历 mock store，并更新执行记录",
+      status: "completed",
+    });
+
+    setElementsBySurface((current) => ({
+      ...current,
+      conversation: [
+        ...current.conversation,
+        {
+          content:
+            "已确认并完成 1 项操作。现在你可以打开日历、Timeline 或执行记录查看 mock 结果。",
+          id: `completed-${Date.now()}`,
+          kind: "message",
+          role: "assistant",
+        },
+      ],
+      ledger: current.ledger.map((element) =>
+        element.kind === "ledger"
+          ? {
+              ...element,
+              items: element.items.map((item) => ({
+                ...item,
+                completed: true,
+              })),
+            }
+          : element,
+      ),
+    }));
+  }
+
+  function handleCancel() {
+    setExecutionStatus({
+      description: "已取消本次 mock 操作，没有写入日程",
+      status: "idle",
+    });
+
+    setElementsBySurface((current) => ({
+      ...current,
+      conversation: [
+        ...current.conversation,
+        {
+          content: "已取消。你可以继续输入新的日程指令。",
+          id: `cancelled-${Date.now()}`,
+          kind: "message",
+          role: "assistant",
+        },
+      ],
+    }));
+  }
 
   useEffect(() => {
     const detectedNativePlatform = getInitialNativePlatform();
@@ -285,10 +607,32 @@ export function AgentWorkbench() {
         return;
       }
 
+      const nextTheme = getThemeFromNativeMessage(message);
+
+      if (nextTheme) {
+        setTheme(nextTheme);
+        setExecutionStatus({
+          description: `已切换到${themeLabels[nextTheme]}主题`,
+          status: "idle",
+        });
+        return;
+      }
+
+      const submittedText = getSubmittedTextFromNativeMessage(message);
+
+      if (submittedText) {
+        handleSubmittedText(submittedText);
+        return;
+      }
+
       const nextSurface = getSurfaceFromNativeMessage(message);
 
       if (nextSurface) {
         setActiveSurface(nextSurface);
+        setExecutionStatus({
+          description: `已切换到${surfaceLabels[nextSurface]}`,
+          status: nextSurface === "conversation" ? "idle" : "completed",
+        });
       }
     });
   }, []);
@@ -309,8 +653,14 @@ export function AgentWorkbench() {
         />
       ) : null}
       <div className="ai-agent-webview-surface">
-        <BackendElementSurface elements={elements} surface={activeSurface} />
-        <ExecutionStatusDock surface={activeSurface} />
+        <BackendElementSurface
+          elements={elements}
+          onCancel={handleCancel}
+          onConfirm={handleConfirm}
+          surfaceRef={surfaceRef}
+          surface={activeSurface}
+        />
+        <ExecutionStatusDock status={executionStatus} />
       </div>
     </main>
   );

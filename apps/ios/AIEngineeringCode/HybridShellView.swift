@@ -68,20 +68,95 @@ private enum NativeDrawerPanel: String, Identifiable {
     }
 }
 
+private enum NativeShellTheme: String {
+    case dark
+    case light
+
+    var next: NativeShellTheme {
+        self == .dark ? .light : .dark
+    }
+
+    var preferredColorScheme: ColorScheme {
+        self == .dark ? .dark : .light
+    }
+
+    var toggleIcon: String {
+        self == .dark ? "sun.max.fill" : "moon.fill"
+    }
+
+    var toggleLabel: String {
+        self == .dark ? "切换浅色主题" : "切换深色主题"
+    }
+
+    var background: Color {
+        self == .dark
+            ? Color(red: 0.03, green: 0.04, blue: 0.035)
+            : Color(red: 0.95, green: 0.97, blue: 0.94)
+    }
+
+    var surface: Color {
+        self == .dark
+            ? Color(red: 0.09, green: 0.11, blue: 0.10).opacity(0.86)
+            : Color.white.opacity(0.88)
+    }
+
+    var elevatedSurface: Color {
+        self == .dark
+            ? Color(red: 0.08, green: 0.09, blue: 0.085).opacity(0.96)
+            : Color(red: 0.99, green: 1.0, blue: 0.98).opacity(0.96)
+    }
+
+    var inset: Color {
+        self == .dark ? Color.black.opacity(0.38) : Color(red: 0.90, green: 0.93, blue: 0.90)
+    }
+
+    var primary: Color {
+        self == .dark
+            ? Color(red: 0.03, green: 0.72, blue: 0.58)
+            : Color(red: 0.03, green: 0.48, blue: 0.40)
+    }
+
+    var text: Color {
+        self == .dark
+            ? Color(red: 0.96, green: 0.98, blue: 0.96)
+            : Color(red: 0.08, green: 0.13, blue: 0.11)
+    }
+
+    var muted: Color {
+        self == .dark
+            ? Color(red: 0.66, green: 0.70, blue: 0.68)
+            : Color(red: 0.36, green: 0.42, blue: 0.38)
+    }
+
+    var softStroke: Color {
+        self == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08)
+    }
+
+    var overlay: Color {
+        self == .dark ? Color.black.opacity(0.34) : Color.black.opacity(0.18)
+    }
+}
+
 struct HybridShellView: View {
     let configuration: HybridShellConfiguration
 
     @State private var activePanel: NativeDrawerPanel?
     @State private var bridgeEvent: NativeBridgeOutboundEvent?
+    @State private var draftText = ""
+    @State private var inputMode: NativeComposerMode = .voice
     @State private var loadState: WebViewLoadState = .loading
+    @State private var selectedTimelineDate = "20"
+    @State private var theme: NativeShellTheme = .dark
 
     var body: some View {
         ZStack {
-            NativeShellStyle.background
+            theme.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 NativeShellHeader(
+                    activePanel: activePanel,
+                    theme: theme,
                     onCalendar: {
                         openPanel(.calendar, source: "native.header.calendar")
                     },
@@ -90,7 +165,8 @@ struct HybridShellView: View {
                     },
                     onMenu: {
                         openPanel(.timeline, source: "native.header.menu")
-                    }
+                    },
+                    onThemeToggle: toggleTheme
                 )
 
                 H5WebView(
@@ -101,11 +177,17 @@ struct HybridShellView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 NativeComposerBar(
-                    onKeyboard: {
-                        sendInputRequest("keyboard", source: "native.composer.keyboard")
+                    draftText: $draftText,
+                    mode: $inputMode,
+                    theme: theme,
+                    onCamera: {
+                        submitNativeText("这是一张会议截图，帮我识别里面的时间并创建日程", source: "native.composer.camera")
+                    },
+                    onSubmit: {
+                        submitDraftText()
                     },
                     onVoice: {
-                        sendInputRequest("voice", source: "native.composer.voice")
+                        submitNativeText("明天下午三点安排一个新年业务规划会，时间一个半小时", source: "native.composer.voice")
                     }
                 )
                 .padding(.horizontal, 18)
@@ -116,6 +198,7 @@ struct HybridShellView: View {
             if loadState != .ready {
                 NativeShellOverlay(
                     loadState: loadState,
+                    theme: theme,
                     title: configuration.title,
                     url: configuration.h5URL
                 )
@@ -124,15 +207,21 @@ struct HybridShellView: View {
             if let activePanel {
                 NativeDrawerOverlay(
                     panel: activePanel,
+                    selectedTimelineDate: $selectedTimelineDate,
+                    theme: theme,
                     onClose: {
                         closePanel()
+                    },
+                    onSelectPanel: { panel in
+                        openPanel(panel, source: "native.drawer.quick-switch")
                     }
                 )
                 .transition(.move(edge: .leading).combined(with: .opacity))
             }
         }
         .animation(.spring(response: 0.34, dampingFraction: 0.88), value: activePanel)
-        .preferredColorScheme(.dark)
+        .animation(.easeInOut(duration: 0.2), value: theme)
+        .preferredColorScheme(theme.preferredColorScheme)
     }
 
     private func closePanel() {
@@ -145,13 +234,28 @@ struct HybridShellView: View {
         sendViewChanged(panel.surface, source: source)
     }
 
-    private func sendInputRequest(_ mode: String, source: String) {
+    private func submitDraftText() {
+        let text = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !text.isEmpty else {
+            inputMode = .text
+            return
+        }
+
+        draftText = ""
+        submitNativeText(text, source: "native.composer.keyboard")
+    }
+
+    private func submitNativeText(_ text: String, source: String) {
+        activePanel = nil
+        inputMode = .text
         bridgeEvent = NativeBridgeOutboundEvent(
             payload: [
-                "inputMode": mode,
                 "source": source,
+                "text": text,
+                "view": NativeSurface.conversation.rawValue,
             ],
-            type: "native.inputRequested"
+            type: "native.inputSubmitted"
         )
     }
 
@@ -164,39 +268,61 @@ struct HybridShellView: View {
             type: "native.viewChanged"
         )
     }
-}
 
-private enum NativeShellStyle {
-    static let background = Color(red: 0.03, green: 0.04, blue: 0.035)
-    static let surface = Color(red: 0.09, green: 0.11, blue: 0.10).opacity(0.86)
-    static let primary = Color(red: 0.03, green: 0.72, blue: 0.58)
-    static let text = Color(red: 0.96, green: 0.98, blue: 0.96)
-    static let muted = Color(red: 0.66, green: 0.70, blue: 0.68)
+    private func toggleTheme() {
+        theme = theme.next
+        bridgeEvent = NativeBridgeOutboundEvent(
+            payload: [
+                "source": "native.header.theme",
+                "theme": theme.rawValue,
+            ],
+            type: "native.themeChanged"
+        )
+    }
 }
 
 private struct NativeShellHeader: View {
+    let activePanel: NativeDrawerPanel?
+    let theme: NativeShellTheme
     let onCalendar: () -> Void
     let onLedger: () -> Void
     let onMenu: () -> Void
+    let onThemeToggle: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
-            NativeIconButton(systemName: "line.3.horizontal", action: onMenu)
+        HStack(spacing: 12) {
+            NativeIconButton(
+                isSelected: activePanel == .timeline,
+                systemName: "line.3.horizontal",
+                theme: theme,
+                action: onMenu
+            )
 
             VStack(spacing: 2) {
-                Text("AI 日程执行")
+                Text(activePanel?.title ?? "AI 日程执行")
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.text)
+                    .foregroundStyle(theme.text)
 
-                Text("Native 壳层 · H5 元素区")
+                Text(activePanel == nil ? "对话驱动 · 内部日历" : "Native Drawer · H5 同步内容")
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.muted)
+                    .foregroundStyle(theme.muted)
             }
             .frame(maxWidth: .infinity)
 
-            HStack(spacing: 10) {
-                NativeIconButton(systemName: "clock", action: onLedger)
-                NativeIconButton(systemName: "calendar", action: onCalendar)
+            HStack(spacing: 8) {
+                NativeIconButton(systemName: theme.toggleIcon, theme: theme, action: onThemeToggle)
+                NativeIconButton(
+                    isSelected: activePanel == .ledger,
+                    systemName: "clock",
+                    theme: theme,
+                    action: onLedger
+                )
+                NativeIconButton(
+                    isSelected: activePanel == .calendar,
+                    systemName: "calendar",
+                    theme: theme,
+                    action: onCalendar
+                )
             }
         }
         .padding(.horizontal, 18)
@@ -205,70 +331,115 @@ private struct NativeShellHeader: View {
         .background(
             LinearGradient(
                 colors: [
-                    NativeShellStyle.background.opacity(0.98),
-                    NativeShellStyle.background.opacity(0.72),
+                    theme.background.opacity(0.98),
+                    theme.background.opacity(0.72),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
         )
+        .accessibilityLabel("原生顶部导航")
     }
 }
 
 private struct NativeIconButton: View {
+    var isSelected = false
     let systemName: String
+    let theme: NativeShellTheme
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundStyle(NativeShellStyle.text)
+                .foregroundStyle(isSelected ? theme.primary : theme.text)
                 .frame(width: 42, height: 42)
                 .background(.ultraThinMaterial)
-                .background(Color.white.opacity(0.05))
+                .background(isSelected ? theme.primary.opacity(0.18) : theme.surface)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.24), radius: 12, x: 0, y: 8)
+                .overlay(Circle().stroke(theme.softStroke, lineWidth: 1))
+                .shadow(color: .black.opacity(theme == .dark ? 0.24 : 0.08), radius: 12, x: 0, y: 8)
         }
         .buttonStyle(.plain)
     }
 }
 
+private enum NativeComposerMode {
+    case text
+    case voice
+}
+
 private struct NativeComposerBar: View {
-    let onKeyboard: () -> Void
+    @Binding var draftText: String
+    @Binding var mode: NativeComposerMode
+
+    let theme: NativeShellTheme
+    let onCamera: () -> Void
+    let onSubmit: () -> Void
     let onVoice: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            NativeIconButton(systemName: "camera.fill") {}
+            NativeIconButton(systemName: "camera.fill", theme: theme, action: onCamera)
 
-            Button(action: onVoice) {
-                Text("按住说话")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.text)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color.black.opacity(0.38))
-                    .clipShape(Capsule())
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                    )
+            if mode == .text {
+                HStack(spacing: 8) {
+                    TextField("输入你的日程指令", text: $draftText)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(theme.text)
+                        .textInputAutocapitalization(.never)
+                        .submitLabel(.send)
+                        .onSubmit(onSubmit)
+
+                    Button(action: onSubmit) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundStyle(draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? theme.muted : theme.primary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .padding(.horizontal, 14)
+                .background(theme.inset)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(theme.softStroke, lineWidth: 1))
+            } else {
+                Button(action: onVoice) {
+                    Text("按住说话")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(theme.text)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(theme.inset)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(theme.softStroke, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
-            NativeIconButton(systemName: "keyboard", action: onKeyboard)
+            NativeIconButton(
+                isSelected: mode == .text,
+                systemName: mode == .text ? "mic.fill" : "keyboard",
+                theme: theme,
+                action: {
+                    mode = mode == .text ? .voice : .text
+                }
+            )
         }
     }
 }
 
 private struct NativeDrawerOverlay: View {
     let panel: NativeDrawerPanel
+    @Binding var selectedTimelineDate: String
+    let theme: NativeShellTheme
     let onClose: () -> Void
+    let onSelectPanel: (NativeDrawerPanel) -> Void
 
     var body: some View {
         ZStack(alignment: .leading) {
-            Color.black.opacity(0.34)
+            theme.overlay
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
 
@@ -277,32 +448,41 @@ private struct NativeDrawerOverlay: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(panel.title)
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundStyle(NativeShellStyle.text)
+                            .foregroundStyle(theme.text)
 
-                        Text("由 iOS 原生壳控制，H5 只同步内容元素")
+                        Text("由 iOS 原生壳控制，H5 同步内容元素")
                             .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundStyle(NativeShellStyle.muted)
+                            .foregroundStyle(theme.muted)
                     }
 
                     Spacer()
 
-                    NativeIconButton(systemName: "xmark", action: onClose)
+                    NativeIconButton(systemName: "xmark", theme: theme, action: onClose)
                 }
+
+                NativeDrawerSegmentedControl(
+                    activePanel: panel,
+                    theme: theme,
+                    onSelect: onSelectPanel
+                )
 
                 switch panel {
                 case .calendar:
-                    NativeCalendarSummary()
+                    NativeCalendarSummary(theme: theme)
                 case .ledger:
-                    NativeLedgerSummary()
+                    NativeLedgerSummary(theme: theme)
                 case .timeline:
-                    NativeTimepageTimeline()
+                    NativeTimepageTimeline(
+                        selectedDate: $selectedTimelineDate,
+                        theme: theme
+                    )
                 }
             }
             .padding(18)
-            .frame(width: 326)
+            .frame(width: 340)
             .frame(maxHeight: .infinity, alignment: .top)
             .background(.ultraThinMaterial)
-            .background(Color(red: 0.08, green: 0.09, blue: 0.085).opacity(0.96))
+            .background(theme.elevatedSurface)
             .clipShape(
                 UnevenRoundedRectangle(
                     topLeadingRadius: 0,
@@ -312,70 +492,165 @@ private struct NativeDrawerOverlay: View {
                     style: .continuous
                 )
             )
-            .shadow(color: .black.opacity(0.34), radius: 30, x: 16, y: 0)
+            .shadow(color: .black.opacity(theme == .dark ? 0.34 : 0.16), radius: 30, x: 16, y: 0)
             .ignoresSafeArea(edges: .vertical)
         }
     }
 }
 
-private struct NativeTimepageTimeline: View {
-    private let days: [(weekday: String, date: String, events: [(String, String, Color)])] = [
-        ("周三", "20", [("团队站会", "09:30 -> 10:00", .blue), ("设计 Review", "16:00 -> 17:00", NativeShellStyle.primary)]),
-        ("周四", "21", [("新年业务规划会", "15:00 -> 16:30", .orange), ("复盘整理", "19:30 -> 20:30", .green)]),
-        ("周五", "22", [("1:1 沟通", "14:00 -> 14:30", .blue)]),
-        ("周六", "23", [("自由安排", "全天", .green)]),
-    ]
+private struct NativeDrawerSegmentedControl: View {
+    let activePanel: NativeDrawerPanel
+    let theme: NativeShellTheme
+    let onSelect: (NativeDrawerPanel) -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            VStack(spacing: 8) {
+        HStack(spacing: 6) {
+            drawerButton(.timeline, title: "Timeline")
+            drawerButton(.calendar, title: "日历")
+            drawerButton(.ledger, title: "记录")
+        }
+        .padding(4)
+        .background(theme.inset)
+        .clipShape(Capsule())
+    }
+
+    private func drawerButton(_ panel: NativeDrawerPanel, title: String) -> some View {
+        Button {
+            onSelect(panel)
+        } label: {
+            Text(title)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundStyle(activePanel == panel ? Color.white : theme.muted)
+                .frame(maxWidth: .infinity)
+                .frame(height: 32)
+                .background(activePanel == panel ? theme.primary : Color.clear)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct NativeTimelineEvent: Identifiable {
+    let id: String
+    let title: String
+    let time: String
+    let tone: Color
+}
+
+private struct NativeTimelineDay: Identifiable {
+    let id: String
+    let weekday: String
+    let date: String
+    let events: [NativeTimelineEvent]
+}
+
+private struct NativeTimepageTimeline: View {
+    @Binding var selectedDate: String
+    let theme: NativeShellTheme
+
+    private var days: [NativeTimelineDay] {
+        [
+            NativeTimelineDay(
+                id: "20",
+                weekday: "周三",
+                date: "20",
+                events: [
+                    NativeTimelineEvent(id: "standup", title: "团队站会", time: "09:30 -> 10:00", tone: .blue),
+                    NativeTimelineEvent(id: "review", title: "设计 Review", time: "16:00 -> 17:00", tone: theme.primary),
+                ]
+            ),
+            NativeTimelineDay(
+                id: "21",
+                weekday: "周四",
+                date: "21",
+                events: [
+                    NativeTimelineEvent(id: "planning", title: "新年业务规划会", time: "15:00 -> 16:30", tone: .orange),
+                    NativeTimelineEvent(id: "retro", title: "复盘整理", time: "19:30 -> 20:30", tone: .green),
+                ]
+            ),
+            NativeTimelineDay(
+                id: "22",
+                weekday: "周五",
+                date: "22",
+                events: [
+                    NativeTimelineEvent(id: "one-on-one", title: "1:1 沟通", time: "14:00 -> 14:30", tone: .blue),
+                ]
+            ),
+            NativeTimelineDay(
+                id: "23",
+                weekday: "周六",
+                date: "23",
+                events: [
+                    NativeTimelineEvent(id: "free", title: "自由安排", time: "全天", tone: .green),
+                ]
+            ),
+        ]
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 10) {
                 Text("2026 五月")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.primary)
+                    .foregroundStyle(theme.primary)
                     .rotationEffect(.degrees(-90))
                     .frame(width: 28, height: 94)
 
                 Rectangle()
-                    .fill(NativeShellStyle.primary.opacity(0.45))
+                    .fill(theme.primary.opacity(0.45))
                     .frame(width: 2)
             }
 
-            VStack(spacing: 10) {
-                ForEach(days, id: \.date) { day in
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack(spacing: 2) {
-                            Text(day.weekday)
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundStyle(NativeShellStyle.muted)
-                            Text(day.date)
-                                .font(.system(size: 26, weight: .bold, design: .rounded))
-                                .foregroundStyle(NativeShellStyle.text)
-                        }
-                        .frame(width: 48)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 10) {
+                    ForEach(days) { day in
+                        Button {
+                            selectedDate = day.date
+                        } label: {
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(spacing: 2) {
+                                    Text(day.weekday)
+                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(theme.muted)
+                                    Text(day.date)
+                                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                                        .foregroundStyle(selectedDate == day.date ? theme.background : theme.text)
+                                        .frame(width: 48, height: 54)
+                                        .background(selectedDate == day.date ? theme.text : Color.clear)
+                                        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                                }
+                                .frame(width: 52)
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            ForEach(day.events, id: \.0) { event in
-                                HStack(alignment: .top, spacing: 8) {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(event.2)
-                                        .frame(width: 4, height: 34)
+                                VStack(alignment: .leading, spacing: 9) {
+                                    ForEach(day.events) { event in
+                                        HStack(alignment: .top, spacing: 8) {
+                                            RoundedRectangle(cornerRadius: 4)
+                                                .fill(event.tone)
+                                                .frame(width: 4, height: 34)
 
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(event.0)
-                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(NativeShellStyle.text)
-                                        Text(event.1)
-                                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                                            .foregroundStyle(NativeShellStyle.muted)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(event.title)
+                                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                                    .foregroundStyle(theme.text)
+                                                Text(event.time)
+                                                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                                                    .foregroundStyle(theme.muted)
+                                            }
+                                        }
                                     }
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
+                            .padding(12)
+                            .background(selectedDate == day.date ? theme.primary.opacity(0.14) : theme.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .stroke(selectedDate == day.date ? theme.primary.opacity(0.45) : theme.softStroke, lineWidth: 1)
+                            )
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .buttonStyle(.plain)
                     }
-                    .padding(12)
-                    .background(Color.white.opacity(day.date == "20" ? 0.08 : 0.04))
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
             }
         }
@@ -383,45 +658,71 @@ private struct NativeTimepageTimeline: View {
 }
 
 private struct NativeCalendarSummary: View {
+    let theme: NativeShellTheme
+
+    private let items = [
+        ("今天 4 项安排", "calendar"),
+        ("明天 1 项待确认", "calendar.badge.clock"),
+        ("本周仍有 3.5h 可用时间", "clock.badge.checkmark"),
+    ]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(["今天 4 项安排", "明天 1 项待确认", "本周仍有 3.5h 可用时间"], id: \.self) { item in
-                HStack {
-                    Image(systemName: "calendar")
-                        .foregroundStyle(NativeShellStyle.primary)
-                    Text(item)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(NativeShellStyle.text)
+            ForEach(items, id: \.0) { item in
+                Button {} label: {
+                    HStack {
+                        Image(systemName: item.1)
+                            .foregroundStyle(theme.primary)
+                        Text(item.0)
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(theme.text)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(theme.muted)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(theme.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(theme.softStroke, lineWidth: 1))
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .buttonStyle(.plain)
             }
         }
     }
 }
 
 private struct NativeLedgerSummary: View {
+    let theme: NativeShellTheme
+
+    private let items: [(title: String, done: Bool)] = [
+        ("解析时间表达", true),
+        ("生成确认卡片", true),
+        ("等待用户确认", false),
+    ]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(["解析时间表达", "等待创建日程"], id: \.self) { item in
+            ForEach(items, id: \.title) { item in
                 HStack {
-                    Image(systemName: item == "解析时间表达" ? "checkmark.circle.fill" : "clock.fill")
-                        .foregroundStyle(item == "解析时间表达" ? NativeShellStyle.primary : .orange)
+                    Image(systemName: item.done ? "checkmark.circle.fill" : "clock.fill")
+                        .foregroundStyle(item.done ? theme.primary : .orange)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(item)
+                        Text(item.title)
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundStyle(NativeShellStyle.text)
-                        Text(item == "解析时间表达" ? "已完成" : "确认后写入内部日历")
+                            .foregroundStyle(theme.text)
+                        Text(item.done ? "已完成" : "确认后写入内部日历")
                             .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundStyle(NativeShellStyle.muted)
+                            .foregroundStyle(theme.muted)
                     }
+                    Spacer()
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.05))
+                .background(theme.surface)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(theme.softStroke, lineWidth: 1))
             }
         }
     }
@@ -429,30 +730,31 @@ private struct NativeLedgerSummary: View {
 
 private struct NativeShellOverlay: View {
     let loadState: WebViewLoadState
+    let theme: NativeShellTheme
     let title: String
     let url: URL
 
     var body: some View {
         VStack(spacing: 14) {
             ProgressView()
-                .tint(NativeShellStyle.primary)
+                .tint(theme.primary)
                 .opacity(loadState == .loading ? 1 : 0)
 
             VStack(spacing: 8) {
                 Text(title)
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.text)
+                    .foregroundStyle(theme.text)
 
                 Text(message)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.muted)
+                    .foregroundStyle(theme.muted)
                     .multilineTextAlignment(.center)
             }
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
         .background(.ultraThinMaterial)
-        .background(NativeShellStyle.surface)
+        .background(theme.surface)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: .black.opacity(0.28), radius: 24, x: 0, y: 18)
         .padding(24)

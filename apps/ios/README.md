@@ -11,15 +11,17 @@
 - 启动 SwiftUI App。
 - 用 `WKWebView` 加载 H5 产品层。
 - 提供深色宿主背景、加载态和错误态。
-- 拥有 App 头部 Header、底部输入框。
+- 拥有 App 头部 Header、底部输入框、主题切换入口。
 - 拥有点击菜单后出现的 Timepage 风格 Drawer、完整日历入口和执行记录入口。
-- 实现 `NativeBridge` 消息入口、宿主上下文回传、视图切换事件、输入请求事件和 ACK / Error 回传。
+- 实现 `NativeBridge` 消息入口、宿主上下文回传、视图切换事件、输入提交事件、主题切换事件和 ACK / Error 回传。
+- 在无后端阶段提供可交互 mock：Header 跳转、Drawer 切换、Timepage 日期选择、原生文本输入、语音 / 图片入口 mock 文本。
 
 H5 不再拥有 App 壳层 UI，只负责渲染后端返回的内容元素和接口驱动的页面内执行状态条。执行状态条视觉上固定在输入框上方，但数据与渲染归 H5。
 
 ## 依赖边界
 
 - iOS 不实现日程业务逻辑。
+- iOS 可以提交用户输入和系统入口事件，但不解析日程语义。
 - iOS 不直接读取 `services/*` 或 `ai-factory/*`。
 - iOS 不直接调用后端业务接口。
 - iOS 与 H5 的通信必须通过 `contracts/hybrid-bridge` 的显式契约定义。
@@ -89,6 +91,13 @@ xcodebuild \
 - `HybridShellView.swift`：Native 壳样式、加载态和错误态。
 - `H5WebView.swift`：`WKWebView` 封装、`NativeBridge` 消息解析和 Native -> H5 事件回传。
 - `Info.plist`：本地 HTTP 调试权限和 App 基础配置。
+
+## 当前交互能力
+
+- Header 菜单、执行记录、日历按钮会打开对应 Native Drawer，并通过 `native.viewChanged` 通知 H5 切换后端元素。
+- Header 主题按钮会切换 iOS 深色 / 浅色壳层，并通过 `native.themeChanged` 通知 H5 同步主题。
+- 底部输入框支持语音态和文本态切换。文本提交后，iOS 通过 `native.inputSubmitted` 把原始文本交给 H5。
+- 当前 H5 使用 mock 数据模拟后端响应，真实语义解析、计划生成和写入内部日历仍属于后端后续工作。
 
 ## xcodebuild 环境
 

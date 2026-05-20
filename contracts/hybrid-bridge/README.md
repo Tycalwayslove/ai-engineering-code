@@ -64,6 +64,8 @@ Native 发往 H5：
 - `native.hostContext`：原生宿主上下文。
 - `native.viewChanged`：原生壳切换当前视图，H5 根据视图渲染后端元素。
 - `native.inputRequested`：原生壳触发语音、键盘或附件输入入口，H5 可展示对应后端元素或等待态。
+- `native.inputSubmitted`：原生输入框提交文本、语音 mock 文本或图片 mock 文本，H5 用 mock 后端元素响应。
+- `native.themeChanged`：原生壳切换深色 / 浅色主题，H5 同步主题 token。
 - `native.ack`：原生已收到 H5 消息。
 - `native.error`：原生无法处理消息。
 
@@ -71,5 +73,6 @@ Native 发往 H5：
 
 - 所有新增消息必须先更新本目录契约，再更新 H5 和 iOS。
 - 消息必须带 `id`，方便后续追踪、重放和日志定位。
+- 文本输入、主题切换和页面跳转都通过显式消息传递，不做隐式全局状态读取。
 - 原生能力未实现时，Native 应返回 `native.ack` 或 `native.error`，不得静默失败。
 - 后续 Android 实现必须兼容同一契约，不得另起一套消息命名。
