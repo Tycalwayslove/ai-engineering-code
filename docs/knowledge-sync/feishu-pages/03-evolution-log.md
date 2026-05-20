@@ -417,3 +417,18 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 - 用户反馈修改后仍像是没有生效。
 - 排查后发现 H5 监听 Native 消息的注册时机过于依赖 `h5.ready` 是否成功投递。
 - H5 已调整为“先注册 Native 消息监听，再尝试发送 `h5.ready`”，避免初始化阶段 Bridge 可用性判断失败后，后续 `native.inputSubmitted` 和 `native.themeChanged` 被忽略。
+
+三次修正：
+
+- 用户移除旧 Xcode 后，模拟器中仍然看不到最新交互，进一步排查确认不是旧 Xcode、旧 App 包或错误 H5 URL。
+- iOS 原生层新增 `Native Debug` 标识和 WebView JS 探针，屏幕上直接显示当前 URL、H5 debug build、NativeBridge 可用性、是否存在开发预览控件、hydration 错误数量。
+- 探针发现 H5 一度停留在服务端 HTML 状态：`debugBuild=null`、`hasBridgeDebug=false`、`hasPreviewControls=true`。
+- 根因是 H5 首屏渲染直接读取 `window.location`，服务端与客户端首次渲染不一致，触发 React hydration mismatch。
+- H5 已改为把 `bridgeDebugEnabled`、`nativePlatform`、`hostContext` 等浏览器相关状态延后到 `useEffect` 初始化，避免首屏不一致。
+- `next.config.ts` 增加本地 `allowedDevOrigins`，提高 iOS WebView / 模拟器访问 Next dev 资源的稳定性。
+- 验证结果：`debugBuild=bridge-debug-2026-05-20-01`、`hasBridgeDebug=true`、`hasPreviewControls=false`、`nativeEmbedded=true`、`errorCount=0`。
+- 主题切换和原生键盘输入均已通过模拟器验证，H5 能收到 `native.themeChanged` 和 `native.inputSubmitted` 并渲染可见回执。
+
+阶段补充价值：
+
+这次问题把 Hybrid 调试规则补完整了：不要只猜 Xcode 缓存或 WebView 缓存，要同时验证“原生包是否更新、H5 bundle 是否更新、React 是否完成 hydration、Bridge 是否收发消息”。后续 Hybrid 问题应保留原生可见探针、H5 可见探针和控制台日志三层线索。

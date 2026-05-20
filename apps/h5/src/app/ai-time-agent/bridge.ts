@@ -54,6 +54,14 @@ declare global {
 
 const nativeMessageEventName = "ai-native-message";
 
+function bridgeLog(message: string, detail?: unknown) {
+  if (typeof console === "undefined") {
+    return;
+  }
+
+  console.info(`[AIH5Bridge] ${message}`, detail ?? "");
+}
+
 function createMessageId(type: NativeBridgeMessageType) {
   const randomPart =
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -91,6 +99,7 @@ export function postNativeBridgeMessage(
   };
 
   if (!isNativeBridgeAvailable()) {
+    bridgeLog("outbound skipped: NativeBridge unavailable", envelope);
     return {
       delivered: false,
       envelope,
@@ -98,6 +107,7 @@ export function postNativeBridgeMessage(
     } as const;
   }
 
+  bridgeLog("outbound", envelope);
   window.webkit?.messageHandlers?.NativeBridge?.postMessage(envelope);
 
   return {
@@ -115,6 +125,7 @@ export function subscribeNativeBridge(
 
   const listener = (event: Event) => {
     const customEvent = event as CustomEvent<NativeBridgeEnvelope>;
+    bridgeLog("inbound", customEvent.detail);
     onMessage(customEvent.detail);
   };
 

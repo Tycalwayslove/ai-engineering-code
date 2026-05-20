@@ -1,5 +1,7 @@
 import SwiftUI
 
+private let nativeDebugBuild = "native-debug-2026-05-20-01"
+
 struct HybridShellConfiguration {
     let title: String
     let h5URL: URL
@@ -13,7 +15,7 @@ struct HybridShellConfiguration {
 private extension Bundle {
     var h5DevServerURL: String {
         let configuredURL = object(forInfoDictionaryKey: "H5DevServerURL") as? String
-        let fallbackURL = "http://127.0.0.1:3000/?native=ios"
+        let fallbackURL = "http://127.0.0.1:3000/?native=ios&bridgeDebug=1"
 
         guard let configuredURL, !configuredURL.isEmpty else {
             return fallbackURL
@@ -27,6 +29,17 @@ enum WebViewLoadState: Equatable {
     case loading
     case ready
     case failed(String)
+
+    var debugLabel: String {
+        switch self {
+        case .loading:
+            return "loading"
+        case .ready:
+            return "ready"
+        case .failed(let reason):
+            return "failed: \(reason)"
+        }
+    }
 }
 
 private enum NativeSurface: String {
@@ -144,9 +157,14 @@ struct HybridShellView: View {
     @State private var bridgeEvent: NativeBridgeOutboundEvent?
     @State private var draftText = ""
     @State private var inputMode: NativeComposerMode = .voice
+    @State private var diagnostics = WebViewDiagnostics()
     @State private var loadState: WebViewLoadState = .loading
     @State private var selectedTimelineDate = "20"
     @State private var theme: NativeShellTheme = .dark
+
+    private var bridgeDebugEnabled: Bool {
+        configuration.h5URL.absoluteString.contains("bridgeDebug=1")
+    }
 
     var body: some View {
         ZStack {
@@ -169,8 +187,18 @@ struct HybridShellView: View {
                     onThemeToggle: toggleTheme
                 )
 
+                if bridgeDebugEnabled {
+                    NativeBridgeDebugBar(
+                        diagnostics: diagnostics,
+                        h5URL: configuration.h5URL,
+                        loadState: loadState,
+                        theme: theme
+                    )
+                }
+
                 H5WebView(
                     url: configuration.h5URL,
+                    diagnostics: $diagnostics,
                     loadState: $loadState,
                     outboundEvent: bridgeEvent
                 )
@@ -738,6 +766,40 @@ private struct NativeLedgerSummary: View {
                 .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(theme.softStroke, lineWidth: 1))
             }
         }
+    }
+}
+
+private struct NativeBridgeDebugBar: View {
+    let diagnostics: WebViewDiagnostics
+    let h5URL: URL
+    let loadState: WebViewLoadState
+    let theme: NativeShellTheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("Native Debug · \(nativeDebugBuild)")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundStyle(theme.primary)
+
+            Text("state=\(loadState.debugLabel)")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(theme.muted)
+
+            Text(h5URL.absoluteString)
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(theme.muted)
+                .lineLimit(2)
+
+            Text(diagnostics.latestProbe)
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .foregroundStyle(theme.muted)
+                .lineLimit(5)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(theme.inset.opacity(0.92))
+        .overlay(Rectangle().fill(theme.softStroke).frame(height: 1), alignment: .bottom)
     }
 }
 

@@ -54,6 +54,17 @@ const initialExecutionStatus: RuntimeExecutionStatus = {
   status: "idle",
 };
 
+const bridgeDebugBuild = "bridge-debug-2026-05-20-01";
+
+type BridgeDebugState = {
+  bridgeAvailable: boolean;
+  h5ReadyDelivered: boolean;
+  lastInbound?: string;
+  lastOutbound?: string;
+  messageCount: number;
+  mountedAt: string;
+};
+
 function themeVariables(theme: AiTimeThemeName): CSSProperties {
   return createAiTimeThemeCssVariables(theme) as CSSProperties;
 }
@@ -66,6 +77,15 @@ function getInitialNativePlatform() {
   const native = new URLSearchParams(window.location.search).get("native");
 
   return native === "ios" ? "ios" : undefined;
+}
+
+function isBridgeDebugEnabled() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return params.get("bridgeDebug") === "1" || params.get("native") === "ios";
 }
 
 function getSurfaceFromNativeMessage(message: NativeBridgeEnvelope) {
@@ -453,17 +473,61 @@ function ExecutionStatusDock({ status }: { status: RuntimeExecutionStatus }) {
   );
 }
 
+function BridgeDebugPanel({
+  activeSurface,
+  debug,
+  enabled,
+  hostContext,
+  nativePlatform,
+  theme,
+}: {
+  activeSurface: AgentSurface;
+  debug: BridgeDebugState;
+  enabled: boolean;
+  hostContext?: NativeHostContext;
+  nativePlatform?: "ios";
+  theme: AgentTheme;
+}) {
+  if (!enabled) {
+    return null;
+  }
+
+  return (
+    <aside className="ai-agent-bridge-debug" aria-label="Bridge 调试信息">
+      <strong>Bridge Debug</strong>
+      <span>{bridgeDebugBuild}</span>
+      <span>platform: {nativePlatform ?? "unknown"}</span>
+      <span>surface: {activeSurface}</span>
+      <span>theme: {theme}</span>
+      <span>
+        ready: {debug.h5ReadyDelivered ? "delivered" : "not delivered"}
+      </span>
+      <span>bridge: {debug.bridgeAvailable ? "available" : "missing"}</span>
+      <span>inbound: {debug.lastInbound ?? "none"}</span>
+      <span>outbound: {debug.lastOutbound ?? "none"}</span>
+      <span>count: {debug.messageCount}</span>
+      {hostContext?.h5URL ? <span>url: {hostContext.h5URL}</span> : null}
+      <span>mounted: {debug.mountedAt}</span>
+    </aside>
+  );
+}
+
 export function AgentWorkbench() {
   const [activeSurface, setActiveSurface] =
     useState<AgentSurface>("conversation");
+  const [bridgeDebug, setBridgeDebug] = useState<BridgeDebugState>(() => ({
+    bridgeAvailable: false,
+    h5ReadyDelivered: false,
+    messageCount: 0,
+    mountedAt: "pending",
+  }));
+  const [bridgeDebugEnabled, setBridgeDebugEnabled] = useState(false);
   const [elementsBySurface, setElementsBySurface] = useState(
     demoBackendElementsBySurface,
   );
   const [executionStatus, setExecutionStatus] =
     useState<RuntimeExecutionStatus>(initialExecutionStatus);
-  const [hostContext, setHostContext] = useState<NativeHostContext | undefined>(
-    getNativeHostContext(),
-  );
+  const [hostContext, setHostContext] = useState<NativeHostContext>();
   const [nativePlatform, setNativePlatform] = useState<"ios" | undefined>();
   const [theme, setTheme] = useState<AgentTheme>("dark");
   const interactionSequenceRef = useRef(0);
@@ -595,8 +659,32 @@ export function AgentWorkbench() {
   useEffect(() => {
     const detectedNativePlatform = getInitialNativePlatform();
     setNativePlatform(detectedNativePlatform);
+    setHostContext(getNativeHostContext());
+    setBridgeDebugEnabled(isBridgeDebugEnabled());
+    setBridgeDebug((current) => ({
+      ...current,
+      mountedAt: new Date().toLocaleTimeString(),
+    }));
+    (
+      window as typeof window & {
+        __AI_H5_DEBUG_BUILD__?: string;
+      }
+    ).__AI_H5_DEBUG_BUILD__ = bridgeDebugBuild;
+
+    console.info("[AIH5Bridge] mounted", {
+      bridgeDebugBuild,
+      nativePlatform: detectedNativePlatform,
+      search: window.location.search,
+    });
 
     const unsubscribe = subscribeNativeBridge((message) => {
+      setBridgeDebug((current) => ({
+        ...current,
+        bridgeAvailable: true,
+        lastInbound: message.type,
+        messageCount: current.messageCount + 1,
+      }));
+
       if (message.type === "native.hostContext") {
         const context = message.payload as NativeHostContext;
         setHostContext(context);
@@ -645,10 +733,17 @@ export function AgentWorkbench() {
       }
     });
 
-    postNativeBridgeMessage("h5.ready", {
+    const readyResult = postNativeBridgeMessage("h5.ready", {
       route: window.location.pathname,
       surface: "conversation",
     });
+    console.info("[AIH5Bridge] h5.ready result", readyResult);
+    setBridgeDebug((current) => ({
+      ...current,
+      bridgeAvailable: readyResult.delivered,
+      h5ReadyDelivered: readyResult.delivered,
+      lastOutbound: readyResult.envelope.type,
+    }));
 
     return unsubscribe;
   }, []);
@@ -669,6 +764,14 @@ export function AgentWorkbench() {
         />
       ) : null}
       <div className="ai-agent-webview-surface">
+        <BridgeDebugPanel
+          activeSurface={activeSurface}
+          debug={bridgeDebug}
+          enabled={bridgeDebugEnabled}
+          hostContext={hostContext}
+          nativePlatform={nativePlatform}
+          theme={theme}
+        />
         <BackendElementSurface
           elements={elements}
           onCancel={handleCancel}

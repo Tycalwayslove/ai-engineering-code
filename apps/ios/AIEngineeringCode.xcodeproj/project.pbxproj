@@ -261,7 +261,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				H5_DEV_SERVER_URL = "http://127.0.0.1:3000/?native=ios";
+				H5_DEV_SERVER_URL = "http://127.0.0.1:3000/?native=ios&bridgeDebug=1";
 				INFOPLIST_FILE = AIEngineeringCode/Info.plist;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aiengineeringcode.shell;
@@ -278,7 +278,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				H5_DEV_SERVER_URL = "http://127.0.0.1:3000/?native=ios";
+				H5_DEV_SERVER_URL = "http://127.0.0.1:3000/?native=ios&bridgeDebug=1";
 				INFOPLIST_FILE = AIEngineeringCode/Info.plist;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aiengineeringcode.shell;

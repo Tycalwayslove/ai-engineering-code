@@ -7,6 +7,10 @@ struct NativeBridgeOutboundEvent: Equatable {
     let type: String
 }
 
+struct WebViewDiagnostics: Equatable {
+    var latestProbe = "probe=pending"
+}
+
 private enum NativeBridgeContract {
     static let bridgeVersion = "0.1.0"
     static let handlerName = "NativeBridge"
@@ -46,8 +50,41 @@ private enum NativeBridgeContract {
     }
 }
 
+private func bridgeLog(_ message: String) {
+    print("[AIHybridBridge] \(message)")
+}
+
+private func makeDevURLRequest(url: URL) -> URLRequest {
+    URLRequest(
+        url: url,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutInterval: 20
+    )
+}
+
+private let diagnosticBootstrapScript = """
+window.__AI_H5_ERRORS__ = window.__AI_H5_ERRORS__ || [];
+window.__AI_NATIVE_INJECTED_AT__ = new Date().toISOString();
+window.addEventListener('error', function(event) {
+  window.__AI_H5_ERRORS__.push({
+    type: 'error',
+    message: event.message,
+    source: event.filename,
+    line: event.lineno,
+    column: event.colno
+  });
+});
+window.addEventListener('unhandledrejection', function(event) {
+  window.__AI_H5_ERRORS__.push({
+    type: 'unhandledrejection',
+    message: String(event.reason && event.reason.message ? event.reason.message : event.reason)
+  });
+});
+"""
+
 struct H5WebView: UIViewRepresentable {
     let url: URL
+    @Binding var diagnostics: WebViewDiagnostics
     @Binding var loadState: WebViewLoadState
     let outboundEvent: NativeBridgeOutboundEvent?
 
@@ -58,10 +95,20 @@ struct H5WebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let contentController = WKUserContentController()
         contentController.add(context.coordinator, name: NativeBridgeContract.handlerName)
+        contentController.addUserScript(
+            WKUserScript(
+                source: diagnosticBootstrapScript,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: true
+            )
+        )
 
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = contentController
         configuration.allowsInlineMediaPlayback = true
+        configuration.websiteDataStore = .nonPersistent()
+        configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+        configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -71,7 +118,8 @@ struct H5WebView: UIViewRepresentable {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.allowsBackForwardNavigationGestures = false
         context.coordinator.webView = webView
-        webView.load(URLRequest(url: url))
+        bridgeLog("create webview url=\(url.absoluteString)")
+        webView.load(makeDevURLRequest(url: url))
 
         return webView
     }
@@ -79,7 +127,8 @@ struct H5WebView: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         if webView.url != url {
             loadState = .loading
-            webView.load(URLRequest(url: url))
+            bridgeLog("reload webview from=\(webView.url?.absoluteString ?? "nil") to=\(url.absoluteString)")
+            webView.load(makeDevURLRequest(url: url))
         }
 
         context.coordinator.dispatchNativeEvent(outboundEvent, to: webView)
@@ -94,9 +143,23 @@ struct H5WebView: UIViewRepresentable {
             self.parent = parent
         }
 
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            bridgeLog("navigation started url=\(webView.url?.absoluteString ?? parent.url.absoluteString)")
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            bridgeLog("navigation finished url=\(webView.url?.absoluteString ?? "nil")")
             parent.loadState = .ready
             sendHostContext(to: webView)
+            probeWebView(webView, label: "didFinish")
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self, weak webView] in
+                guard let self, let webView else {
+                    return
+                }
+
+                self.probeWebView(webView, label: "after-1.2s")
+            }
         }
 
         func webView(
@@ -104,6 +167,7 @@ struct H5WebView: UIViewRepresentable {
             didFail navigation: WKNavigation!,
             withError error: Error
         ) {
+            bridgeLog("navigation failed error=\(error.localizedDescription)")
             parent.loadState = .failed(error.localizedDescription)
         }
 
@@ -112,6 +176,7 @@ struct H5WebView: UIViewRepresentable {
             didFailProvisionalNavigation navigation: WKNavigation!,
             withError error: Error
         ) {
+            bridgeLog("provisional navigation failed error=\(error.localizedDescription)")
             parent.loadState = .failed(error.localizedDescription)
         }
 
@@ -141,7 +206,7 @@ struct H5WebView: UIViewRepresentable {
                 return
             }
 
-            print("NativeBridge message:", envelope)
+            bridgeLog("received from H5 type=\(type) id=\(id) payload=\(envelope["payload"] ?? [:])")
 
             switch type {
             case "h5.ready":
@@ -183,6 +248,7 @@ struct H5WebView: UIViewRepresentable {
                 ]
             )
 
+            bridgeLog("send host context url=\(parent.url.absoluteString)")
             evaluateNativeMessage(envelope, in: webView)
         }
 
@@ -198,6 +264,7 @@ struct H5WebView: UIViewRepresentable {
                 payload: event.payload
             )
 
+            bridgeLog("send to H5 type=\(event.type) payload=\(event.payload)")
             evaluateNativeMessage(envelope, in: webView)
         }
 
@@ -233,13 +300,53 @@ struct H5WebView: UIViewRepresentable {
                 let webView,
                 let script = NativeBridgeContract.makeDispatchScript(envelope: envelope)
             else {
+                bridgeLog("skip dispatch because webView/script is missing envelope=\(envelope)")
                 return
             }
 
             webView.evaluateJavaScript(script) { _, error in
                 if let error {
-                    print("NativeBridge dispatch failed:", error.localizedDescription)
+                    bridgeLog("dispatch failed type=\(envelope["type"] ?? "unknown") error=\(error.localizedDescription)")
+                } else {
+                    bridgeLog("dispatch succeeded type=\(envelope["type"] ?? "unknown")")
                 }
+            }
+        }
+
+        private func probeWebView(_ webView: WKWebView, label: String) {
+            let probeScript = """
+            JSON.stringify({
+              label: '\(label)',
+              href: window.location.href,
+              readyState: document.readyState,
+              scripts: document.scripts.length,
+              debugBuild: window.__AI_H5_DEBUG_BUILD__ || null,
+              injectedAt: window.__AI_NATIVE_INJECTED_AT__ || null,
+              nativeBridge: !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.NativeBridge),
+              nativeLastMessage: window.__AI_NATIVE_LAST_MESSAGE__ ? window.__AI_NATIVE_LAST_MESSAGE__.type : null,
+              hasBridgeDebug: !!document.querySelector('.ai-agent-bridge-debug'),
+              hasPreviewControls: !!document.querySelector('.ai-agent-preview-controls'),
+              nativeEmbedded: document.querySelector('.ai-agent-page') ? document.querySelector('.ai-agent-page').dataset.nativeEmbedded : null,
+              errorCount: window.__AI_H5_ERRORS__ ? window.__AI_H5_ERRORS__.length : 0,
+              lastError: window.__AI_H5_ERRORS__ && window.__AI_H5_ERRORS__.length ? window.__AI_H5_ERRORS__[window.__AI_H5_ERRORS__.length - 1] : null
+            })
+            """
+
+            webView.evaluateJavaScript(probeScript) { [weak self] result, error in
+                guard let self else {
+                    return
+                }
+
+                if let error {
+                    let message = "probe=\(label) failed error=\(error.localizedDescription)"
+                    bridgeLog(message)
+                    self.parent.diagnostics.latestProbe = message
+                    return
+                }
+
+                let snapshot = String(describing: result ?? "nil")
+                bridgeLog("probe \(snapshot)")
+                self.parent.diagnostics.latestProbe = snapshot
             }
         }
     }
