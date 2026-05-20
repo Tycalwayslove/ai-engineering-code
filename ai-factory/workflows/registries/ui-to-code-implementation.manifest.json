@@ -1,0 +1,42 @@
+{
+  "id": "ui-to-code-implementation",
+  "name": "UI 图到代码实现",
+  "owner": "current-task-owner",
+  "trigger": "human",
+  "execution": "manual",
+  "discovery": "explicit-input-only",
+  "source": "figma-markdown-codebase",
+  "inputs": [
+    "ui source",
+    "design system source",
+    "product source",
+    "implementation scope",
+    "verification requirements"
+  ],
+  "outputs": [
+    "engineering spec",
+    "implementation plan",
+    "code changes",
+    "verification record",
+    "workflow run record"
+  ],
+  "states": [
+    "not_started",
+    "context_loaded",
+    "engineering_spec_drafted",
+    "implementation_plan_drafted",
+    "in_progress",
+    "verified",
+    "synced",
+    "archived"
+  ],
+  "memoryDomains": [
+    "durable/architecture",
+    "durable/product",
+    "durable/design",
+    "working/active-context",
+    "working/tasks",
+    "working/iterations"
+  ],
+  "humanReviewRequired": false
+}

@@ -34,6 +34,29 @@ AI 原生协作不是让模型无限自动执行，而是让人和 AI 在同一�
 
 显式注册牺牲了一点短期速度，但换来长期可解释性和可追踪性。
 
+## UI 图到代码实现
+
+当 UI 设计图已经确认后，项目不会直接进入页面开发，而是先启动 `ui-to-code-implementation` 工作流。
+
+该工作流要求先明确：
+
+- UI 来源：Figma 页面、节点、截图或本地 UI 规格。
+- 设计系统来源：tokens、组件库、主题规则和图标规则。
+- 产品来源：PRD、需求点记录或 design brief。
+- 实现范围：本次落地哪些页面、状态和组件。
+- 非目标：哪些业务能力、后端能力和集成能力暂不实现。
+- 验证方式：类型检查、构建、factory validation、浏览器检查和知识同步。
+
+这条工作流的核心价值是把“设计图”转换成“工程规格”和“实施计划”，避免 AI 直接根据视觉稿自由发挥。
+
+当前 AI 时间管理 Agent 已经生成：
+
+- UI 到代码工作流：`ai-factory/workflows/ui-to-code-implementation.md`
+- H5 工程规格：`ai-factory/specs/engineering/2026-05-20-ai-time-management-agent-h5-ui-engineering-v0-1.md`
+- H5 实施计划：`ai-factory/specs/active/2026-05-20-ai-time-management-agent-h5-ui-implementation-plan.md`
+
+下一步会按计划实现 H5 首屏薄切片。第一版只做 UI 和演示状态，不直接接入真实 AI 解析、日程写入或 Native Bridge。
+
 ## 阶段记录
 
 每个阶段完成后沉淀三类内容：
