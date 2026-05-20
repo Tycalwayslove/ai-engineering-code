@@ -2,6 +2,7 @@ import {
   Button,
   ComposerBar,
   ConfirmationCard,
+  createAiTimeThemeCssVariables,
   ExecutionStatusBar,
   Icon,
   IconButton,
@@ -10,9 +11,13 @@ import {
   StatusBadge,
   TimelineDrawer,
   aiTimeDesignTokens,
+  aiTimeThemeNames,
+  aiTimeThemeValues,
   iconNames,
+  type AiTimeThemeName,
   type TimelineDay,
 } from "@ai-code/shared-ui";
+import type { CSSProperties } from "react";
 
 const timelineDays: TimelineDay[] = [
   {
@@ -64,24 +69,107 @@ const timelineDays: TimelineDay[] = [
   },
 ];
 
+const themeLabels: Record<AiTimeThemeName, string> = {
+  dark: "深色模式",
+  light: "浅色模式",
+};
+
+const themeDescriptions: Record<AiTimeThemeName, string> = {
+  dark: "适合沉浸式对话、夜间使用和高专注执行流。",
+  light: "适合白天、办公场景和面试展示时的长时间阅读。",
+};
+
+function asStyleVariables(theme: AiTimeThemeName): CSSProperties {
+  return createAiTimeThemeCssVariables(theme) as CSSProperties;
+}
+
+function ThemePhonePreview({ theme }: { theme: AiTimeThemeName }) {
+  return (
+    <article className="theme-preview" style={asStyleVariables(theme)}>
+      <div className="theme-preview-header">
+        <div>
+          <strong>{themeLabels[theme]}</strong>
+          <span>{themeDescriptions[theme]}</span>
+        </div>
+        <StatusBadge tone={theme === "dark" ? "primary" : "info"}>
+          {theme}
+        </StatusBadge>
+      </div>
+      <MobileAgentShell
+        bottom={<ComposerBar />}
+        header={
+          <div className="mobile-header-demo">
+            <IconButton icon="menu" label="打开 Timeline" />
+            <div>
+              <strong>AI 日程执行</strong>
+              <span>主题预览</span>
+            </div>
+            <IconButton icon="calendar" label="打开完整日历" />
+          </div>
+        }
+        status={
+          <ExecutionStatusBar
+            description="主题不改变执行语义"
+            status="executing"
+          />
+        }
+      >
+        <MessageBubble roleTone="assistant">
+          我会先补齐缺失信息，再让你确认是否写入日程。
+        </MessageBubble>
+        <MessageBubble roleTone="user">
+          明天下午三点安排一个业务规划会。
+        </MessageBubble>
+        <ConfirmationCard
+          actions={[
+            {
+              id: `${theme}-planning`,
+              label: "业务规划会",
+              meta: "明天 15:00 -> 16:00，默认提醒 30 分钟",
+            },
+          ]}
+          description="组件只消费语义 token，主题只替换变量值。"
+          title="确认 1 项操作"
+        />
+      </MobileAgentShell>
+    </article>
+  );
+}
+
 export default function DesignSystemPage() {
   return (
     <main className="design-system-page">
       <section className="design-system-hero">
         <p>AI Time Management Agent</p>
-        <h1>本地组件库 v0.5</h1>
+        <h1>本地组件库 v0.7</h1>
         <span>
-          设计令牌、基础组件、组合组件、移动端布局和本地 SVG 图标资产。
+          设计令牌、主题系统、基础组件、组合组件、移动端布局和本地 SVG
+          图标资产。
         </span>
       </section>
 
       <section className="design-system-section">
         <div className="section-heading">
+          <h2>Theme Modes</h2>
+          <p>
+            组件只依赖语义
+            token。当前先支持深色和浅色，后续新增主题时只扩展主题值，不改组件层级。
+          </p>
+        </div>
+        <div className="theme-grid">
+          {aiTimeThemeNames.map((theme) => (
+            <ThemePhonePreview key={theme} theme={theme} />
+          ))}
+        </div>
+      </section>
+
+      <section className="design-system-section">
+        <div className="section-heading">
           <h2>Tokens</h2>
-          <p>组件默认使用统一令牌，避免每个页面散落原始颜色和间距。</p>
+          <p>色彩 token 按主题分层，间距、圆角、字体、动效保持跨主题稳定。</p>
         </div>
         <div className="token-grid">
-          {Object.entries(aiTimeDesignTokens.color)
+          {Object.entries(aiTimeThemeValues.dark.color)
             .slice(0, 12)
             .map(([name, value]) => (
               <article key={name}>

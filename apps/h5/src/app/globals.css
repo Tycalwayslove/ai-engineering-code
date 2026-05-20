@@ -166,9 +166,49 @@ p {
 
 .token-grid,
 .icon-grid,
-.component-grid {
+.component-grid,
+.theme-grid {
   display: grid;
   gap: 1rem;
+}
+
+.theme-grid {
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  align-items: start;
+}
+
+.theme-preview {
+  border: 1px solid var(--ai-color-border);
+  border-radius: 18px;
+  background: var(--ai-color-background-elevated);
+  color: var(--ai-color-text);
+  display: grid;
+  gap: 1rem;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.theme-preview-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.theme-preview-header div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.theme-preview-header strong {
+  color: var(--ai-color-text);
+  font-size: 1rem;
+}
+
+.theme-preview-header span {
+  color: var(--ai-color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .token-grid {
@@ -256,12 +296,12 @@ p {
 }
 
 .mobile-header-demo strong {
-  color: #f4f7f5;
+  color: var(--ai-color-text, #f4f7f5);
   font-size: 1rem;
 }
 
 .mobile-header-demo span {
-  color: #a5aea9;
+  color: var(--ai-color-text-muted, #a5aea9);
   font-size: 0.8rem;
 }
 

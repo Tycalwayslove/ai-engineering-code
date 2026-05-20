@@ -279,6 +279,47 @@ v0.6 的关键判断：
 
 当前状态：v0.6 已生成，等待用户评审。
 
+## v0.7 浅色模式与主题系统
+
+2026-05-20，用户指出 v0.6 基本只有深色模式，并希望增加浅色模式，同时为后续更多主题做准备。
+
+因此 v0.7 不做简单反色，而是把颜色体系升级为主题系统基础：
+
+- Figma 页面：`AI 时间管理 Agent v0.7 Theme Modes`
+- 链接：<https://www.figma.com/design/HkZQagTFqRtGaoxwOGcriy?node-id=65-28>
+- Figma 变量集合：`AI Time Theme Tokens`
+- 当前 modes：`Dark`, `Light`
+- 本地代码入口：`packages/shared-ui/src/tokens`
+
+v0.7 覆盖内容：
+
+| 画板                                         | 说明                             |
+| -------------------------------------------- | -------------------------------- |
+| `00 v0.7 Theme System / Cover`               | 主题系统目标、原则和当前模式。   |
+| `01 Light 首页默认态 / AI 执行流`            | 浅色首页主舞台。                 |
+| `02 Light Timeline Drawer / Timepage 日期轴` | 浅色 Timepage 风格日期轴。       |
+| `03 Light 确认与执行记录`                    | 浅色确认卡片和固定状态栏。       |
+| `04 Theme Tokens / Dark Light Modes`         | Dark / Light 语义 token 对照表。 |
+| `05 Theme Expansion Map / v0.7`              | 未来主题扩展路径。               |
+
+代码侧同步完成：
+
+- `aiTimeThemeValues` 保存 `dark` 和 `light` 两套真实主题值。
+- `aiTimeDesignTokens` 暴露 CSS variable 引用和 fallback。
+- `createAiTimeThemeCssVariables(theme)` 负责生成主题 CSS 变量。
+- 组件继续读取语义 token，不感知具体主题名称。
+- H5 `/design-system` 示例页新增深色和浅色并排预览。
+
+v0.7 的关键判断：
+
+- 主题不改变产品信息架构。
+- 主题不改变组件 API。
+- 组件只消费语义 token。
+- 后续新增主题只新增 token values 和 Figma mode。
+- 每次主题新增都必须同步 Figma、代码、Obsidian、飞书和 Git 提交。
+
+当前状态：v0.7 已生成，等待用户评审。
+
 ## 仓库证据
 
 - `ai-factory/specs/design/2026-05-18-ai-time-management-agent-ui-design.md`
@@ -286,8 +327,10 @@ v0.6 的关键判断：
 - `ai-factory/specs/design/2026-05-19-ai-time-management-agent-ui-revision.md`
 - `ai-factory/specs/design/2026-05-19-ai-time-management-agent-design-system-v0-5-plan.md`
 - `ai-factory/specs/design/2026-05-20-ai-time-management-agent-ui-v0-6-component-based.md`
+- `ai-factory/specs/design/2026-05-20-ai-time-management-agent-theme-system-v0-7.md`
 - `ai-factory/workflows/runs/2026-05-19-design-system-v0-5-implementation.md`
 - `ai-factory/workflows/runs/2026-05-20-ui-redraw-ai-time-management-agent-v0-6.md`
+- `ai-factory/workflows/runs/2026-05-20-theme-system-ai-time-management-agent-v0-7.md`
 - `ai-factory/workflows/ui-design-draft.md`
 - `ai-factory/workflows/registries/ui-design-draft.manifest.json`
 - `ai-factory/workflows/runs/2026-05-18-ui-design-draft-ai-time-management-agent.md`

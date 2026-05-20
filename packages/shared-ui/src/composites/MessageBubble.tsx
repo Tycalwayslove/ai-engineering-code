@@ -28,7 +28,9 @@ export function MessageBubble({
           ? "1px solid transparent"
           : `1px solid ${aiTimeDesignTokens.color.border}`,
         borderRadius: isUser ? "20px 20px 6px 20px" : "20px 20px 20px 6px",
-        color: isUser ? "#ffffff" : aiTimeDesignTokens.color.text,
+        color: isUser
+          ? aiTimeDesignTokens.color.primaryText
+          : aiTimeDesignTokens.color.text,
         fontFamily: aiTimeDesignTokens.font.family,
         fontSize: aiTimeDesignTokens.font.size.md,
         lineHeight: aiTimeDesignTokens.font.lineHeight.relaxed,

@@ -34,7 +34,7 @@ export function TimelineDrawer({
     <aside
       aria-label={title}
       style={{
-        background: "#111412",
+        background: aiTimeDesignTokens.color.backgroundElevated,
         borderRight: `1px solid ${aiTimeDesignTokens.color.border}`,
         color: aiTimeDesignTokens.color.text,
         display: "grid",
@@ -49,7 +49,7 @@ export function TimelineDrawer({
       <div
         style={{
           alignItems: "center",
-          background: "#080a09",
+          background: aiTimeDesignTokens.color.backgroundInset,
           display: "grid",
           justifyItems: "center",
           padding: "18px 0",
@@ -103,9 +103,13 @@ export function TimelineDrawer({
               <strong
                 style={{
                   alignItems: "center",
-                  background: day.selected ? "#ffffff" : "transparent",
+                  background: day.selected
+                    ? aiTimeDesignTokens.color.dateSelected
+                    : "transparent",
                   borderRadius: aiTimeDesignTokens.radius.md,
-                  color: day.selected ? "#111412" : "inherit",
+                  color: day.selected
+                    ? aiTimeDesignTokens.color.dateSelectedText
+                    : "inherit",
                   display: "inline-flex",
                   fontFamily: aiTimeDesignTokens.font.family,
                   fontSize: aiTimeDesignTokens.font.size["2xl"],

@@ -21,7 +21,7 @@ export function ComposerBar({
 }: ComposerBarProps) {
   const inputStyle: CSSProperties = {
     alignItems: "center",
-    background: "#080a09",
+    background: aiTimeDesignTokens.color.backgroundInset,
     border: `1px solid ${aiTimeDesignTokens.color.border}`,
     borderRadius: aiTimeDesignTokens.radius.pill,
     color: aiTimeDesignTokens.color.text,

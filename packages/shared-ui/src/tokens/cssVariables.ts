@@ -1,4 +1,4 @@
-import { aiTimeDesignTokens } from "./designTokens";
+import { aiTimeThemeValues, type AiTimeThemeName } from "./designTokens";
 
 type TokenValue = string | number | TokenBranch;
 
@@ -12,7 +12,11 @@ function flattenTokens(
   output: Record<string, string>,
 ) {
   for (const [key, value] of Object.entries(branch)) {
-    const name = `${prefix}-${key}`;
+    const variableKey = key.replace(
+      /[A-Z]/g,
+      (match) => `-${match.toLowerCase()}`,
+    );
+    const name = `${prefix}-${variableKey}`;
 
     if (typeof value === "object") {
       flattenTokens(value, name, output);
@@ -23,10 +27,13 @@ function flattenTokens(
   }
 }
 
-export function createAiTimeCssVariables() {
+export function createAiTimeThemeCssVariables(theme: AiTimeThemeName = "dark") {
   const variables: Record<string, string> = {};
-  flattenTokens(aiTimeDesignTokens, "ai", variables);
+  flattenTokens(aiTimeThemeValues[theme], "ai", variables);
   return variables;
 }
 
-export const aiTimeCssVariables = createAiTimeCssVariables();
+export const createAiTimeCssVariables = createAiTimeThemeCssVariables;
+
+export const aiTimeCssVariables = createAiTimeThemeCssVariables("dark");
+export const aiTimeLightCssVariables = createAiTimeThemeCssVariables("light");

@@ -29,7 +29,7 @@ const toneStyles: Record<NonNullable<ButtonProps["tone"]>, CSSProperties> = {
   primary: {
     background: aiTimeDesignTokens.color.primary,
     borderColor: aiTimeDesignTokens.color.primary,
-    color: "#ffffff",
+    color: aiTimeDesignTokens.color.primaryText,
   },
   secondary: {
     background: aiTimeDesignTokens.color.surfaceRaised,

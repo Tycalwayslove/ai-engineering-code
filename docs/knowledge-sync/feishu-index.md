@@ -56,3 +56,4 @@
 - 2026-05-19：已创建 Figma `AI 时间管理 Agent v0.5 Design System` 组件库页面，并同步更新 `13 AI 时间管理 Agent：UI 设计图草案` 与 `03 阶段演进记录`。
 - 2026-05-20：已补充 Figma `05 Component Gallery` 与 `06 Design System Changelog`，并同步更新 `13 AI 时间管理 Agent：UI 设计图草案` 与 `03 阶段演进记录`。
 - 2026-05-20：已生成 Figma `AI 时间管理 Agent v0.6 Component-Based UI` 页面，并同步更新 `13 AI 时间管理 Agent：UI 设计图草案` 与 `03 阶段演进记录`。
+- 2026-05-20：已生成 Figma `AI 时间管理 Agent v0.7 Theme Modes` 页面，补充浅色模式与主题系统基础，并同步更新 `13 AI 时间管理 Agent：UI 设计图草案` 与 `03 阶段演进记录`。
