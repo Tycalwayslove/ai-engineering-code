@@ -1,11 +1,22 @@
 import type { ConfirmationAction, TimelineDay } from "@ai-code/shared-ui";
 
 import type {
+  AgentSurface,
+  BackendRenderedElement,
   ConversationMessage,
   DemoExecutionStatus,
   ExecutionLedgerItem,
   QuickStat,
 } from "./types";
+
+function toBackendElementTone(tone: TimelineDay["events"][number]["tone"]) {
+  return tone === "primary" ||
+    tone === "success" ||
+    tone === "warning" ||
+    tone === "info"
+    ? tone
+    : "info";
+}
 
 export const demoConversation: ConversationMessage[] = [
   {
@@ -146,3 +157,74 @@ export const demoLedgerItems: ExecutionLedgerItem[] = [
     meta: "确认后写入内部日历",
   },
 ];
+
+export const demoBackendElementsBySurface: Record<
+  AgentSurface,
+  BackendRenderedElement[]
+> = {
+  calendar: [
+    {
+      id: "calendar-summary",
+      items: [
+        {
+          id: "today-standup",
+          label: "团队站会",
+          meta: "今天 09:30 -> 10:00",
+          tone: "info",
+        },
+        {
+          id: "tomorrow-planning",
+          label: "新年业务规划会",
+          meta: "明天 15:00 -> 16:30，待确认",
+          tone: "warning",
+        },
+        {
+          id: "friday-focus",
+          label: "复盘整理",
+          meta: "周五 19:30 -> 20:30",
+          tone: "success",
+        },
+      ],
+      kind: "summary-list",
+      title: "后端返回：日程列表元素",
+    },
+  ],
+  conversation: [
+    ...demoConversation.map((message) => ({
+      content: message.content,
+      id: message.id,
+      kind: "message" as const,
+      role: message.role,
+    })),
+    {
+      actions: demoConfirmationActions,
+      description: "执行前由你确认。真实写入会在后端日程领域完成。",
+      id: "confirm-create-meeting",
+      kind: "confirmation",
+      title: "后端返回：确认 1 项操作",
+    },
+  ],
+  ledger: [
+    {
+      id: "ledger-summary",
+      items: demoLedgerItems,
+      kind: "ledger",
+      title: "后端返回：执行记录元素",
+    },
+  ],
+  timeline: [
+    {
+      id: "timeline-summary",
+      items: demoTimelineDays.flatMap((day) =>
+        day.events.map((event) => ({
+          id: `${day.id}-${event.id}`,
+          label: event.title,
+          meta: `${day.weekday} ${day.date}｜${event.time}`,
+          tone: toBackendElementTone(event.tone),
+        })),
+      ),
+      kind: "summary-list",
+      title: "后端返回：Timeline 摘要元素",
+    },
+  ],
+};

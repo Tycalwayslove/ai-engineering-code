@@ -20,6 +20,8 @@
         "input.voice.start",
         "input.keyboard.open",
         "native.hostContext",
+        "native.viewChanged",
+        "native.inputRequested",
         "native.ack",
         "native.error"
       ]

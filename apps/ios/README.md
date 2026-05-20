@@ -11,9 +11,11 @@
 - 启动 SwiftUI App。
 - 用 `WKWebView` 加载 H5 产品层。
 - 提供深色宿主背景、加载态和错误态。
-- 实现 `NativeBridge` 消息入口、宿主上下文回传和 ACK / Error 回传。
+- 拥有 App 头部 Header、底部输入框、固定执行状态栏。
+- 拥有点击菜单后出现的 Timepage 风格 Drawer、完整日历入口和执行记录入口。
+- 实现 `NativeBridge` 消息入口、宿主上下文回传、视图切换事件、输入请求事件和 ACK / Error 回传。
 
-业务界面、AI 执行流、日程确认、Timeline 和主题系统仍由 H5 承载。
+H5 不再拥有 App 壳层 UI，只负责渲染后端返回的内容元素。
 
 ## 依赖边界
 

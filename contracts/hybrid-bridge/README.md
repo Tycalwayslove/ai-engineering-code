@@ -8,8 +8,8 @@
 
 ## 边界划分
 
-- H5 拥有具体产品页面、AI 执行流、Timeline、完整日历和执行记录展示。
-- iOS 拥有 WebView 宿主、加载态、错误态、系统能力入口和 NativeBridge。
+- H5 拥有后端返回元素的渲染表面，不拥有 App 头部、底部输入、菜单 Drawer 或 Timepage 日期轴。
+- iOS 拥有 WebView 宿主、加载态、错误态、头部 Header、底部输入框、固定执行状态、Timepage Drawer、系统能力入口和 NativeBridge。
 - 后端仍是未来业务解析、日程写入、计划执行和跨领域编排的归属。
 - 原生层不得实现日程业务状态机。
 
@@ -60,6 +60,8 @@ H5 发往 Native：
 Native 发往 H5：
 
 - `native.hostContext`：原生宿主上下文。
+- `native.viewChanged`：原生壳切换当前视图，H5 根据视图渲染后端元素。
+- `native.inputRequested`：原生壳触发语音、键盘或附件输入入口，H5 可展示对应后端元素或等待态。
 - `native.ack`：原生已收到 H5 消息。
 - `native.error`：原生无法处理消息。
 

@@ -10,6 +10,8 @@ export type H5ToNativeMessageType =
 
 export type NativeToH5MessageType =
   | "native.hostContext"
+  | "native.viewChanged"
+  | "native.inputRequested"
   | "native.ack"
   | "native.error";
 

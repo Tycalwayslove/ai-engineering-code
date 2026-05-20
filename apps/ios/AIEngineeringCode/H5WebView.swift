@@ -1,6 +1,12 @@
 import SwiftUI
 import WebKit
 
+struct NativeBridgeOutboundEvent: Equatable {
+    let id = UUID()
+    let payload: [String: String]
+    let type: String
+}
+
 private enum NativeBridgeContract {
     static let bridgeVersion = "0.1.0"
     static let handlerName = "NativeBridge"
@@ -43,6 +49,7 @@ private enum NativeBridgeContract {
 struct H5WebView: UIViewRepresentable {
     let url: URL
     @Binding var loadState: WebViewLoadState
+    let outboundEvent: NativeBridgeOutboundEvent?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -70,16 +77,17 @@ struct H5WebView: UIViewRepresentable {
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        guard webView.url != url else {
-            return
+        if webView.url != url {
+            loadState = .loading
+            webView.load(URLRequest(url: url))
         }
 
-        loadState = .loading
-        webView.load(URLRequest(url: url))
+        context.coordinator.dispatchNativeEvent(outboundEvent, to: webView)
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         private var parent: H5WebView
+        private var lastDispatchedNativeEventID: UUID?
         weak var webView: WKWebView?
 
         init(_ parent: H5WebView) {
@@ -170,8 +178,24 @@ struct H5WebView: UIViewRepresentable {
                 payload: [
                     "bridgeVersion": NativeBridgeContract.bridgeVersion,
                     "h5URL": parent.url.absoluteString,
+                    "ownsChrome": true,
                     "platform": "ios",
                 ]
+            )
+
+            evaluateNativeMessage(envelope, in: webView)
+        }
+
+        func dispatchNativeEvent(_ event: NativeBridgeOutboundEvent?, to webView: WKWebView) {
+            guard let event, lastDispatchedNativeEventID != event.id else {
+                return
+            }
+
+            lastDispatchedNativeEventID = event.id
+
+            let envelope = NativeBridgeContract.makeEnvelope(
+                type: event.type,
+                payload: event.payload
             )
 
             evaluateNativeMessage(envelope, in: webView)

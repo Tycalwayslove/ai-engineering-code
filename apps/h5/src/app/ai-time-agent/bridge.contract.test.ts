@@ -15,6 +15,8 @@ const h5ToNativeMessages = [
 
 const nativeToH5Messages = [
   "native.hostContext",
+  "native.viewChanged",
+  "native.inputRequested",
   "native.ack",
   "native.error",
 ] as const;

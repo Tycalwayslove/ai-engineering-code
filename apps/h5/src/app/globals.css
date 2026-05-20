@@ -341,18 +341,11 @@ p {
 }
 
 .ai-agent-page[data-native-embedded="true"] {
-  padding: 0;
-}
-
-.ai-agent-page[data-native-embedded="true"] .ai-agent-stage {
+  background: transparent;
   display: block;
   min-height: 100vh;
-}
-
-.ai-agent-page[data-native-embedded="true"] .ai-agent-device {
-  height: 100vh;
-  min-height: 0;
-  width: 100%;
+  overflow: auto;
+  padding: 0.85rem 0.9rem 1rem;
 }
 
 .ai-agent-page p,
@@ -413,6 +406,83 @@ p {
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: flex-end;
+}
+
+.ai-agent-backend-surface {
+  align-content: start;
+  display: grid;
+  gap: 0.85rem;
+  justify-self: center;
+  min-height: 0;
+  width: min(100%, 28rem);
+}
+
+.ai-agent-page[data-native-embedded="true"] .ai-agent-backend-surface {
+  width: 100%;
+}
+
+.ai-agent-backend-heading {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.1rem 0.15rem 0.25rem;
+}
+
+.ai-agent-backend-heading span {
+  color: var(--ai-color-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.ai-agent-backend-heading strong {
+  color: var(--ai-color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.ai-agent-backend-card {
+  background: var(--ai-color-background-elevated);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 20px;
+  box-shadow: var(--ai-shadow-control);
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.ai-agent-backend-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.ai-agent-backend-row {
+  align-items: center;
+  background: var(--ai-color-background-inset);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 14px;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+  padding: 0.7rem;
+}
+
+.ai-agent-backend-row > div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ai-agent-backend-row strong {
+  color: var(--ai-color-text);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.ai-agent-backend-row span {
+  color: var(--ai-color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .ai-agent-segmented-control,
