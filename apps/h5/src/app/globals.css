@@ -338,6 +338,9 @@ p {
     sans-serif;
   overflow: hidden;
   padding: clamp(1rem, 3vw, 2rem);
+  transition:
+    background 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ai-agent-page[data-native-embedded="true"] {
@@ -423,21 +426,48 @@ p {
   width: 100%;
 }
 
+.ai-agent-page
+  :where(
+    .ai-agent-preview-controls,
+    .ai-agent-bridge-debug,
+    .ai-agent-backend-surface,
+    .ai-agent-backend-card,
+    .ai-agent-backend-row,
+    .ai-agent-status-dock,
+    button,
+    article,
+    section,
+    div[style]
+  ) {
+  transition:
+    background-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .ai-agent-bridge-debug {
   background: color-mix(in srgb, var(--ai-color-info-soft) 70%, transparent);
   border: 1px solid var(--ai-color-border-strong);
   border-radius: 14px;
+  contain: layout paint;
   color: var(--ai-color-text);
   display: grid;
   font-size: 0.68rem;
   gap: 0.12rem;
   line-height: 1.25;
   margin: 0.65rem 0.75rem 0;
-  max-height: 8.5rem;
-  overflow: auto;
+  max-height: 5.8rem;
+  min-height: 5.8rem;
+  overflow: hidden;
   padding: 0.55rem 0.65rem;
   position: relative;
   z-index: 5;
+}
+
+.ai-agent-bridge-debug,
+.ai-agent-bridge-debug * {
+  transition: none !important;
 }
 
 .ai-agent-bridge-debug strong {

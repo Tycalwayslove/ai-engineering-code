@@ -495,19 +495,18 @@ function BridgeDebugPanel({
   return (
     <aside className="ai-agent-bridge-debug" aria-label="Bridge 调试信息">
       <strong>Bridge Debug</strong>
-      <span>{bridgeDebugBuild}</span>
-      <span>platform: {nativePlatform ?? "unknown"}</span>
-      <span>surface: {activeSurface}</span>
-      <span>theme: {theme}</span>
       <span>
-        ready: {debug.h5ReadyDelivered ? "delivered" : "not delivered"}
+        {bridgeDebugBuild} · {nativePlatform ?? "unknown"} · {theme}
       </span>
-      <span>bridge: {debug.bridgeAvailable ? "available" : "missing"}</span>
-      <span>inbound: {debug.lastInbound ?? "none"}</span>
-      <span>outbound: {debug.lastOutbound ?? "none"}</span>
-      <span>count: {debug.messageCount}</span>
-      {hostContext?.h5URL ? <span>url: {hostContext.h5URL}</span> : null}
-      <span>mounted: {debug.mountedAt}</span>
+      <span>
+        ready={debug.h5ReadyDelivered ? "yes" : "no"} · bridge=
+        {debug.bridgeAvailable ? "yes" : "no"} · surface={activeSurface}
+      </span>
+      <span>
+        in={debug.lastInbound ?? "none"} · out={debug.lastOutbound ?? "none"} ·
+        count={debug.messageCount}
+      </span>
+      {hostContext?.h5URL ? <span>host={hostContext.h5URL}</span> : null}
     </aside>
   );
 }
@@ -696,22 +695,6 @@ export function AgentWorkbench() {
 
       if (nextTheme) {
         setTheme(nextTheme);
-        setElementsBySurface((current) => ({
-          ...current,
-          conversation: [
-            ...current.conversation,
-            {
-              content: `已收到主题切换消息：${themeLabels[nextTheme]}主题`,
-              id: `theme-${Date.now()}`,
-              kind: "message",
-              role: "assistant",
-            },
-          ],
-        }));
-        setExecutionStatus({
-          description: `已切换到${themeLabels[nextTheme]}主题`,
-          status: "idle",
-        });
         return;
       }
 

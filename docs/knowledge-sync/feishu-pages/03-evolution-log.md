@@ -432,3 +432,28 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段补充价值：
 
 这次问题把 Hybrid 调试规则补完整了：不要只猜 Xcode 缓存或 WebView 缓存，要同时验证“原生包是否更新、H5 bundle 是否更新、React 是否完成 hydration、Bridge 是否收发消息”。后续 Hybrid 问题应保留原生可见探针、H5 可见探针和控制台日志三层线索。
+
+四次修正：
+
+- 用户反馈主题切换时 Native 和 H5 的切换效果仍然卡顿、突兀，debugger 面板有闪烁感。
+- 排查后判断主要原因不是单点 bug，而是视觉状态、执行状态和调试状态混在同一次更新里：
+  - Native 先切主题，H5 后收到 `native.themeChanged`，两层视觉变化存在轻微时差。
+  - H5 收到主题消息后曾追加可见聊天回执，并更新执行状态，导致滚动内容和底部状态 Dock 一起重绘。
+  - Native Debug 曾直接显示完整探针 JSON，探针内容变化会撑开或重排面板。
+  - H5 Bridge Debug 内容过长，且参与主题过渡动画，容易产生闪烁感。
+- 修正方案：
+  - Native 主题切换和 Bridge 事件发送放进同一个 320ms easeInOut 动画事务。
+  - H5 主题切换只更新主题，不再写入聊天消息，也不再修改执行状态。
+  - Native Debug 改成固定高度的结构化摘要：hydration、bridge、errors、H5 build、probe。
+  - H5 Bridge Debug 改成固定高度摘要，并禁用自身过渡动画。
+  - H5 业务界面保留柔和的背景、文字、边框和阴影过渡。
+- 验证结果：
+  - `pnpm --filter @ai-code/h5 typecheck` 通过。
+  - `pnpm --filter @ai-code/h5 build` 通过。
+  - `pnpm validate:native-shells` 通过。
+  - iOS Simulator `xcodebuild` Debug 构建通过。
+  - 模拟器截图确认 Native Debug 和 H5 Bridge Debug 均为固定摘要面板。
+
+阶段补充价值：
+
+这次修正明确了一个 Hybrid 交互规则：主题属于视觉状态，不属于执行状态。主题切换不应该生成聊天消息、执行状态或业务事件；debugger 也不应该参与产品级动画。这样后续继续调试 Bridge 时，可以保留诊断能力，同时不让调试面板破坏真实交互体验。

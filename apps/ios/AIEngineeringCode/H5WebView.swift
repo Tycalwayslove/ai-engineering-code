@@ -8,7 +8,11 @@ struct NativeBridgeOutboundEvent: Equatable {
 }
 
 struct WebViewDiagnostics: Equatable {
-    var latestProbe = "probe=pending"
+    var bridgeState = "bridge=pending"
+    var debugBuild = "h5=pending"
+    var errorState = "errors=0"
+    var hydrationState = "hydration=pending"
+    var lastProbe = "probe=pending"
 }
 
 private enum NativeBridgeContract {
@@ -340,14 +344,56 @@ struct H5WebView: UIViewRepresentable {
                 if let error {
                     let message = "probe=\(label) failed error=\(error.localizedDescription)"
                     bridgeLog(message)
-                    self.parent.diagnostics.latestProbe = message
+                    self.parent.diagnostics = WebViewDiagnostics(
+                        bridgeState: "bridge=unknown",
+                        debugBuild: "h5=unknown",
+                        errorState: "errors=?",
+                        hydrationState: "hydration=probe-failed",
+                        lastProbe: "probe=\(label)"
+                    )
                     return
                 }
 
                 let snapshot = String(describing: result ?? "nil")
                 bridgeLog("probe \(snapshot)")
-                self.parent.diagnostics.latestProbe = snapshot
+                self.parent.diagnostics = WebViewDiagnostics(snapshot: snapshot)
             }
         }
+    }
+}
+
+private extension WebViewDiagnostics {
+    init(snapshot: String) {
+        guard
+            let data = snapshot.data(using: .utf8),
+            let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else {
+            self.init(
+                bridgeState: "bridge=unknown",
+                debugBuild: "h5=unknown",
+                errorState: "errors=?",
+                hydrationState: "hydration=unknown",
+                lastProbe: "probe=parse-failed"
+            )
+            return
+        }
+
+        let build = payload["debugBuild"] as? String ?? "missing"
+        let nativeBridge = payload["nativeBridge"] as? Bool ?? false
+        let hasBridgeDebug = payload["hasBridgeDebug"] as? Bool ?? false
+        let hasPreviewControls = payload["hasPreviewControls"] as? Bool ?? true
+        let nativeEmbedded = payload["nativeEmbedded"] as? String ?? "unknown"
+        let errorCount = payload["errorCount"] as? Int ?? 0
+        let label = payload["label"] as? String ?? "probe"
+
+        self.init(
+            bridgeState: nativeBridge ? "bridge=available" : "bridge=missing",
+            debugBuild: "h5=\(build)",
+            errorState: "errors=\(errorCount)",
+            hydrationState: hasBridgeDebug && !hasPreviewControls && nativeEmbedded == "true"
+                ? "hydration=ready"
+                : "hydration=checking",
+            lastProbe: "probe=\(label)"
+        )
     }
 }

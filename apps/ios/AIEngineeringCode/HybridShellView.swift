@@ -248,7 +248,7 @@ struct HybridShellView: View {
             }
         }
         .animation(.spring(response: 0.34, dampingFraction: 0.88), value: activePanel)
-        .animation(.easeInOut(duration: 0.2), value: theme)
+        .animation(.easeInOut(duration: 0.32), value: theme)
         .preferredColorScheme(theme.preferredColorScheme)
     }
 
@@ -299,14 +299,18 @@ struct HybridShellView: View {
 
     private func toggleTheme() {
         let nextTheme = theme.next
-        theme = nextTheme
-        bridgeEvent = NativeBridgeOutboundEvent(
+        let nextEvent = NativeBridgeOutboundEvent(
             payload: [
                 "source": "native.header.theme",
                 "theme": nextTheme.rawValue,
             ],
             type: "native.themeChanged"
         )
+
+        withAnimation(.easeInOut(duration: 0.32)) {
+            theme = nextTheme
+            bridgeEvent = nextEvent
+        }
     }
 }
 
@@ -776,30 +780,53 @@ private struct NativeBridgeDebugBar: View {
     let theme: NativeShellTheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text("Native Debug · \(nativeDebugBuild)")
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 7) {
+                Text("Native Debug")
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                Text(loadState.debugLabel)
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(theme.primary.opacity(0.14))
+                    .clipShape(Capsule())
+            }
+            .foregroundStyle(theme.primary)
+
+            HStack(spacing: 6) {
+                debugPill(diagnostics.hydrationState)
+                debugPill(diagnostics.bridgeState)
+                debugPill(diagnostics.errorState)
+            }
+
+            Text(diagnostics.debugBuild)
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
                 .foregroundStyle(theme.primary)
 
-            Text("state=\(loadState.debugLabel)")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundStyle(theme.muted)
-
-            Text(h5URL.absoluteString)
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundStyle(theme.muted)
-                .lineLimit(2)
-
-            Text(diagnostics.latestProbe)
+            Text("\(diagnostics.lastProbe) · \(h5URL.host ?? "local")")
                 .font(.system(size: 9, weight: .medium, design: .monospaced))
                 .foregroundStyle(theme.muted)
-                .lineLimit(5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 92, alignment: .topLeading)
         .padding(.horizontal, 14)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .background(theme.inset.opacity(0.92))
         .overlay(Rectangle().fill(theme.softStroke).frame(height: 1), alignment: .bottom)
+        .transaction { transaction in
+            transaction.animation = nil
+        }
+    }
+
+    private func debugPill(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+            .foregroundStyle(theme.muted)
+            .lineLimit(1)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(theme.surface.opacity(0.84))
+            .clipShape(Capsule())
     }
 }
 
