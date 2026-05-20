@@ -67,3 +67,4 @@
 - 2026-05-20：已补充执行状态条归属规则：页面内执行状态由 H5 根据接口状态渲染，并固定在 WebView 底部；Native 不同步页面状态。
 - 2026-05-20：已实现 Hybrid 可交互 Mock Demo，支持 iOS 原生输入、主题切换、Drawer 跳转、Timepage 日期选择和 H5 mock 响应。
 - 2026-05-20：已修复 Hybrid Mock Demo 的主题同步、Drawer 关闭和原生输入 H5 可见回执问题。
+- 2026-05-20：已二次修正 H5 Bridge 监听注册时机，确保 H5 先监听 Native 消息，再发送 `h5.ready`。

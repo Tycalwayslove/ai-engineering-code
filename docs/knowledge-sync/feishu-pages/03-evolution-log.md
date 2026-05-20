@@ -411,3 +411,9 @@ v0.7 让设计系统从“组件库”继续进化为“主题能力”。后续
 补充判断：
 
 Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 Native -> H5 消息，在 mock 阶段都应有可见回执，至少能让人判断“消息是否到达 H5”。这个规则后续应进入 Hybrid Bridge 调试约定。
+
+二次修正：
+
+- 用户反馈修改后仍像是没有生效。
+- 排查后发现 H5 监听 Native 消息的注册时机过于依赖 `h5.ready` 是否成功投递。
+- H5 已调整为“先注册 Native 消息监听，再尝试发送 `h5.ready`”，避免初始化阶段 Bridge 可用性判断失败后，后续 `native.inputSubmitted` 和 `native.themeChanged` 被忽略。

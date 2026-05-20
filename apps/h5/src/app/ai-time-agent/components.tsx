@@ -596,16 +596,7 @@ export function AgentWorkbench() {
     const detectedNativePlatform = getInitialNativePlatform();
     setNativePlatform(detectedNativePlatform);
 
-    const result = postNativeBridgeMessage("h5.ready", {
-      route: window.location.pathname,
-      surface: "conversation",
-    });
-
-    if (!result.delivered) {
-      return undefined;
-    }
-
-    return subscribeNativeBridge((message) => {
+    const unsubscribe = subscribeNativeBridge((message) => {
       if (message.type === "native.hostContext") {
         const context = message.payload as NativeHostContext;
         setHostContext(context);
@@ -653,6 +644,13 @@ export function AgentWorkbench() {
         });
       }
     });
+
+    postNativeBridgeMessage("h5.ready", {
+      route: window.location.pathname,
+      surface: "conversation",
+    });
+
+    return unsubscribe;
   }, []);
 
   return (
