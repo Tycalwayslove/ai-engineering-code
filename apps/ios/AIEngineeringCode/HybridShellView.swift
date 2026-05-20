@@ -100,19 +100,16 @@ struct HybridShellView: View {
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                VStack(spacing: 10) {
-                    NativeExecutionStatusBar()
-                    NativeComposerBar(
-                        onKeyboard: {
-                            sendInputRequest("keyboard", source: "native.composer.keyboard")
-                        },
-                        onVoice: {
-                            sendInputRequest("voice", source: "native.composer.voice")
-                        }
-                    )
-                }
+                NativeComposerBar(
+                    onKeyboard: {
+                        sendInputRequest("keyboard", source: "native.composer.keyboard")
+                    },
+                    onVoice: {
+                        sendInputRequest("voice", source: "native.composer.voice")
+                    }
+                )
                 .padding(.horizontal, 18)
-                .padding(.top, 8)
+                .padding(.top, 10)
                 .padding(.bottom, 12)
             }
 
@@ -234,37 +231,6 @@ private struct NativeIconButton: View {
                 .shadow(color: .black.opacity(0.24), radius: 12, x: 0, y: 8)
         }
         .buttonStyle(.plain)
-    }
-}
-
-private struct NativeExecutionStatusBar: View {
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(NativeShellStyle.primary)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("已解析 1 项创建操作")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.text)
-
-                Text("等待你确认后再写入后端日程域")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(NativeShellStyle.muted)
-            }
-
-            Spacer(minLength: 8)
-
-            Text("confirming")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(NativeShellStyle.primary)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
-        .background(NativeShellStyle.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 

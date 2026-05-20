@@ -11,10 +11,10 @@
 - 启动 Android App。
 - 用 `WebView` 加载 H5 产品层。
 - 提供深色宿主背景、加载态和错误态。
-- 后续应像 iOS 一样拥有原生 Header、底部输入、固定执行状态和 Timepage Drawer。
+- 后续应像 iOS 一样拥有原生 Header、底部输入和 Timepage Drawer。
 - 预留 `NativeBridge` JavaScript Interface。
 
-H5 不拥有 App 壳层 UI，只负责渲染后端返回的内容元素。Android 后续实现必须跟随 iOS 已验证分层，不重新发明一套交互结构。
+H5 不拥有 App 壳层 UI，只负责渲染后端返回的内容元素和接口驱动的页面内执行状态条。Android 后续实现必须跟随 iOS 已验证分层，不重新发明一套交互结构。
 
 ## 依赖边界
 
@@ -29,7 +29,7 @@ H5 不拥有 App 壳层 UI，只负责渲染后端返回的内容元素。Androi
 Android 进入开发时，以 iOS 已验证能力作为输入清单：
 
 1. 支持 `h5.ready`，并回传 `native.hostContext`。
-2. 实现 Android 原生 Header、底部输入、固定执行状态和 Timepage Drawer。
+2. 实现 Android 原生 Header、底部输入和 Timepage Drawer。
 3. 支持 `native.viewChanged`，由 Android 原生壳告诉 H5 当前要渲染哪个后端元素集合。
 4. 支持 `native.inputRequested`，由 Android 原生壳告诉 H5 当前触发语音、键盘或附件输入。
 5. H5 仍通过 `ai-native-message` 事件接收 Android 回传。

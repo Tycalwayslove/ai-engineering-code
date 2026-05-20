@@ -226,6 +226,32 @@ function BackendElementSurface({
   );
 }
 
+function ExecutionStatusDock({ surface }: { surface: AgentSurface }) {
+  const statusCopy =
+    surface === "conversation"
+      ? {
+          description: "已解析 1 项创建操作，等待确认",
+          label: "confirming",
+          title: "接口状态",
+        }
+      : {
+          description: `正在同步 ${surfaceLabels[surface]} 的后端元素`,
+          label: "synced",
+          title: "接口状态",
+        };
+
+  return (
+    <section className="ai-agent-status-dock" aria-label="当前执行状态">
+      <span className="ai-agent-status-dot" />
+      <div>
+        <strong>{statusCopy.title}</strong>
+        <span>{statusCopy.description}</span>
+      </div>
+      <em>{statusCopy.label}</em>
+    </section>
+  );
+}
+
 export function AgentWorkbench() {
   const [activeSurface, setActiveSurface] =
     useState<AgentSurface>("conversation");
@@ -282,7 +308,10 @@ export function AgentWorkbench() {
           theme={theme}
         />
       ) : null}
-      <BackendElementSurface elements={elements} surface={activeSurface} />
+      <div className="ai-agent-webview-surface">
+        <BackendElementSurface elements={elements} surface={activeSurface} />
+        <ExecutionStatusDock surface={activeSurface} />
+      </div>
     </main>
   );
 }

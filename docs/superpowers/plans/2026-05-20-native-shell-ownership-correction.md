@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move app chrome ownership from H5 into the iOS native shell, leaving H5 as a backend element rendering surface.
+**Goal:** Move app chrome ownership from H5 into the iOS native shell, leaving H5 as a backend element rendering surface with its own interface-driven execution status dock.
 
-**Architecture:** iOS owns header, bottom input, fixed execution status, menu drawer, and Timepage-style timeline. H5 receives native host/view messages and renders only backend-provided content elements for the active surface. The Hybrid Bridge contract becomes the source of truth for native-to-H5 view and input events.
+**Architecture:** iOS owns header, bottom input, menu drawer, and Timepage-style timeline. H5 receives native host/view messages and renders backend-provided content elements plus the page-level execution status dock for the active surface. The Hybrid Bridge contract becomes the source of truth for native-to-H5 view and input events.
 
 **Tech Stack:** SwiftUI, WKWebView, Next.js, TypeScript, JSON Schema.
 
@@ -31,7 +31,7 @@
 - Modify: `apps/ios/AIEngineeringCode/H5WebView.swift`
 
 - [ ] Add native header buttons for menu, execution ledger, and calendar.
-- [ ] Add native fixed execution status above the composer.
+- [ ] Keep page execution status inside H5; do not mirror it into Native.
 - [ ] Add native composer with camera, voice, and keyboard controls.
 - [ ] Add a SwiftUI drawer containing Timepage-style timeline, calendar summary, and execution ledger panels.
 - [ ] Send `native.viewChanged` and `native.inputRequested` messages to H5 through the existing WebView dispatch path.
@@ -46,7 +46,8 @@
 - Modify: `apps/h5/src/app/ai-time-agent/components.tsx`
 - Modify: `apps/h5/src/app/globals.css`
 
-- [ ] Replace H5-owned header, composer, status bar, drawer, calendar, and ledger chrome with a backend element renderer.
+- [ ] Replace H5-owned header, composer, drawer, calendar, and ledger chrome with a backend element renderer.
+- [ ] Keep an H5 execution status dock fixed at the bottom of the WebView content area.
 - [ ] Keep demo data as a stand-in for backend returned elements.
 - [ ] Let `native.viewChanged` choose which backend element set H5 renders.
 - [ ] Run `pnpm --filter @ai-code/h5 typecheck` and `pnpm --filter @ai-code/h5 build`.

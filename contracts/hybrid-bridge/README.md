@@ -8,8 +8,10 @@
 
 ## 边界划分
 
-- H5 拥有后端返回元素的渲染表面，不拥有 App 头部、底部输入、菜单 Drawer 或 Timepage 日期轴。
-- iOS 拥有 WebView 宿主、加载态、错误态、头部 Header、底部输入框、固定执行状态、Timepage Drawer、系统能力入口和 NativeBridge。
+- H5 拥有后端返回元素的渲染表面，以及由后端接口状态驱动的页面内执行状态条。
+- H5 不拥有 App 头部、底部输入、菜单 Drawer 或 Timepage 日期轴。
+- iOS 拥有 WebView 宿主、加载态、错误态、头部 Header、底部输入框、Timepage Drawer、系统能力入口和 NativeBridge。
+- iOS 不渲染页面内执行状态条；如果未来需要 Live Activity、通知、锁屏等系统级状态，必须另行定义系统状态同步契约。
 - 后端仍是未来业务解析、日程写入、计划执行和跨领域编排的归属。
 - 原生层不得实现日程业务状态机。
 

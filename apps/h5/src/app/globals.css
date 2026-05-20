@@ -343,9 +343,10 @@ p {
 .ai-agent-page[data-native-embedded="true"] {
   background: transparent;
   display: block;
-  min-height: 100vh;
-  overflow: auto;
-  padding: 0.85rem 0.9rem 1rem;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .ai-agent-page p,
@@ -408,17 +409,39 @@ p {
   justify-content: flex-end;
 }
 
+.ai-agent-webview-surface {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-self: center;
+  min-height: 0;
+  width: min(100%, 28rem);
+}
+
+.ai-agent-page[data-native-embedded="true"] .ai-agent-webview-surface {
+  height: 100vh;
+  width: 100%;
+}
+
 .ai-agent-backend-surface {
   align-content: start;
   display: grid;
   gap: 0.85rem;
   justify-self: center;
   min-height: 0;
+  overflow: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
   width: min(100%, 28rem);
 }
 
 .ai-agent-page[data-native-embedded="true"] .ai-agent-backend-surface {
+  padding: 0.85rem 0.9rem 0.25rem;
   width: 100%;
+}
+
+.ai-agent-backend-surface::-webkit-scrollbar {
+  display: none;
 }
 
 .ai-agent-backend-heading {
@@ -483,6 +506,59 @@ p {
   color: var(--ai-color-text-muted);
   font-size: 0.78rem;
   line-height: 1.4;
+}
+
+.ai-agent-status-dock {
+  align-items: center;
+  background: var(--ai-color-surface-glass);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 18px;
+  box-shadow: var(--ai-shadow-control);
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  margin-inline: auto;
+  padding: 0.75rem 0.85rem;
+  width: min(100%, 28rem);
+}
+
+.ai-agent-page[data-native-embedded="true"] .ai-agent-status-dock {
+  margin: 0 0.9rem 0.2rem;
+  width: auto;
+}
+
+.ai-agent-status-dot {
+  background: var(--ai-color-primary);
+  border-radius: 999px;
+  box-shadow: 0 0 18px var(--ai-color-primary-soft);
+  height: 0.65rem;
+  width: 0.65rem;
+}
+
+.ai-agent-status-dock div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ai-agent-status-dock strong {
+  color: var(--ai-color-text);
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.ai-agent-status-dock span {
+  color: var(--ai-color-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.ai-agent-status-dock em {
+  color: var(--ai-color-primary);
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .ai-agent-segmented-control,
