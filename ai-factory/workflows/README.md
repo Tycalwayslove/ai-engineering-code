@@ -16,6 +16,8 @@
 - [Design Brief 草案](design-brief-draft.md)：将已确认 PRD 转成可审阅设计输入。
 - [UI 设计图草案](ui-design-draft.md)：将已确认 design brief 转成可审阅 UI 设计图。
 - [规格到实施计划](spec-to-implementation-plan.md)：手动优先地把明确给定的规格转换为可审阅实施计划。
+- [UI 图到代码实现](ui-to-code-implementation.md)：将已确认 UI 图、设计系统和工程边界转换为可验证前端实现。
+- [组件库维护](component-library-maintenance.md)：维护 Figma、设计系统、shared-ui 和页面消费之间的组件一致性。
 
 ## 边界
 

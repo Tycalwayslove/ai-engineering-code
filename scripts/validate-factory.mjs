@@ -47,6 +47,8 @@ const workflowDefinitions = [
   "memory-review",
   "process-audit",
   "spec-to-implementation-plan",
+  "ui-to-code-implementation",
+  "component-library-maintenance",
 ];
 
 const requiredPrompts = [

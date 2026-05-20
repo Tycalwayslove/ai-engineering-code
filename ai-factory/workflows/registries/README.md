@@ -34,6 +34,8 @@
 | memory-review                 | `ai-factory/workflows/registries/memory-review.manifest.json`                 |
 | process-audit                 | `ai-factory/workflows/registries/process-audit.manifest.json`                 |
 | spec-to-implementation-plan   | `ai-factory/workflows/registries/spec-to-implementation-plan.manifest.json`   |
+| ui-to-code-implementation     | `ai-factory/workflows/registries/ui-to-code-implementation.manifest.json`     |
+| component-library-maintenance | `ai-factory/workflows/registries/component-library-maintenance.manifest.json` |
 
 ## 演进
 

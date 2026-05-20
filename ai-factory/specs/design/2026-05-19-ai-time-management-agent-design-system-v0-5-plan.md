@@ -46,7 +46,7 @@ v0.5 的目标是建立可复用的本地设计系统基础：
 - Figma 映射区：已列出 Figma Component 到 `packages/shared-ui` 源码路径的对应关系。
 - Figma Component Gallery：已新增面向浏览的组件样式展示区，节点 `53:19`。
 - Figma Design System Changelog：已新增组件库变更记录区，节点 `53:199`。
-- 后续组件库修改应同步更新 Figma Gallery、Figma Changelog、workflow run、Obsidian 阶段成果、飞书 UI 设计页和 Git 提交记录。
+- 后续组件库修改必须优先走 `component-library-maintenance` 工作流，并同步更新 Figma Gallery、Figma Changelog、workflow run、Obsidian 阶段成果、飞书知识库和 Git 提交记录。
 
 仍待后续补齐：
 
@@ -181,3 +181,5 @@ v0.5 应交付：
 - shared-ui 真实组件实现。
 - 图标子集自动打包。
 - Figma 与代码组件一致性校验。
+
+所有后续演进都应通过 `component-library-maintenance` 记录变更类型、影响范围、人工确认点和验证结果。
