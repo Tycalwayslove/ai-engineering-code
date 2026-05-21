@@ -9,8 +9,13 @@
 
 ## Git 提交
 
-- Git 提交信息默认使用中文，除非用户明确要求英文，或项目已有必须遵循的英文提交格式。
-- 提交信息保持简洁，说明本次变更的真实意图；可保留 `feat:`、`fix:`、`docs:`、`test:` 等约定式提交前缀。
+- Git 提交必须遵循 [docs/conventions/git-commits.md](docs/conventions/git-commits.md)。
+- 提交标题使用 `<type>(<scope>): <中文摘要>` 或 `<type>: <中文摘要>`。
+- `type` 使用 `feat`、`fix`、`docs`、`style`、`refactor`、`test`、`chore`、`ci`、`build`、`perf`、`revert`。
+- `scope` 使用稳定边界名，例如 `backend`、`sdk`、`contracts`、`ai-factory`、`conventions`；不确定时可省略。
+- 摘要、正文和 footer 默认使用中文；需要被工具识别的关键字保留英文，例如 `BREAKING CHANGE:`。
+- 一个提交只表达一个阶段性变化，摘要描述结果，不写“更新代码”这类泛泛表述。
+- 已推送到远端的提交历史默认不改写，除非用户明确要求整理历史。
 
 ## 协作偏好
 
