@@ -29,3 +29,18 @@
 - `GET /factory/status` 返回工厂状态、版本和当前能力清单。
 - `GET /health` 返回服务健康状态。
 - `GET /version` 返回 API 名称和版本。
+
+## Agent 执行工作流
+
+V1 后端保持 FastAPI 薄网关定位，自然语言工作流通过 Orchestrator 处理。
+
+关键端点：
+
+- `POST /agent/turns` 提交用户输入，返回 assistant message、clarification request、confirmation card 或 execution result。
+- `POST /execution-plans/{id}/confirm` 确认并同步执行待确认计划。
+- `POST /execution-plans/{id}/reject` 拒绝待确认计划。
+- `GET /execution-plans/{id}` 读取执行计划。
+- `GET /execution-ledger` 读取执行审计事件。
+- `GET /calendar/events` 读取已确认 action 创建的日程事实。
+
+V1 使用 in-process repository，但 plan、action 和 ledger 的数据形态保持 Postgres-ready。领域 service 拥有业务校验和幂等控制。Agent runtime 的输出不能直接写入领域事实表。
