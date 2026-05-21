@@ -1,65 +1,83 @@
-# Orchestrator-First Backend Phase 1 Implementation Plan
+# Orchestrator-First 后端 Phase 1 实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给 agentic workers：** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 按任务逐步执行本计划。步骤使用 checkbox（`- [ ]`）追踪。
 
-**Goal:** Build the first working backend slice for the AI scheduling execution agent: typed contracts, SDK methods, FastAPI routes, orchestrator planning, guarded domain execution, and execution ledger persistence.
+**目标：** 构建 AI 日程执行 Agent 的第一条可运行后端薄切片，覆盖类型契约、SDK 方法、FastAPI 路由、Orchestrator 计划生成、受保护的领域执行和 execution ledger。
 
-**Architecture:** Keep FastAPI thin and route work through `python/orchestrator`. Use `python/agent-runtime` for framework-agnostic parsing and structured planning primitives. Implement calendar as the first executable domain, with expense and reminder represented in contracts and plan payloads so multi-intent data shapes are stable from day one.
+**架构：** FastAPI 保持薄网关，业务请求进入 `python/orchestrator`。`python/agent-runtime` 提供框架无关的解析与结构化计划原语。Phase 1 先把 calendar 做成可执行领域，同时让 expense 和 reminder 在契约、类型和计划载荷中成为一等边界。
 
-**Tech Stack:** FastAPI, Pydantic v2, Python 3.12, pytest, TypeScript, pnpm, OpenAPI 3.1, lightweight repository interfaces, Postgres-ready data shapes.
+**技术栈：** FastAPI、Pydantic v2、Python 3.12、pytest、TypeScript、pnpm、OpenAPI 3.1、轻量 repository interface、Postgres-ready 数据形态。
 
 ---
 
-## Scope
+## 范围
 
-This plan implements Phase 1 from [the approved design spec](../specs/2026-05-21-backend-architecture-design.md): synchronous Orchestrator, agent-runtime interfaces, typed API contract, SDK methods, calendar execution, expense/reminder planning boundaries, and execution ledger retrieval.
+本计划实现已批准设计文档中的 Phase 1：[AI 日程执行 Agent 后端架构设计](../specs/2026-05-21-backend-architecture-design.md)。
 
-This plan does not implement a production authentication system, async workers, Redis queues, external reimbursement systems, external calendars, or real LLM API calls. It creates stable adapter interfaces and deterministic parser behavior so those integrations can be added without moving the core boundaries.
+本计划包含：
 
-## File Structure
+- 同步 Orchestrator。
+- Agent runtime 接口。
+- typed API contract。
+- SDK 工作流方法。
+- calendar 领域执行。
+- expense 和 reminder 的计划边界。
+- execution ledger 查询。
 
-Create or modify these files.
+本计划不包含：
 
-Contracts and TypeScript:
+- 生产级账号体系。
+- async worker 或 Redis queue。
+- 外部报销系统。
+- 外部日历系统。
+- 真实 LLM API 调用。
 
-- Modify `contracts/openapi/api-gateway.yaml`: add Agent turn, execution plan, confirmation, ledger, calendar, expense, and reminder schemas and paths.
-- Modify `packages/shared-types/src/index.ts`: add workflow, plan, action, confirmation, ledger, and domain object types.
-- Modify `packages/sdk/src/index.ts`: add typed client methods for agent turns, plan confirmation, plan rejection, plan retrieval, ledger retrieval, and domain reads.
-- Modify `scripts/validate-contracts.mjs`: extend lightweight contract validation for the new slice.
+这些能力后续通过 adapter、repository 和 worker 边界接入，不能反向污染当前的计划生命周期。
 
-Python runtime:
+## 文件结构
 
-- Create `python/agent-runtime/agent_runtime/types.py`: framework-agnostic parser and planning types.
-- Create `python/agent-runtime/agent_runtime/parsers/rule_parser.py`: deterministic parser for the first Chinese scheduling scenarios.
-- Create `python/orchestrator/orchestrator/types.py`: orchestrator request and response types.
-- Create `python/orchestrator/orchestrator/planner.py`: plan creation and response selection.
-- Create `python/orchestrator/orchestrator/executor.py`: confirmation and synchronous action execution.
-- Create `python/backend/backend/app/domains/calendar/models.py`: calendar domain typed dictionaries.
-- Create `python/backend/backend/app/domains/calendar/repository.py`: in-process repository interface and implementation used by tests.
-- Create `python/backend/backend/app/domains/calendar/service.py`: guarded calendar domain service.
-- Create `python/backend/backend/app/services/execution_store.py`: plan, action, confirmation, and ledger store interface.
-- Create `python/backend/backend/app/routes/agent.py`: `/agent/turns` route.
-- Create `python/backend/backend/app/routes/execution.py`: execution plan and ledger routes.
-- Create `python/backend/backend/app/routes/calendar.py`: calendar read route.
-- Modify `python/backend/backend/app/main.py`: register new routers.
+### 契约与 TypeScript
 
-Tests:
+- 修改 `contracts/openapi/api-gateway.yaml`：新增 Agent turn、execution plan、confirmation、ledger、calendar、expense 和 reminder schema/path。
+- 修改 `packages/shared-types/src/index.ts`：新增 workflow、plan、action、confirmation、ledger 和领域对象类型。
+- 修改 `packages/sdk/src/index.ts`：新增提交 turn、确认 plan、拒绝 plan、读取 plan、读取 ledger 和读取领域数据的方法。
+- 修改 `scripts/validate-contracts.mjs`：把新 workflow slice 纳入轻量契约校验。
 
-- Create `python/backend/tests/test_agent_turns.py`: end-to-end tests for turn planning, clarification, confirmation, execution, and ledger.
-- Create `python/backend/tests/test_orchestrator_planner.py`: unit tests for deterministic multi-intent planning.
-- Create `python/backend/tests/test_calendar_domain.py`: domain service tests for guarded, idempotent event creation.
+### Python 运行时
 
-## Implementation Tasks
+- 新建 `python/agent-runtime/agent_runtime/types.py`：解析与计划类型。
+- 新建 `python/agent-runtime/agent_runtime/parsers/rule_parser.py`：第一批中文日程表达的确定性解析器。
+- 新建 `python/orchestrator/orchestrator/types.py`：Orchestrator 请求和响应类型。
+- 新建 `python/orchestrator/orchestrator/planner.py`：创建 plan 并决定响应类型。
+- 新建 `python/orchestrator/orchestrator/executor.py`：确认 plan 后同步执行 action。
+- 新建 `python/backend/backend/app/domains/calendar/models.py`：calendar 领域模型。
+- 新建 `python/backend/backend/app/domains/calendar/repository.py`：测试用 in-process repository。
+- 新建 `python/backend/backend/app/domains/calendar/service.py`：受保护的 calendar domain service。
+- 新建 `python/backend/backend/app/services/execution_store.py`：plan、action、confirmation 和 ledger store。
+- 新建 `python/backend/backend/app/routes/agent.py`：`/agent/turns`。
+- 新建 `python/backend/backend/app/routes/execution.py`：execution plan 与 ledger 路由。
+- 新建 `python/backend/backend/app/routes/calendar.py`：calendar 读取路由。
+- 新建 `python/backend/backend/app/routes/expense.py`：expense 读取边界路由。
+- 新建 `python/backend/backend/app/routes/reminder.py`：reminder 读取边界路由。
+- 修改 `python/backend/backend/app/main.py`：注册新路由。
 
-### Task 1: Add Shared TypeScript Workflow Types
+### 测试
 
-**Files:**
+- 新建 `python/backend/tests/test_agent_turns.py`：端到端验证 turn、追问、确认、执行和 ledger。
+- 新建 `python/backend/tests/test_orchestrator_planner.py`：验证多意图解析和计划生成。
+- 新建 `python/backend/tests/test_calendar_domain.py`：验证 calendar 领域校验和幂等执行。
 
-- Modify: `packages/shared-types/src/index.ts`
+## 执行任务
 
-- [ ] **Step 1: Add failing type usage test by extending the package with concrete exports**
+### 任务 1：新增 TypeScript 工作流类型
 
-Modify `packages/shared-types/src/index.ts` by appending these types after the existing `FactoryStatus` type:
+**文件：**
+
+- 修改 `packages/shared-types/src/index.ts`
+
+- [ ] **步骤 1：追加 workflow 类型**
+
+在 `packages/shared-types/src/index.ts` 的 `FactoryStatus` 类型之后追加：
 
 ```ts
 export type RiskLevel = "low" | "medium" | "high";
@@ -214,32 +232,32 @@ export type Reminder = {
 };
 ```
 
-- [ ] **Step 2: Run shared-types typecheck**
+- [ ] **步骤 2：运行 shared-types 类型检查**
 
-Run:
+运行：
 
 ```bash
 pnpm --filter @ai-code/shared-types typecheck
 ```
 
-Expected: PASS. This task only adds types.
+预期：命令通过。
 
-- [ ] **Step 3: Commit**
+- [ ] **步骤 3：提交**
 
 ```bash
 git add packages/shared-types/src/index.ts
 git commit -m "feat(types): add execution workflow types"
 ```
 
-### Task 2: Add SDK Workflow Methods
+### 任务 2：新增 SDK 工作流方法
 
-**Files:**
+**文件：**
 
-- Modify: `packages/sdk/src/index.ts`
+- 修改 `packages/sdk/src/index.ts`
 
-- [ ] **Step 1: Update SDK imports and exports**
+- [ ] **步骤 1：替换 import/export 区块**
 
-Replace the import/export block at the top of `packages/sdk/src/index.ts` with:
+把 `packages/sdk/src/index.ts` 顶部 import/export 区块替换为：
 
 ```ts
 import type {
@@ -278,9 +296,9 @@ export type {
 } from "@ai-code/shared-types";
 ```
 
-- [ ] **Step 2: Add SDK methods**
+- [ ] **步骤 2：新增 SDK 方法**
 
-Inside `ApiClient`, after `getFactoryStatus()`, add:
+在 `ApiClient` 的 `getFactoryStatus()` 后加入：
 
 ```ts
   async submitAgentTurn(request: AgentTurnRequest): Promise<AgentTurnResponse> {
@@ -335,15 +353,15 @@ Inside `ApiClient`, after `getFactoryStatus()`, add:
   }
 ```
 
-- [ ] **Step 3: Extend private request options**
+- [ ] **步骤 3：让 request 支持 POST**
 
-Change:
+把：
 
 ```ts
   private async request<T>(path: string): Promise<T> {
 ```
 
-to:
+改为：
 
 ```ts
   private async request<T>(
@@ -352,54 +370,52 @@ to:
   ): Promise<T> {
 ```
 
-Then replace the `headers` object with:
+把 `headers` 对象改为：
 
 ```ts
-const headers: Record<string, string> = {
-  Accept: "application/json",
-  ...(init.body ? { "Content-Type": "application/json" } : {}),
-};
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+    };
 ```
 
-Then replace the fetch call with:
+把 fetch 调用改为：
 
 ```ts
-const response = await fetch(`${this.baseUrl}${path}`, {
-  ...init,
-  headers: {
-    ...headers,
-    ...init.headers,
-  },
-});
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      ...init,
+      headers: {
+        ...headers,
+        ...init.headers,
+      },
+    });
 ```
 
-- [ ] **Step 4: Run SDK typecheck**
-
-Run:
+- [ ] **步骤 4：运行 SDK 类型检查**
 
 ```bash
 pnpm --filter @ai-code/sdk typecheck
 ```
 
-Expected: PASS.
+预期：命令通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add packages/sdk/src/index.ts
 git commit -m "feat(sdk): add execution workflow methods"
 ```
 
-### Task 3: Extend OpenAPI and Contract Validation
+### 任务 3：扩展 OpenAPI 和契约校验
 
-**Files:**
+**文件：**
 
-- Modify: `contracts/openapi/api-gateway.yaml`
-- Modify: `scripts/validate-contracts.mjs`
+- 修改 `contracts/openapi/api-gateway.yaml`
+- 修改 `scripts/validate-contracts.mjs`
 
-- [ ] **Step 1: Add OpenAPI paths**
+- [ ] **步骤 1：新增 OpenAPI paths**
 
-In `contracts/openapi/api-gateway.yaml`, add these paths under `paths:` after `/factory/status`. The snippet starts at the path-key level; indent it by two spaces when inserting it under `paths:`.
+在 `contracts/openapi/api-gateway.yaml` 的 `paths:` 下、`/factory/status` 后新增以下 path。下面代码块从 path key 开始，插入到 `paths:` 下时整体缩进两个空格。
 
 ```yaml
 /agent/turns:
@@ -522,9 +538,9 @@ In `contracts/openapi/api-gateway.yaml`, add these paths under `paths:` after `/
                 $ref: "#/components/schemas/Reminder"
 ```
 
-- [ ] **Step 2: Add OpenAPI schemas**
+- [ ] **步骤 2：新增 OpenAPI schemas**
 
-Append these schemas under `components.schemas` after `FactoryStatus`. The snippet starts at the schema-key level; indent it by four spaces when inserting it under `components.schemas`.
+在 `components.schemas` 下、`FactoryStatus` 后新增以下 schema。下面代码块从 schema key 开始，插入到 `components.schemas` 下时整体缩进四个空格。
 
 ```yaml
 AgentTurnRequest:
@@ -549,8 +565,7 @@ ConfirmExecutionPlanRequest:
         type: string
 DomainAction:
   type: object
-  required:
-    [id, planId, domain, actionType, status, riskLevel, summary, payload]
+  required: [id, planId, domain, actionType, status, riskLevel, summary, payload]
   properties:
     id:
       type: string
@@ -574,8 +589,7 @@ DomainAction:
       type: object
 ConfirmationCard:
   type: object
-  required:
-    [id, planId, status, requiredActionIds, title, description, confirmToken]
+  required: [id, planId, status, requiredActionIds, title, description, confirmToken]
   properties:
     id:
       type: string
@@ -595,8 +609,7 @@ ConfirmationCard:
       type: string
 ExecutionPlan:
   type: object
-  required:
-    [id, conversationId, status, riskLevel, summary, decisionTraceId, actions]
+  required: [id, conversationId, status, riskLevel, summary, decisionTraceId, actions]
   properties:
     id:
       type: string
@@ -623,13 +636,7 @@ AgentTurnResponse:
   properties:
     kind:
       type: string
-      enum:
-        [
-          assistant_message,
-          clarification_request,
-          confirmation_required,
-          execution_result,
-        ]
+      enum: [assistant_message, clarification_request, confirmation_required, execution_result]
     conversationId:
       type: string
     message:
@@ -716,9 +723,9 @@ Reminder:
       type: string
 ```
 
-- [ ] **Step 3: Extend validation script operation checks**
+- [ ] **步骤 3：扩展契约校验脚本**
 
-In `scripts/validate-contracts.mjs`, extend `expectedOperations` to:
+在 `scripts/validate-contracts.mjs` 中，把 `expectedOperations` 改为：
 
 ```js
 const expectedOperations = {
@@ -736,7 +743,7 @@ const expectedOperations = {
 };
 ```
 
-Then add this constant near `expectedFactoryStatusFields`:
+在 `expectedFactoryStatusFields` 附近增加：
 
 ```js
 const expectedExecutionPlanFields = [
@@ -750,51 +757,50 @@ const expectedExecutionPlanFields = [
 ];
 ```
 
-Then in `validateFactoryStatusSlice`, after the FactoryStatus required check, add:
+在 `validateFactoryStatusSlice` 的 `FactoryStatus.required` 校验之后增加：
 
 ```js
-const executionPlanRequired = getPathValue(openapiDocument, [
-  "components",
-  "schemas",
-  "ExecutionPlan",
-  "required",
-]);
-assertArrayIncludesAll(
-  contractFiles.openapi,
-  "ExecutionPlan.required",
-  executionPlanRequired,
-  expectedExecutionPlanFields,
-);
+  const executionPlanRequired = getPathValue(openapiDocument, [
+    "components",
+    "schemas",
+    "ExecutionPlan",
+    "required",
+  ]);
+  assertArrayIncludesAll(
+    contractFiles.openapi,
+    "ExecutionPlan.required",
+    executionPlanRequired,
+    expectedExecutionPlanFields,
+  );
 ```
 
-- [ ] **Step 4: Run contract validation**
-
-Run:
+- [ ] **步骤 4：运行契约校验**
 
 ```bash
 pnpm validate:contracts
 ```
 
-Expected: PASS and output includes `Contract validation passed.`
+预期：命令通过，并输出 `Contract validation passed.`。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add contracts/openapi/api-gateway.yaml scripts/validate-contracts.mjs
 git commit -m "feat(contracts): add execution workflow api"
 ```
 
-### Task 4: Add Agent Runtime Rule Parser
+### 任务 4：新增 Agent Runtime 规则解析器
 
-**Files:**
+**文件：**
 
-- Create: `python/agent-runtime/agent_runtime/types.py`
-- Create: `python/agent-runtime/agent_runtime/parsers/__init__.py`
-- Create: `python/agent-runtime/agent_runtime/parsers/rule_parser.py`
+- 新建 `python/agent-runtime/agent_runtime/types.py`
+- 新建 `python/agent-runtime/agent_runtime/parsers/__init__.py`
+- 新建 `python/agent-runtime/agent_runtime/parsers/rule_parser.py`
+- 新建 `python/backend/tests/test_orchestrator_planner.py`
 
-- [ ] **Step 1: Write failing parser tests**
+- [ ] **步骤 1：先写失败测试**
 
-Create `python/backend/tests/test_orchestrator_planner.py` with:
+新建 `python/backend/tests/test_orchestrator_planner.py`：
 
 ```python
 from agent_runtime.parsers.rule_parser import RuleParser
@@ -832,19 +838,17 @@ def test_rule_parser_extracts_multi_intent_calendar_and_expense() -> None:
     assert result.actions[1]["missing_fields"] == ["amount"]
 ```
 
-- [ ] **Step 2: Run tests to verify failure**
-
-Run:
+- [ ] **步骤 2：确认测试失败**
 
 ```bash
 pytest python/backend/tests/test_orchestrator_planner.py -v
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'agent_runtime.parsers'`.
+预期：失败，报错包含 `ModuleNotFoundError: No module named 'agent_runtime.parsers'`。
 
-- [ ] **Step 3: Add agent runtime types**
+- [ ] **步骤 3：新增 agent runtime 类型**
 
-Create `python/agent-runtime/agent_runtime/types.py`:
+新建 `python/agent-runtime/agent_runtime/types.py`：
 
 ```python
 from typing import Literal, TypedDict
@@ -872,9 +876,9 @@ class ParseResult:
         return len(self.actions)
 ```
 
-- [ ] **Step 4: Add parser package**
+- [ ] **步骤 4：新增 parser package**
 
-Create `python/agent-runtime/agent_runtime/parsers/__init__.py`:
+新建 `python/agent-runtime/agent_runtime/parsers/__init__.py`：
 
 ```python
 from agent_runtime.parsers.rule_parser import RuleParser
@@ -882,9 +886,9 @@ from agent_runtime.parsers.rule_parser import RuleParser
 __all__ = ["RuleParser"]
 ```
 
-- [ ] **Step 5: Add deterministic rule parser**
+- [ ] **步骤 5：新增确定性规则解析器**
 
-Create `python/agent-runtime/agent_runtime/parsers/rule_parser.py`:
+新建 `python/agent-runtime/agent_runtime/parsers/rule_parser.py`：
 
 ```python
 from datetime import datetime, timedelta
@@ -946,38 +950,36 @@ class RuleParser:
         return target_day.replace(hour=hour, minute=0, second=0, microsecond=0)
 ```
 
-- [ ] **Step 6: Run parser tests**
-
-Run:
+- [ ] **步骤 6：运行 parser 测试**
 
 ```bash
 pytest python/backend/tests/test_orchestrator_planner.py -v
 ```
 
-Expected: PASS.
+预期：命令通过。
 
-- [ ] **Step 7: Commit**
+- [ ] **步骤 7：提交**
 
 ```bash
 git add python/agent-runtime/agent_runtime/types.py python/agent-runtime/agent_runtime/parsers python/backend/tests/test_orchestrator_planner.py
 git commit -m "feat(agent-runtime): add deterministic rule parser"
 ```
 
-### Task 5: Add Calendar Domain and Execution Store
+### 任务 5：新增 Calendar 领域和 Execution Store
 
-**Files:**
+**文件：**
 
-- Create: `python/backend/backend/app/domains/__init__.py`
-- Create: `python/backend/backend/app/domains/calendar/__init__.py`
-- Create: `python/backend/backend/app/domains/calendar/models.py`
-- Create: `python/backend/backend/app/domains/calendar/repository.py`
-- Create: `python/backend/backend/app/domains/calendar/service.py`
-- Create: `python/backend/backend/app/services/execution_store.py`
-- Create: `python/backend/tests/test_calendar_domain.py`
+- 新建 `python/backend/backend/app/domains/__init__.py`
+- 新建 `python/backend/backend/app/domains/calendar/__init__.py`
+- 新建 `python/backend/backend/app/domains/calendar/models.py`
+- 新建 `python/backend/backend/app/domains/calendar/repository.py`
+- 新建 `python/backend/backend/app/domains/calendar/service.py`
+- 新建 `python/backend/backend/app/services/execution_store.py`
+- 新建 `python/backend/tests/test_calendar_domain.py`
 
-- [ ] **Step 1: Write failing calendar domain tests**
+- [ ] **步骤 1：先写 calendar 领域失败测试**
 
-Create `python/backend/tests/test_calendar_domain.py`:
+新建 `python/backend/tests/test_calendar_domain.py`：
 
 ```python
 import pytest
@@ -1047,31 +1049,19 @@ def test_calendar_service_rejects_missing_title() -> None:
         )
 ```
 
-- [ ] **Step 2: Run test to verify failure**
-
-Run:
+- [ ] **步骤 2：确认测试失败**
 
 ```bash
 pytest python/backend/tests/test_calendar_domain.py -v
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'backend.app.domains'`.
+预期：失败，报错包含 `ModuleNotFoundError: No module named 'backend.app.domains'`。
 
-- [ ] **Step 3: Add calendar models**
+- [ ] **步骤 3：新增 calendar model**
 
-Create `python/backend/backend/app/domains/__init__.py`:
+新建 `python/backend/backend/app/domains/__init__.py` 和 `python/backend/backend/app/domains/calendar/__init__.py`，内容为空文件。
 
-```python
-
-```
-
-Create `python/backend/backend/app/domains/calendar/__init__.py`:
-
-```python
-
-```
-
-Create `python/backend/backend/app/domains/calendar/models.py`:
+新建 `python/backend/backend/app/domains/calendar/models.py`：
 
 ```python
 from typing import Literal, TypedDict
@@ -1087,9 +1077,9 @@ class CalendarEvent(TypedDict):
     sourceActionId: str
 ```
 
-- [ ] **Step 4: Add repository**
+- [ ] **步骤 4：新增 repository**
 
-Create `python/backend/backend/app/domains/calendar/repository.py`:
+新建 `python/backend/backend/app/domains/calendar/repository.py`：
 
 ```python
 from backend.app.domains.calendar.models import CalendarEvent
@@ -1111,9 +1101,9 @@ class InMemoryCalendarEventRepository:
         return list(self._events_by_action_id.values())
 ```
 
-- [ ] **Step 5: Add guarded domain service**
+- [ ] **步骤 5：新增受保护的领域 service**
 
-Create `python/backend/backend/app/domains/calendar/service.py`:
+新建 `python/backend/backend/app/domains/calendar/service.py`：
 
 ```python
 from uuid import uuid4
@@ -1154,9 +1144,9 @@ class CalendarDomainService:
         return value
 ```
 
-- [ ] **Step 6: Add execution store**
+- [ ] **步骤 6：新增 execution store**
 
-Create `python/backend/backend/app/services/execution_store.py`:
+新建 `python/backend/backend/app/services/execution_store.py`：
 
 ```python
 from datetime import UTC, datetime
@@ -1244,35 +1234,33 @@ class InMemoryExecutionStore:
         return record
 ```
 
-- [ ] **Step 7: Run calendar domain tests**
-
-Run:
+- [ ] **步骤 7：运行 calendar 领域测试**
 
 ```bash
 pytest python/backend/tests/test_calendar_domain.py -v
 ```
 
-Expected: PASS.
+预期：命令通过。
 
-- [ ] **Step 8: Commit**
+- [ ] **步骤 8：提交**
 
 ```bash
 git add python/backend/backend/app/domains python/backend/backend/app/services/execution_store.py python/backend/tests/test_calendar_domain.py
 git commit -m "feat(backend): add guarded calendar domain"
 ```
 
-### Task 6: Add Orchestrator Planner and Executor
+### 任务 6：新增 Orchestrator Planner 和 Executor
 
-**Files:**
+**文件：**
 
-- Create: `python/orchestrator/orchestrator/types.py`
-- Create: `python/orchestrator/orchestrator/planner.py`
-- Create: `python/orchestrator/orchestrator/executor.py`
-- Modify: `python/backend/tests/test_orchestrator_planner.py`
+- 新建 `python/orchestrator/orchestrator/types.py`
+- 新建 `python/orchestrator/orchestrator/planner.py`
+- 新建 `python/orchestrator/orchestrator/executor.py`
+- 修改 `python/backend/tests/test_orchestrator_planner.py`
 
-- [ ] **Step 1: Extend orchestrator tests**
+- [ ] **步骤 1：扩展 Orchestrator 测试**
 
-Append to `python/backend/tests/test_orchestrator_planner.py`:
+在 `python/backend/tests/test_orchestrator_planner.py` 追加：
 
 ```python
 from backend.app.domains.calendar.repository import InMemoryCalendarEventRepository
@@ -1343,19 +1331,17 @@ def test_executor_confirms_and_executes_calendar_action() -> None:
     assert calendar_service.list_events()[0]["title"] == "开会"
 ```
 
-- [ ] **Step 2: Run tests to verify failure**
-
-Run:
+- [ ] **步骤 2：确认测试失败**
 
 ```bash
 pytest python/backend/tests/test_orchestrator_planner.py -v
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'orchestrator.planner'`.
+预期：失败，报错包含 `ModuleNotFoundError: No module named 'orchestrator.planner'`。
 
-- [ ] **Step 3: Add orchestrator types**
+- [ ] **步骤 3：新增 Orchestrator 类型**
 
-Create `python/orchestrator/orchestrator/types.py`:
+新建 `python/orchestrator/orchestrator/types.py`：
 
 ```python
 from typing import Literal, TypedDict
@@ -1378,9 +1364,17 @@ class AgentTurnResponse(TypedDict, total=False):
     structuredElements: list[dict[str, object]]
 ```
 
-- [ ] **Step 4: Add execution planner**
+- [ ] **步骤 4：新增 planner**
 
-Create `python/orchestrator/orchestrator/planner.py`:
+新建 `python/orchestrator/orchestrator/planner.py`。实现要求：
+
+- 调用 `RuleParser.parse()`。
+- 如果任一 action 有 `missing_fields`，返回 `clarification_request`。
+- 如果没有 action，返回 `assistant_message`。
+- 如果有可执行 action，创建 `ExecutionPlanRecord`、`DomainActionRecord`、`ConfirmationRecord`，保存到 store，并写入 `plan_created` 与 `confirmation_created` ledger。
+- 返回 `confirmation_required`。
+
+关键实现代码：
 
 ```python
 from uuid import uuid4
@@ -1488,130 +1482,56 @@ class ExecutionPlanner:
         }
 ```
 
-- [ ] **Step 5: Add execution coordinator**
+- [ ] **步骤 5：新增 executor**
 
-Create `python/orchestrator/orchestrator/executor.py`:
+新建 `python/orchestrator/orchestrator/executor.py`。实现要求：
 
-```python
-from backend.app.domains.calendar.service import CalendarDomainService
-from backend.app.services.execution_store import InMemoryExecutionStore
-from orchestrator.types import AgentTurnResponse
+- 校验 confirm token。
+- 将 plan 和 action 推进到 executing。
+- 对 `calendar.create_event` 调用 `CalendarDomainService.create_event()`。
+- 成功后写入 `action_executed` ledger。
+- 失败后写入 `action_failed` ledger。
+- 支持 reject plan。
 
-
-class ExecutionCoordinator:
-    def __init__(
-        self,
-        store: InMemoryExecutionStore,
-        calendar_service: CalendarDomainService,
-    ) -> None:
-        self._store = store
-        self._calendar_service = calendar_service
-
-    def confirm_plan(self, plan_id: str, confirm_token: str) -> AgentTurnResponse:
-        plan = self._store.get_plan(plan_id)
-        confirmation = plan["confirmation"]
-        if confirmation is None or confirmation["confirmToken"] != confirm_token:
-            raise ValueError("invalid confirm token")
-
-        plan["status"] = "executing"
-        confirmation["status"] = "confirmed"
-
-        for action in plan["actions"]:
-            action["status"] = "executing"
-            try:
-                if action["actionType"] == "calendar.create_event":
-                    event = self._calendar_service.create_event(
-                        action_id=action["id"],
-                        payload=action["payload"],
-                    )
-                    action["result"] = {"calendarEventId": event["id"]}
-                action["status"] = "succeeded"
-                self._store.append_ledger(
-                    plan_id=plan_id,
-                    action_id=action["id"],
-                    event_type="action_executed",
-                    status="succeeded",
-                    message=f'{action["actionType"]} succeeded.',
-                )
-            except ValueError as error:
-                action["status"] = "failed"
-                plan["status"] = "failed"
-                self._store.append_ledger(
-                    plan_id=plan_id,
-                    action_id=action["id"],
-                    event_type="action_failed",
-                    status="failed",
-                    message=str(error),
-                )
-                raise
-
-        plan["status"] = "succeeded"
-        self._store.save_plan(plan)
-        return {
-            "kind": "execution_result",
-            "conversationId": plan["conversationId"],
-            "plan": plan,
-        }
-
-    def reject_plan(self, plan_id: str) -> dict[str, object]:
-        plan = self._store.get_plan(plan_id)
-        plan["status"] = "rejected"
-        if plan["confirmation"] is not None:
-            plan["confirmation"]["status"] = "rejected"
-        for action in plan["actions"]:
-            action["status"] = "rejected"
-        self._store.append_ledger(
-            plan_id=plan_id,
-            event_type="plan_rejected",
-            status="info",
-            message="Execution plan rejected.",
-        )
-        return plan
-```
-
-- [ ] **Step 6: Run orchestrator tests**
-
-Run:
+- [ ] **步骤 6：运行 Orchestrator 测试**
 
 ```bash
 pytest python/backend/tests/test_orchestrator_planner.py -v
 ```
 
-Expected: PASS.
+预期：命令通过。
 
-- [ ] **Step 7: Run mypy for Python packages**
-
-Run:
+- [ ] **步骤 7：运行 Python 类型检查**
 
 ```bash
 mypy python
 ```
 
-Expected: PASS. If it fails because `AgentTurnResponse.plan` is typed as `dict[str, object]`, refine `orchestrator/types.py` to import `ExecutionPlanRecord` and set `plan: ExecutionPlanRecord`.
+预期：命令通过。如果 `AgentTurnResponse.plan` 的类型过宽，改为从 `backend.app.services.execution_store` 导入 `ExecutionPlanRecord` 并使用该类型。
 
-- [ ] **Step 8: Commit**
+- [ ] **步骤 8：提交**
 
 ```bash
 git add python/orchestrator/orchestrator python/backend/tests/test_orchestrator_planner.py
 git commit -m "feat(orchestrator): add plan and execution lifecycle"
 ```
 
-### Task 7: Wire FastAPI Routes
+### 任务 7：接入 FastAPI 路由
 
-**Files:**
+**文件：**
 
-- Create: `python/backend/backend/app/runtime.py`
-- Create: `python/backend/backend/app/routes/agent.py`
-- Create: `python/backend/backend/app/routes/execution.py`
-- Create: `python/backend/backend/app/routes/calendar.py`
-- Create: `python/backend/backend/app/routes/expense.py`
-- Create: `python/backend/backend/app/routes/reminder.py`
-- Modify: `python/backend/backend/app/main.py`
-- Create: `python/backend/tests/test_agent_turns.py`
+- 新建 `python/backend/backend/app/runtime.py`
+- 新建 `python/backend/backend/app/routes/agent.py`
+- 新建 `python/backend/backend/app/routes/execution.py`
+- 新建 `python/backend/backend/app/routes/calendar.py`
+- 新建 `python/backend/backend/app/routes/expense.py`
+- 新建 `python/backend/backend/app/routes/reminder.py`
+- 修改 `python/backend/backend/app/main.py`
+- 新建 `python/backend/tests/test_agent_turns.py`
 
-- [ ] **Step 1: Write failing API tests**
+- [ ] **步骤 1：先写 API 失败测试**
 
-Create `python/backend/tests/test_agent_turns.py`:
+新建 `python/backend/tests/test_agent_turns.py`：
 
 ```python
 from backend.app.main import app
@@ -1700,19 +1620,17 @@ def test_agent_turn_returns_clarification_for_expense_amount() -> None:
     }
 ```
 
-- [ ] **Step 2: Run API tests to verify failure**
-
-Run:
+- [ ] **步骤 2：确认 API 测试失败**
 
 ```bash
 pytest python/backend/tests/test_agent_turns.py -v
 ```
 
-Expected: FAIL with 404 for `/agent/turns`.
+预期：失败，`/agent/turns` 返回 404。
 
-- [ ] **Step 3: Add runtime assembly**
+- [ ] **步骤 3：新增 runtime 组装**
 
-Create `python/backend/backend/app/runtime.py`:
+新建 `python/backend/backend/app/runtime.py`：
 
 ```python
 from backend.app.domains.calendar.repository import InMemoryCalendarEventRepository
@@ -1731,9 +1649,9 @@ execution_coordinator = ExecutionCoordinator(
 )
 ```
 
-- [ ] **Step 4: Add agent route**
+- [ ] **步骤 4：新增 agent route**
 
-Create `python/backend/backend/app/routes/agent.py`:
+新建 `python/backend/backend/app/routes/agent.py`：
 
 ```python
 from typing import Any
@@ -1771,9 +1689,9 @@ def submit_turn(request: AgentTurnRequest) -> dict[str, Any]:
     )
 ```
 
-- [ ] **Step 5: Add execution routes**
+- [ ] **步骤 5：新增 execution routes**
 
-Create `python/backend/backend/app/routes/execution.py`:
+新建 `python/backend/backend/app/routes/execution.py`：
 
 ```python
 from typing import Any
@@ -1816,9 +1734,9 @@ def get_execution_ledger() -> list[dict[str, Any]]:
     return execution_store.list_ledger()
 ```
 
-- [ ] **Step 6: Add domain read routes**
+- [ ] **步骤 6：新增领域读取 routes**
 
-Create `python/backend/backend/app/routes/calendar.py`:
+新建 `python/backend/backend/app/routes/calendar.py`：
 
 ```python
 from backend.app.domains.calendar.models import CalendarEvent
@@ -1833,7 +1751,7 @@ def get_events() -> list[CalendarEvent]:
     return calendar_service.list_events()
 ```
 
-Create `python/backend/backend/app/routes/expense.py`:
+新建 `python/backend/backend/app/routes/expense.py`：
 
 ```python
 from fastapi import APIRouter
@@ -1846,7 +1764,7 @@ def get_expenses() -> list[dict[str, object]]:
     return []
 ```
 
-Create `python/backend/backend/app/routes/reminder.py`:
+新建 `python/backend/backend/app/routes/reminder.py`：
 
 ```python
 from fastapi import APIRouter
@@ -1859,9 +1777,9 @@ def get_reminders() -> list[dict[str, object]]:
     return []
 ```
 
-- [ ] **Step 7: Register routers**
+- [ ] **步骤 7：注册路由**
 
-Modify `python/backend/backend/app/main.py` to:
+把 `python/backend/backend/app/main.py` 改为：
 
 ```python
 from fastapi import FastAPI
@@ -1886,69 +1804,67 @@ app.include_router(reminder_router)
 app.include_router(version_router)
 ```
 
-- [ ] **Step 8: Run API tests**
-
-Run:
+- [ ] **步骤 8：运行 API 测试**
 
 ```bash
 pytest python/backend/tests/test_agent_turns.py -v
 ```
 
-Expected: PASS.
+预期：命令通过。
 
-- [ ] **Step 9: Run full backend tests**
-
-Run:
+- [ ] **步骤 9：运行完整后端测试**
 
 ```bash
 pytest python/backend/tests -v
 ```
 
-Expected: PASS.
+预期：命令通过。
 
-- [ ] **Step 10: Commit**
+- [ ] **步骤 10：提交**
 
 ```bash
 git add python/backend/backend/app/runtime.py python/backend/backend/app/routes/agent.py python/backend/backend/app/routes/execution.py python/backend/backend/app/routes/calendar.py python/backend/backend/app/routes/expense.py python/backend/backend/app/routes/reminder.py python/backend/backend/app/main.py python/backend/tests/test_agent_turns.py
 git commit -m "feat(api): expose agent execution workflow"
 ```
 
-### Task 8: Final Verification and Documentation Alignment
+### 任务 8：最终验证和文档对齐
 
-**Files:**
+**文件：**
 
-- Modify: `python/backend/README.md`
-- Modify: `packages/sdk/README.md`
+- 修改 `python/backend/README.md`
+- 修改 `packages/sdk/README.md`
 
-- [ ] **Step 1: Update backend README**
+- [ ] **步骤 1：更新后端 README**
 
-Append to `python/backend/README.md`:
+在 `python/backend/README.md` 末尾追加：
 
 ```markdown
-## Agent execution workflow
 
-The V1 backend keeps FastAPI thin and routes natural-language work through the orchestrator.
+## Agent 执行工作流
 
-Key endpoints:
+V1 后端保持 FastAPI 薄网关定位，自然语言工作流通过 Orchestrator 处理。
 
-- `POST /agent/turns` submits a user turn and returns an assistant message, clarification request, confirmation card, or execution result.
-- `POST /execution-plans/{id}/confirm` confirms and synchronously executes a pending plan.
-- `POST /execution-plans/{id}/reject` rejects a pending plan.
-- `GET /execution-plans/{id}` reads a plan.
-- `GET /execution-ledger` reads execution audit events.
-- `GET /calendar/events` reads calendar facts created by confirmed actions.
+关键端点：
 
-V1 uses in-process repositories while the plan/action/ledger shapes remain Postgres-ready. Domain services own business validation and idempotency. Agent runtime output never writes directly to domain facts.
+- `POST /agent/turns` 提交用户输入，返回 assistant message、clarification request、confirmation card 或 execution result。
+- `POST /execution-plans/{id}/confirm` 确认并同步执行待确认计划。
+- `POST /execution-plans/{id}/reject` 拒绝待确认计划。
+- `GET /execution-plans/{id}` 读取执行计划。
+- `GET /execution-ledger` 读取执行审计事件。
+- `GET /calendar/events` 读取已确认 action 创建的日程事实。
+
+V1 使用 in-process repository，但 plan、action 和 ledger 的数据形态保持 Postgres-ready。领域 service 拥有业务校验和幂等控制。Agent runtime 的输出不能直接写入领域事实表。
 ```
 
-- [ ] **Step 2: Update SDK README**
+- [ ] **步骤 2：更新 SDK README**
 
-Append to `packages/sdk/README.md`:
+在 `packages/sdk/README.md` 末尾追加：
 
 ```markdown
-## Agent workflow methods
 
-The SDK exposes workflow methods so apps do not assemble backend URLs directly:
+## Agent 工作流方法
+
+SDK 暴露工作流方法，应用不直接拼装后端 URL：
 
 - `submitAgentTurn(request)`
 - `confirmExecutionPlan(planId, request)`
@@ -1959,12 +1875,10 @@ The SDK exposes workflow methods so apps do not assemble backend URLs directly:
 - `getExpenses()`
 - `getReminders()`
 
-Apps render the returned union type. They do not parse natural language or infer domain state from chat messages.
+应用只渲染返回的 union type，不解析自然语言，也不从聊天消息反推领域状态。
 ```
 
-- [ ] **Step 3: Run complete verification**
-
-Run:
+- [ ] **步骤 3：运行完整验证**
 
 ```bash
 pnpm validate:contracts
@@ -1975,39 +1889,35 @@ mypy python
 ruff check python
 ```
 
-Expected: all commands pass.
+预期：全部命令通过。
 
-- [ ] **Step 4: Commit**
+- [ ] **步骤 4：提交**
 
 ```bash
 git add python/backend/README.md packages/sdk/README.md
 git commit -m "docs: document agent execution workflow"
 ```
 
-## Plan Self-Review
+## 计划自检
 
-Spec coverage:
+规格覆盖：
 
-- Overall architecture is covered by Tasks 4, 6, and 7.
-- Multi-intent execution is covered by Task 4 parser tests and Task 6 orchestrator tests.
-- Data model shape is covered by Tasks 1, 3, and 5 through typed records and API schemas.
-- API flow is covered by Tasks 2, 3, and 7.
-- Guarded tools and idempotency are covered by Task 5.
-- Trace and ledger are covered by Tasks 5, 6, and 7.
-- Test strategy is covered by per-task TDD steps and Task 8 final verification.
+- 总体架构由任务 4、任务 6 和任务 7 覆盖。
+- 多意图执行由任务 4 的 parser 测试和任务 6 的 Orchestrator 测试覆盖。
+- 数据模型形态由任务 1、任务 3 和任务 5 的类型、schema 与 record 覆盖。
+- API 流程由任务 2、任务 3 和任务 7 覆盖。
+- guarded tools 和幂等由任务 5 覆盖。
+- trace 与 ledger 由任务 5、任务 6 和任务 7 覆盖。
+- 测试策略由每个任务的 TDD 步骤和任务 8 的最终验证覆盖。
 
-Known deferred work:
+已推迟的工作：
 
-- Real Postgres tables and migrations are deferred to the next implementation plan after the in-process repository slice proves the API and lifecycle. The types and repository boundaries in this plan keep that migration direct.
-- Real LLM calls are deferred until deterministic plan lifecycle tests pass. The `RuleParser` and agent-runtime interfaces keep the adapter boundary explicit.
-- Expense and reminder execution are deferred, but their API, type, and route boundaries exist in this slice.
+- 真实 Postgres 表和 migration 留到下一份实施计划。当前计划先用 in-process repository 验证 API 与生命周期，且保留可迁移的数据边界。
+- 真实 LLM 调用留到确定性计划生命周期测试稳定后接入。`RuleParser` 和 agent-runtime 接口保留 adapter 边界。
+- expense 和 reminder 的执行留到后续任务；本计划先建立 API、类型和路由边界。
 
-Placeholder scan:
+类型一致性：
 
-- No placeholder markers or undefined task references should remain.
-
-Type consistency:
-
-- TypeScript uses camelCase API fields.
-- Python route request models use Pydantic aliases for camelCase JSON.
-- Orchestrator and backend store records use camelCase keys so FastAPI returns contract-shaped JSON without extra mapping code.
+- TypeScript API 字段使用 camelCase。
+- Python route request model 使用 Pydantic alias 兼容 camelCase JSON。
+- Orchestrator 和 backend store record 使用 camelCase key，让 FastAPI 能直接返回契约形态的 JSON。
