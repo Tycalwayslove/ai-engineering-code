@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 
 const rootDir = process.cwd();
 
@@ -140,6 +141,14 @@ function parseYamlScalar(rawValue) {
   return unquoteYamlString(value);
 }
 
+function setStackContainer(stackEntry, container) {
+  if (stackEntry.parent !== undefined && stackEntry.key !== undefined) {
+    stackEntry.parent.value[stackEntry.key] = container;
+  }
+  stackEntry.value = container;
+  return container;
+}
+
 function parseSimpleYamlObject(text, filePath) {
   const root = {};
   const stack = [{ indent: -1, value: root }];
@@ -166,13 +175,7 @@ function parseSimpleYamlObject(text, filePath) {
     }
 
     const line = withoutComment.trimEnd();
-    const match = line.trimStart().match(/^(.+?):(?:\s+(.*))?$/);
-    if (!match) {
-      throw new Error(`line ${lineNumber}: expected a key/value mapping`);
-    }
-
-    const key = unquoteYamlString(match[1]);
-    const rawValue = match[2];
+    const trimmed = line.trimStart();
 
     while (indent <= stack.at(-1).indent) {
       stack.pop();
@@ -185,18 +188,69 @@ function parseSimpleYamlObject(text, filePath) {
       );
     }
 
-    if (Object.hasOwn(parent.value, key)) {
+    if (trimmed.startsWith("- ")) {
+      const rawItem = trimmed.slice(2).trim();
+      const sequence = Array.isArray(parent.value)
+        ? parent.value
+        : setStackContainer(parent, []);
+
+      const mappingMatch = rawItem.match(/^(.+?):(?:\s+(.*))?$/);
+      if (!mappingMatch) {
+        sequence.push(parseYamlScalar(rawItem));
+        return;
+      }
+
+      const key = unquoteYamlString(mappingMatch[1]);
+      const rawValue = mappingMatch[2];
+      const item = {};
+      sequence.push(item);
+
+      if (rawValue === undefined) {
+        const child = {};
+        item[key] = child;
+        stack.push({ indent, value: item });
+        stack.push({
+          indent: indent + 2,
+          value: child,
+          parent: { value: item },
+          key,
+        });
+        return;
+      }
+
+      item[key] = parseYamlScalar(rawValue);
+      stack.push({ indent, value: item });
+      return;
+    }
+
+    const match = trimmed.match(/^(.+?):(?:\s+(.*))?$/);
+    if (!match) {
+      throw new Error(`line ${lineNumber}: expected a key/value mapping`);
+    }
+
+    const key = unquoteYamlString(match[1]);
+    const rawValue = match[2];
+    const parentValue = parent.value;
+    if (
+      typeof parentValue !== "object" ||
+      parentValue === null ||
+      Array.isArray(parentValue)
+    ) {
+      throw new Error(`line ${lineNumber}: mapping parent must be an object`);
+    }
+
+    if (Object.hasOwn(parentValue, key)) {
       throw new Error(`line ${lineNumber}: duplicate key "${key}"`);
     }
 
     if (rawValue === undefined) {
       const child = {};
-      parent.value[key] = child;
-      stack.push({ indent, value: child });
+      parentValue[key] = child;
+      stack.push({ indent, value: child, parent, key });
       return;
     }
 
-    parent.value[key] = parseYamlScalar(rawValue);
+    parentValue[key] = parseYamlScalar(rawValue);
   });
 
   if (Object.keys(root).length === 0) {
@@ -373,18 +427,26 @@ function validateFactoryStatusSlice(openapiDocument) {
   }
 }
 
-const openapiDocument = validateOpenApiYaml(contractFiles.openapi);
-validateJsonSchema(contractFiles.memorySchema);
-validateJsonSchema(contractFiles.workflowSchema);
-validateJsonSchema(contractFiles.hybridBridgeSchema);
-validateFactoryStatusSlice(openapiDocument);
+function runValidation() {
+  const openapiDocument = validateOpenApiYaml(contractFiles.openapi);
+  validateJsonSchema(contractFiles.memorySchema);
+  validateJsonSchema(contractFiles.workflowSchema);
+  validateJsonSchema(contractFiles.hybridBridgeSchema);
+  validateFactoryStatusSlice(openapiDocument);
 
-if (failures.length > 0) {
-  console.error("\nContract validation failed:");
-  for (const failure of failures) {
-    console.error(`- ${failure}`);
+  if (failures.length > 0) {
+    console.error("\nContract validation failed:");
+    for (const failure of failures) {
+      console.error(`- ${failure}`);
+    }
+    process.exit(1);
   }
-  process.exit(1);
+
+  console.log("\nContract validation passed.");
 }
 
-console.log("\nContract validation passed.");
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runValidation();
+}
+
+export { parseSimpleYamlObject };

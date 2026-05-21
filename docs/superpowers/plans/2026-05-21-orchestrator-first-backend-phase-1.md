@@ -54,6 +54,7 @@ Tests:
 ### Task 1: Add Shared TypeScript Workflow Types
 
 **Files:**
+
 - Modify: `packages/shared-types/src/index.ts`
 
 - [ ] **Step 1: Add failing type usage test by extending the package with concrete exports**
@@ -173,7 +174,12 @@ export type ExecutionLedgerItem = {
   id: string;
   planId: string;
   actionId?: string;
-  eventType: "plan_created" | "confirmation_created" | "action_executed" | "action_failed" | "plan_rejected";
+  eventType:
+    | "plan_created"
+    | "confirmation_created"
+    | "action_executed"
+    | "action_failed"
+    | "plan_rejected";
   status: "info" | "succeeded" | "failed";
   message: string;
   createdAt: string;
@@ -228,6 +234,7 @@ git commit -m "feat(types): add execution workflow types"
 ### Task 2: Add SDK Workflow Methods
 
 **Files:**
+
 - Modify: `packages/sdk/src/index.ts`
 
 - [ ] **Step 1: Update SDK imports and exports**
@@ -348,22 +355,22 @@ to:
 Then replace the `headers` object with:
 
 ```ts
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-    };
+const headers: Record<string, string> = {
+  Accept: "application/json",
+  ...(init.body ? { "Content-Type": "application/json" } : {}),
+};
 ```
 
 Then replace the fetch call with:
 
 ```ts
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      headers: {
-        ...headers,
-        ...init.headers,
-      },
-    });
+const response = await fetch(`${this.baseUrl}${path}`, {
+  ...init,
+  headers: {
+    ...headers,
+    ...init.headers,
+  },
+});
 ```
 
 - [ ] **Step 4: Run SDK typecheck**
@@ -386,301 +393,327 @@ git commit -m "feat(sdk): add execution workflow methods"
 ### Task 3: Extend OpenAPI and Contract Validation
 
 **Files:**
+
 - Modify: `contracts/openapi/api-gateway.yaml`
 - Modify: `scripts/validate-contracts.mjs`
 
 - [ ] **Step 1: Add OpenAPI paths**
 
-In `contracts/openapi/api-gateway.yaml`, add these paths under `paths:` after `/factory/status`:
-
-The current contract validator uses a lightweight YAML parser that does not support YAML array objects. Keep path parameter declarations out of this Phase 1 contract snippet and let FastAPI route tests validate path behavior. Add semantic OpenAPI validation in a separate contract tooling task before adding full parameter arrays.
+In `contracts/openapi/api-gateway.yaml`, add these paths under `paths:` after `/factory/status`. The snippet starts at the path-key level; indent it by two spaces when inserting it under `paths:`.
 
 ```yaml
-  /agent/turns:
-    post:
-      operationId: submitAgentTurn
-      requestBody:
-        required: true
+/agent/turns:
+  post:
+    operationId: submitAgentTurn
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AgentTurnRequest"
+    responses:
+      "200":
+        description: Agent turn result
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AgentTurnRequest"
-      responses:
-        "200":
-          description: Agent turn result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentTurnResponse"
-  /execution-plans/{id}/confirm:
-    post:
-      operationId: confirmExecutionPlan
-      requestBody:
+              $ref: "#/components/schemas/AgentTurnResponse"
+/execution-plans/{id}/confirm:
+  post:
+    operationId: confirmExecutionPlan
+    parameters:
+      - name: id
+        in: path
         required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfirmExecutionPlanRequest"
+    responses:
+      "200":
+        description: Execution result after confirmation
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConfirmExecutionPlanRequest"
-      responses:
-        "200":
-          description: Execution result after confirmation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentTurnResponse"
-  /execution-plans/{id}/reject:
-    post:
-      operationId: rejectExecutionPlan
-      responses:
-        "200":
-          description: Rejected execution plan
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExecutionPlan"
-  /execution-plans/{id}:
-    get:
-      operationId: getExecutionPlan
-      responses:
-        "200":
-          description: Execution plan
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExecutionPlan"
-  /execution-ledger:
-    get:
-      operationId: getExecutionLedger
-      responses:
-        "200":
-          description: Execution ledger
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ExecutionLedgerItem"
-  /calendar/events:
-    get:
-      operationId: getCalendarEvents
-      responses:
-        "200":
-          description: Calendar events
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CalendarEvent"
-  /expenses:
-    get:
-      operationId: getExpenses
-      responses:
-        "200":
-          description: Expense records
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ExpenseRecord"
-  /reminders:
-    get:
-      operationId: getReminders
-      responses:
-        "200":
-          description: Reminders
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Reminder"
+              $ref: "#/components/schemas/AgentTurnResponse"
+/execution-plans/{id}/reject:
+  post:
+    operationId: rejectExecutionPlan
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Rejected execution plan
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExecutionPlan"
+/execution-plans/{id}:
+  get:
+    operationId: getExecutionPlan
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Execution plan
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExecutionPlan"
+/execution-ledger:
+  get:
+    operationId: getExecutionLedger
+    responses:
+      "200":
+        description: Execution ledger
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ExecutionLedgerItem"
+/calendar/events:
+  get:
+    operationId: getCalendarEvents
+    responses:
+      "200":
+        description: Calendar events
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/CalendarEvent"
+/expenses:
+  get:
+    operationId: getExpenses
+    responses:
+      "200":
+        description: Expense records
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ExpenseRecord"
+/reminders:
+  get:
+    operationId: getReminders
+    responses:
+      "200":
+        description: Reminders
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Reminder"
 ```
 
 - [ ] **Step 2: Add OpenAPI schemas**
 
-Append these schemas under `components.schemas` after `FactoryStatus`:
+Append these schemas under `components.schemas` after `FactoryStatus`. The snippet starts at the schema-key level; indent it by four spaces when inserting it under `components.schemas`.
 
 ```yaml
-    AgentTurnRequest:
+AgentTurnRequest:
+  type: object
+  required: [input]
+  properties:
+    conversationId:
+      type: string
+    input:
+      type: string
+    clientContext:
       type: object
-      required: [input]
-      properties:
-        conversationId:
-          type: string
-        input:
-          type: string
-        clientContext:
-          type: object
-    ConfirmExecutionPlanRequest:
+ConfirmExecutionPlanRequest:
+  type: object
+  required: [confirmToken]
+  properties:
+    confirmToken:
+      type: string
+    actionIds:
+      type: array
+      items:
+        type: string
+DomainAction:
+  type: object
+  required:
+    [id, planId, domain, actionType, status, riskLevel, summary, payload]
+  properties:
+    id:
+      type: string
+    planId:
+      type: string
+    domain:
+      type: string
+      enum: [calendar, expense, reminder]
+    actionType:
+      type: string
+    status:
+      type: string
+    riskLevel:
+      type: string
+      enum: [low, medium, high]
+    summary:
+      type: string
+    payload:
       type: object
-      required: [confirmToken]
-      properties:
-        confirmToken:
-          type: string
-        actionIds:
-          type: array
-          items:
-            type: string
-    DomainAction:
+    result:
       type: object
-      required: [id, planId, domain, actionType, status, riskLevel, summary, payload]
-      properties:
-        id:
-          type: string
-        planId:
-          type: string
-        domain:
-          type: string
-          enum: [calendar, expense, reminder]
-        actionType:
-          type: string
-        status:
-          type: string
-        riskLevel:
-          type: string
-          enum: [low, medium, high]
-        summary:
-          type: string
-        payload:
-          type: object
-        result:
-          type: object
-    ConfirmationCard:
-      type: object
-      required: [id, planId, status, requiredActionIds, title, description, confirmToken]
-      properties:
-        id:
-          type: string
-        planId:
-          type: string
-        status:
-          type: string
-        requiredActionIds:
-          type: array
-          items:
-            type: string
-        title:
-          type: string
-        description:
-          type: string
-        confirmToken:
-          type: string
-    ExecutionPlan:
-      type: object
-      required: [id, conversationId, status, riskLevel, summary, decisionTraceId, actions]
-      properties:
-        id:
-          type: string
-        conversationId:
-          type: string
-        status:
-          type: string
-        riskLevel:
-          type: string
-          enum: [low, medium, high]
-        summary:
-          type: string
-        decisionTraceId:
-          type: string
-        actions:
-          type: array
-          items:
-            $ref: "#/components/schemas/DomainAction"
-        confirmation:
-          $ref: "#/components/schemas/ConfirmationCard"
-    AgentTurnResponse:
-      type: object
-      required: [kind, conversationId]
-      properties:
-        kind:
-          type: string
-          enum: [assistant_message, clarification_request, confirmation_required, execution_result]
-        conversationId:
-          type: string
-        message:
-          type: string
-        question:
-          type: string
-        missingFields:
-          type: array
-          items:
-            type: string
-        plan:
-          $ref: "#/components/schemas/ExecutionPlan"
-        structuredElements:
-          type: array
-          items:
-            type: object
-    ExecutionLedgerItem:
-      type: object
-      required: [id, planId, eventType, status, message, createdAt]
-      properties:
-        id:
-          type: string
-        planId:
-          type: string
-        actionId:
-          type: string
-        eventType:
-          type: string
-        status:
-          type: string
-        message:
-          type: string
-        createdAt:
-          type: string
-    CalendarEvent:
-      type: object
-      required: [id, title, startAt, endAt, timezone, status, sourceActionId]
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        startAt:
-          type: string
-        endAt:
-          type: string
-        timezone:
-          type: string
-        status:
-          type: string
-        sourceActionId:
-          type: string
-    ExpenseRecord:
-      type: object
-      required: [id, title, currency, status, sourceActionId]
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        amount:
-          type: number
-        currency:
-          type: string
-        occurredOn:
-          type: string
-        status:
-          type: string
-        sourceActionId:
-          type: string
-    Reminder:
-      type: object
-      required: [id, title, dueAt, status, sourceActionId]
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        dueAt:
-          type: string
-        status:
-          type: string
-        sourceActionId:
-          type: string
+ConfirmationCard:
+  type: object
+  required:
+    [id, planId, status, requiredActionIds, title, description, confirmToken]
+  properties:
+    id:
+      type: string
+    planId:
+      type: string
+    status:
+      type: string
+    requiredActionIds:
+      type: array
+      items:
+        type: string
+    title:
+      type: string
+    description:
+      type: string
+    confirmToken:
+      type: string
+ExecutionPlan:
+  type: object
+  required:
+    [id, conversationId, status, riskLevel, summary, decisionTraceId, actions]
+  properties:
+    id:
+      type: string
+    conversationId:
+      type: string
+    status:
+      type: string
+    riskLevel:
+      type: string
+      enum: [low, medium, high]
+    summary:
+      type: string
+    decisionTraceId:
+      type: string
+    actions:
+      type: array
+      items:
+        $ref: "#/components/schemas/DomainAction"
+    confirmation:
+      $ref: "#/components/schemas/ConfirmationCard"
+AgentTurnResponse:
+  type: object
+  required: [kind, conversationId]
+  properties:
+    kind:
+      type: string
+      enum:
+        [
+          assistant_message,
+          clarification_request,
+          confirmation_required,
+          execution_result,
+        ]
+    conversationId:
+      type: string
+    message:
+      type: string
+    question:
+      type: string
+    missingFields:
+      type: array
+      items:
+        type: string
+    plan:
+      $ref: "#/components/schemas/ExecutionPlan"
+    structuredElements:
+      type: array
+      items:
+        type: object
+ExecutionLedgerItem:
+  type: object
+  required: [id, planId, eventType, status, message, createdAt]
+  properties:
+    id:
+      type: string
+    planId:
+      type: string
+    actionId:
+      type: string
+    eventType:
+      type: string
+    status:
+      type: string
+    message:
+      type: string
+    createdAt:
+      type: string
+CalendarEvent:
+  type: object
+  required: [id, title, startAt, endAt, timezone, status, sourceActionId]
+  properties:
+    id:
+      type: string
+    title:
+      type: string
+    startAt:
+      type: string
+    endAt:
+      type: string
+    timezone:
+      type: string
+    status:
+      type: string
+    sourceActionId:
+      type: string
+ExpenseRecord:
+  type: object
+  required: [id, title, currency, status, sourceActionId]
+  properties:
+    id:
+      type: string
+    title:
+      type: string
+    amount:
+      type: number
+    currency:
+      type: string
+    occurredOn:
+      type: string
+    status:
+      type: string
+    sourceActionId:
+      type: string
+Reminder:
+  type: object
+  required: [id, title, dueAt, status, sourceActionId]
+  properties:
+    id:
+      type: string
+    title:
+      type: string
+    dueAt:
+      type: string
+    status:
+      type: string
+    sourceActionId:
+      type: string
 ```
 
 - [ ] **Step 3: Extend validation script operation checks**
@@ -720,18 +753,18 @@ const expectedExecutionPlanFields = [
 Then in `validateFactoryStatusSlice`, after the FactoryStatus required check, add:
 
 ```js
-  const executionPlanRequired = getPathValue(openapiDocument, [
-    "components",
-    "schemas",
-    "ExecutionPlan",
-    "required",
-  ]);
-  assertArrayIncludesAll(
-    contractFiles.openapi,
-    "ExecutionPlan.required",
-    executionPlanRequired,
-    expectedExecutionPlanFields,
-  );
+const executionPlanRequired = getPathValue(openapiDocument, [
+  "components",
+  "schemas",
+  "ExecutionPlan",
+  "required",
+]);
+assertArrayIncludesAll(
+  contractFiles.openapi,
+  "ExecutionPlan.required",
+  executionPlanRequired,
+  expectedExecutionPlanFields,
+);
 ```
 
 - [ ] **Step 4: Run contract validation**
@@ -754,6 +787,7 @@ git commit -m "feat(contracts): add execution workflow api"
 ### Task 4: Add Agent Runtime Rule Parser
 
 **Files:**
+
 - Create: `python/agent-runtime/agent_runtime/types.py`
 - Create: `python/agent-runtime/agent_runtime/parsers/__init__.py`
 - Create: `python/agent-runtime/agent_runtime/parsers/rule_parser.py`
@@ -932,6 +966,7 @@ git commit -m "feat(agent-runtime): add deterministic rule parser"
 ### Task 5: Add Calendar Domain and Execution Store
 
 **Files:**
+
 - Create: `python/backend/backend/app/domains/__init__.py`
 - Create: `python/backend/backend/app/domains/calendar/__init__.py`
 - Create: `python/backend/backend/app/domains/calendar/models.py`
@@ -1027,11 +1062,13 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'backend.app.domains'`
 Create `python/backend/backend/app/domains/__init__.py`:
 
 ```python
+
 ```
 
 Create `python/backend/backend/app/domains/calendar/__init__.py`:
 
 ```python
+
 ```
 
 Create `python/backend/backend/app/domains/calendar/models.py`:
@@ -1227,6 +1264,7 @@ git commit -m "feat(backend): add guarded calendar domain"
 ### Task 6: Add Orchestrator Planner and Executor
 
 **Files:**
+
 - Create: `python/orchestrator/orchestrator/types.py`
 - Create: `python/orchestrator/orchestrator/planner.py`
 - Create: `python/orchestrator/orchestrator/executor.py`
@@ -1561,6 +1599,7 @@ git commit -m "feat(orchestrator): add plan and execution lifecycle"
 ### Task 7: Wire FastAPI Routes
 
 **Files:**
+
 - Create: `python/backend/backend/app/runtime.py`
 - Create: `python/backend/backend/app/routes/agent.py`
 - Create: `python/backend/backend/app/routes/execution.py`
@@ -1877,6 +1916,7 @@ git commit -m "feat(api): expose agent execution workflow"
 ### Task 8: Final Verification and Documentation Alignment
 
 **Files:**
+
 - Modify: `python/backend/README.md`
 - Modify: `packages/sdk/README.md`
 
@@ -1885,7 +1925,6 @@ git commit -m "feat(api): expose agent execution workflow"
 Append to `python/backend/README.md`:
 
 ```markdown
-
 ## Agent execution workflow
 
 The V1 backend keeps FastAPI thin and routes natural-language work through the orchestrator.
@@ -1907,7 +1946,6 @@ V1 uses in-process repositories while the plan/action/ledger shapes remain Postg
 Append to `packages/sdk/README.md`:
 
 ```markdown
-
 ## Agent workflow methods
 
 The SDK exposes workflow methods so apps do not assemble backend URLs directly:
