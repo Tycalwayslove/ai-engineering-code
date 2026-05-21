@@ -53,7 +53,6 @@ class ExecutionPlanner:
                     "riskLevel": parsed_action["risk_level"],
                     "summary": parsed_action["summary"],
                     "payload": parsed_action["payload"],
-                    "result": None,
                 }
             )
 

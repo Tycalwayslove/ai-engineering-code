@@ -24,6 +24,9 @@ class ExecutionCoordinator:
         action_ids: list[str] | None = None,
     ) -> AgentTurnResponse:
         plan = self._store.get_plan(plan_id)
+        if plan["status"] != "awaiting_confirmation":
+            raise ValueError("only awaiting confirmation plans can be confirmed")
+
         confirmation = plan["confirmation"]
         if confirmation is None:
             raise ValueError("confirmation is required")
@@ -33,6 +36,22 @@ class ExecutionCoordinator:
             raise ValueError("confirmation is not pending")
 
         selected_action_ids = set(action_ids or confirmation["requiredActionIds"])
+        known_action_ids = {action["id"] for action in plan["actions"]}
+        unknown_action_ids = sorted(selected_action_ids - known_action_ids)
+        if unknown_action_ids:
+            raise ValueError(f"unknown action ids: {', '.join(unknown_action_ids)}")
+
+        non_pending_action_ids = sorted(
+            action["id"]
+            for action in plan["actions"]
+            if action["id"] in selected_action_ids
+            and action["status"] != "awaiting_confirmation"
+        )
+        if non_pending_action_ids:
+            raise ValueError(
+                f"actions are not awaiting confirmation: {', '.join(non_pending_action_ids)}"
+            )
+
         plan["status"] = "executing"
         confirmation["status"] = "confirmed"
 
@@ -50,8 +69,11 @@ class ExecutionCoordinator:
             "plan": plan,
         }
 
-    def reject_plan(self, plan_id: str) -> AgentTurnResponse:
+    def reject_plan(self, plan_id: str) -> ExecutionPlanRecord:
         plan = self._store.get_plan(plan_id)
+        if plan["status"] != "awaiting_confirmation":
+            raise ValueError("only awaiting confirmation plans can be rejected")
+
         plan["status"] = "rejected"
         if plan["confirmation"] is not None:
             plan["confirmation"]["status"] = "rejected"
@@ -65,11 +87,7 @@ class ExecutionCoordinator:
             status="info",
             message="Execution plan rejected.",
         )
-        return {
-            "kind": "execution_result",
-            "conversationId": plan["conversationId"],
-            "plan": plan,
-        }
+        return plan
 
     def _execute_action(
         self,

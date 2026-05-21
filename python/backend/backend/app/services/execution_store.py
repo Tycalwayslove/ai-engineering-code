@@ -4,7 +4,7 @@ from typing import Literal, TypedDict
 RiskLevel = Literal["low", "medium", "high"]
 
 
-class DomainActionRecord(TypedDict):
+class DomainActionRecordRequired(TypedDict):
     id: str
     planId: str
     domain: str
@@ -13,7 +13,10 @@ class DomainActionRecord(TypedDict):
     riskLevel: RiskLevel
     summary: str
     payload: dict[str, object]
-    result: dict[str, object] | None
+
+
+class DomainActionRecord(DomainActionRecordRequired, total=False):
+    result: dict[str, object]
 
 
 class ConfirmationRecord(TypedDict):
@@ -37,14 +40,17 @@ class ExecutionPlanRecord(TypedDict):
     confirmation: ConfirmationRecord | None
 
 
-class LedgerRecord(TypedDict):
+class LedgerRecordRequired(TypedDict):
     id: str
     planId: str
-    actionId: str | None
     eventType: str
     status: str
     message: str
     createdAt: str
+
+
+class LedgerRecord(LedgerRecordRequired, total=False):
+    actionId: str
 
 
 class InMemoryExecutionStore:
@@ -73,11 +79,12 @@ class InMemoryExecutionStore:
         record: LedgerRecord = {
             "id": f"ledger_{len(self._ledger) + 1}",
             "planId": plan_id,
-            "actionId": action_id,
             "eventType": event_type,
             "status": status,
             "message": message,
             "createdAt": datetime.now(UTC).isoformat(),
         }
+        if action_id is not None:
+            record["actionId"] = action_id
         self._ledger.append(record)
         return record

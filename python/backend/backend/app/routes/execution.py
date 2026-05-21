@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from orchestrator.types import AgentTurnResponse
 from pydantic import BaseModel, Field
 
@@ -18,16 +18,22 @@ def confirm_execution_plan(
     plan_id: str,
     request: ConfirmExecutionPlanRequest,
 ) -> AgentTurnResponse:
-    return execution_coordinator.confirm_plan(
-        plan_id=plan_id,
-        confirm_token=request.confirm_token,
-        action_ids=request.action_ids,
-    )
+    try:
+        return execution_coordinator.confirm_plan(
+            plan_id=plan_id,
+            confirm_token=request.confirm_token,
+            action_ids=request.action_ids,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.post("/execution-plans/{plan_id}/reject")
-def reject_execution_plan(plan_id: str) -> AgentTurnResponse:
-    return execution_coordinator.reject_plan(plan_id)
+def reject_execution_plan(plan_id: str) -> ExecutionPlanRecord:
+    try:
+        return execution_coordinator.reject_plan(plan_id)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get("/execution-plans/{plan_id}")
