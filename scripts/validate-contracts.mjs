@@ -16,9 +16,17 @@ const contractFiles = {
 };
 
 const expectedOperations = {
+  confirmExecutionPlan: "confirmExecutionPlan",
+  getCalendarEvents: "getCalendarEvents",
+  getExecutionLedger: "getExecutionLedger",
+  getExecutionPlan: "getExecutionPlan",
+  getExpenses: "getExpenses",
   getFactoryStatus: "getFactoryStatus",
   getHealth: "getHealth",
+  getReminders: "getReminders",
   getVersion: "getVersion",
+  rejectExecutionPlan: "rejectExecutionPlan",
+  submitAgentTurn: "submitAgentTurn",
 };
 
 const expectedFactoryCapabilityFields = [
@@ -35,6 +43,16 @@ const expectedFactoryStatusFields = [
   "version",
   "capabilities",
   "nextActions",
+];
+
+const expectedExecutionPlanFields = [
+  "id",
+  "conversationId",
+  "status",
+  "riskLevel",
+  "summary",
+  "decisionTraceId",
+  "actions",
 ];
 
 const failures = [];
@@ -405,6 +423,19 @@ function validateFactoryStatusSlice(openapiDocument) {
     "FactoryStatus.required",
     statusRequired,
     expectedFactoryStatusFields,
+  );
+
+  const executionPlanRequired = getPathValue(openapiDocument, [
+    "components",
+    "schemas",
+    "ExecutionPlan",
+    "required",
+  ]);
+  assertArrayIncludesAll(
+    contractFiles.openapi,
+    "ExecutionPlan.required",
+    executionPlanRequired,
+    expectedExecutionPlanFields,
   );
 
   if (sharedTypesSource === undefined) {
