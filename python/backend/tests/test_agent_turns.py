@@ -170,3 +170,21 @@ def test_reject_executed_plan_fails() -> None:
 
     assert response.status_code == 400
     assert response.json()["detail"] == "only awaiting confirmation plans can be rejected"
+
+
+def test_unknown_execution_plan_returns_404() -> None:
+    client = TestClient(app)
+
+    get_response = client.get("/execution-plans/plan_missing")
+    confirm_response = client.post(
+        "/execution-plans/plan_missing/confirm",
+        json={"confirmToken": "confirm_missing"},
+    )
+    reject_response = client.post("/execution-plans/plan_missing/reject")
+
+    assert get_response.status_code == 404
+    assert get_response.json()["detail"] == "execution plan not found: plan_missing"
+    assert confirm_response.status_code == 404
+    assert confirm_response.json()["detail"] == "execution plan not found: plan_missing"
+    assert reject_response.status_code == 404
+    assert reject_response.json()["detail"] == "execution plan not found: plan_missing"

@@ -35,11 +35,16 @@ class ExecutionCoordinator:
         if confirmation["status"] != "pending":
             raise ValueError("confirmation is not pending")
 
-        selected_action_ids = set(action_ids or confirmation["requiredActionIds"])
+        required_action_ids = set(confirmation["requiredActionIds"])
+        selected_action_ids = set(
+            confirmation["requiredActionIds"] if action_ids is None else action_ids
+        )
         known_action_ids = {action["id"] for action in plan["actions"]}
         unknown_action_ids = sorted(selected_action_ids - known_action_ids)
         if unknown_action_ids:
             raise ValueError(f"unknown action ids: {', '.join(unknown_action_ids)}")
+        if selected_action_ids != required_action_ids:
+            raise ValueError("partial action confirmation is not supported")
 
         non_pending_action_ids = sorted(
             action["id"]

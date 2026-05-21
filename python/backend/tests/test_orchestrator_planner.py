@@ -1,7 +1,8 @@
+import pytest
 from agent_runtime.parsers.rule_parser import RuleParser
 from backend.app.domains.calendar.repository import InMemoryCalendarEventRepository
 from backend.app.domains.calendar.service import CalendarDomainService
-from backend.app.services.execution_store import InMemoryExecutionStore
+from backend.app.services.execution_store import ExecutionPlanRecord, InMemoryExecutionStore
 from orchestrator.executor import ExecutionCoordinator
 from orchestrator.planner import ExecutionPlanner
 
@@ -101,3 +102,69 @@ def test_executor_confirms_and_executes_calendar_action() -> None:
     assert result["kind"] == "execution_result"
     assert result["plan"]["status"] == "succeeded"
     assert calendar_service.list_events()[0]["title"] == "开会"
+
+
+def test_executor_rejects_partial_action_confirmation() -> None:
+    store = InMemoryExecutionStore()
+    calendar_service = CalendarDomainService(InMemoryCalendarEventRepository())
+    coordinator = ExecutionCoordinator(store=store, calendar_service=calendar_service)
+    plan: ExecutionPlanRecord = {
+        "id": "plan_multi",
+        "conversationId": "conversation_001",
+        "status": "awaiting_confirmation",
+        "riskLevel": "medium",
+        "summary": "确认后执行计划",
+        "decisionTraceId": "test-trace",
+        "actions": [
+            {
+                "id": "action_001",
+                "planId": "plan_multi",
+                "domain": "calendar",
+                "actionType": "calendar.create_event",
+                "status": "awaiting_confirmation",
+                "riskLevel": "medium",
+                "summary": "创建日程：开会",
+                "payload": {
+                    "title": "开会",
+                    "start_at": "2026-05-22T15:00:00+08:00",
+                    "end_at": "2026-05-22T16:00:00+08:00",
+                    "timezone": "Asia/Shanghai",
+                },
+            },
+            {
+                "id": "action_002",
+                "planId": "plan_multi",
+                "domain": "calendar",
+                "actionType": "calendar.create_event",
+                "status": "awaiting_confirmation",
+                "riskLevel": "medium",
+                "summary": "创建日程：复盘",
+                "payload": {
+                    "title": "复盘",
+                    "start_at": "2026-05-22T16:00:00+08:00",
+                    "end_at": "2026-05-22T17:00:00+08:00",
+                    "timezone": "Asia/Shanghai",
+                },
+            },
+        ],
+        "confirmation": {
+            "id": "confirmation_multi",
+            "planId": "plan_multi",
+            "status": "pending",
+            "requiredActionIds": ["action_001", "action_002"],
+            "title": "请确认执行计划",
+            "description": "确认后我会执行这些动作。",
+            "confirmToken": "confirm_multi",
+        },
+    }
+    store.save_plan(plan)
+
+    with pytest.raises(ValueError, match="partial action confirmation is not supported"):
+        coordinator.confirm_plan(
+            plan_id="plan_multi",
+            confirm_token="confirm_multi",
+            action_ids=["action_001"],
+        )
+
+    assert store.get_plan("plan_multi")["status"] == "awaiting_confirmation"
+    assert calendar_service.list_events() == []

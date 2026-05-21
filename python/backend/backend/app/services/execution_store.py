@@ -4,6 +4,12 @@ from typing import Literal, TypedDict
 RiskLevel = Literal["low", "medium", "high"]
 
 
+class ExecutionPlanNotFound(KeyError):
+    def __init__(self, plan_id: str) -> None:
+        super().__init__(plan_id)
+        self.plan_id = plan_id
+
+
 class DomainActionRecordRequired(TypedDict):
     id: str
     planId: str
@@ -63,7 +69,10 @@ class InMemoryExecutionStore:
         return plan
 
     def get_plan(self, plan_id: str) -> ExecutionPlanRecord:
-        return self._plans[plan_id]
+        try:
+            return self._plans[plan_id]
+        except KeyError as error:
+            raise ExecutionPlanNotFound(plan_id) from error
 
     def list_ledger(self) -> list[LedgerRecord]:
         return self._ledger
