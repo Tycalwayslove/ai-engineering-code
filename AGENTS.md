@@ -1,5 +1,13 @@
 # 项目 Agent 指令
 
+## 新窗口启动协议
+
+- 每次进入本项目的新 Codex 窗口，先读取 `ai-factory/memory/working/active-context/current-project-state.md` 和 `ai-factory/memory/index.md`，再回答项目进展、下一步或执行类问题。
+- 如果当前问题涉及代码、服务、数据库或调试，还必须先查看 `git status --short --branch` 和最近 5 条提交，避免基于旧对话记忆行动。
+- 不要假设飞书、Obsidian 或其他外部知识库会自动同步。只有实际执行同步命令或写入文件后，才可以说“已同步”。
+- 阶段性工作结束时，必须更新 `current-project-state.md`；如果影响项目理解，还要同步 Obsidian 阶段记录和 `docs/knowledge-sync/feishu-pages/` 源稿。
+- 如果无法完成飞书或 Obsidian 同步，必须在最终回复中明确说明“仓库已更新，外部知识库未同步”，不能模糊带过。
+
 ## 文档语言
 
 - 面向人的项目文档默认使用中文，包括规格、实施计划、README、架构说明、评审记录和工作流说明。

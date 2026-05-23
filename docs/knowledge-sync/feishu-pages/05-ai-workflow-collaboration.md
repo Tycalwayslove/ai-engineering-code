@@ -180,3 +180,17 @@ AI 时间管理 Agent 的第一段具体代码开发不是业务功能，而是�
 - Admin 工作台中的 workflow / memory / spec 状态视图。
 
 但这些能力都应该由真实使用压力推动，而不是提前堆砌。
+
+## 新窗口上下文恢复
+
+2026-05-23 的全链路开发暴露了一个协作问题：新的 Codex 窗口不会自动继承旧窗口对话，也不会自动更新 Obsidian 或飞书。如果项目进展只留在聊天里，下一次打开窗口时 AI 很容易回到旧状态。
+
+因此项目新增固定启动协议：
+
+- 新窗口先读 `AGENTS.md`。
+- 再读 `ai-factory/memory/index.md` 和 `ai-factory/memory/working/active-context/current-project-state.md`。
+- 涉及代码、服务、数据库或调试时，先看 `git status --short --branch` 和最近提交。
+- 阶段结束必须更新 `current-project-state.md`。
+- Obsidian 和飞书不是自动同步；只有实际写入后才能说“已同步”。
+
+这个协议把“上下文恢复”从对话默契变成仓库规则。它不会让运行时代码自动加载 AI 工厂文档，但会让协作 Agent 在新窗口中先读取明确的项目状态，从而减少重复解释、旧判断和知识库漏同步。

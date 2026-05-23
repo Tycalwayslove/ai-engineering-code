@@ -457,3 +457,51 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段补充价值：
 
 这次修正明确了一个 Hybrid 交互规则：主题属于视觉状态，不属于执行状态。主题切换不应该生成聊天消息、执行状态或业务事件；debugger 也不应该参与产品级动画。这样后续继续调试 Bridge 时，可以保留诊断能力，同时不让调试面板破坏真实交互体验。
+
+## 阶段 25：原生到数据库全链路打通
+
+完成内容：
+
+- 后端采用包边界优先的 V1 架构：`python/backend` 作为 FastAPI 网关，`python/orchestrator` 负责计划与确认执行，`python/agent-runtime` 负责规则解析器和 Agent 原语。
+- 新增 Postgres 首版执行工作流迁移，覆盖 `conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger`、`calendar_events` 等表。
+- 后端设置 `DATABASE_URL` 后使用 Postgres repository；未设置时仍保留 in-memory repository，方便测试。
+- H5 从 mock 后端切换为经 `@ai-code/sdk` 调用真实 API：提交 `/agent/turns`、确认 `/execution-plans/{id}/confirm`、刷新 `/calendar/events` 与 `/execution-ledger`。
+- iOS 原生输入通过 `native.inputSubmitted` 进入 H5，再由 H5 调后端。原生层仍不解析日程语义、不直接写数据库。
+- 解析器支持“明天下午三点安排一个新年业务规划会，时间一个半小时”，生成 90 分钟日程。
+- API 支持局域网 CORS，`pnpm dev:full` 同时启动 H5 `0.0.0.0:3000` 和 API `0.0.0.0:8000`。
+- 修复重复确认导致 H5 底部状态栏显示 `API request failed: 400 Bad Request` 的问题：后端对同一成功计划的重复确认做幂等返回，H5 成功确认后移除确认卡。
+
+验证结果：
+
+- `pytest python/backend/tests -v` 通过。
+- `ruff check python` 通过。
+- `mypy python` 通过。
+- `pnpm --filter @ai-code/h5 typecheck` 通过。
+- `pnpm --filter @ai-code/sdk typecheck` 通过。
+- `pnpm --filter @ai-code/shared-types typecheck` 通过。
+- `pnpm validate:contracts` 通过。
+- 局域网现场验证：`POST /agent/turns -> 200`，`POST /confirm -> 200`，重复确认仍为 `200`；Postgres 中 `calendar_events=1`、`execution_ledger=3`。
+
+阶段价值：
+
+这一步把之前的 Hybrid mock 演示推进到真实业务闭环：用户在 Xcode 原生壳输入一句自然语言，H5 渲染确认卡，后端生成计划并写入 Postgres 日程事实。项目现在不再只是“App 壳 + Mock 后端元素”，而是拥有了可验证的原生到数据库链路。新的工程约束也更清晰：Native 提供输入和系统能力入口，H5 渲染后端元素并调用 SDK，后端拥有计划、确认、执行和审计，数据库保存业务事实。
+
+## 阶段 26：新窗口上下文恢复协议
+
+问题背景：
+
+- 用户发现新开 Codex 窗口后，AI 不知道最新项目进展，飞书和 Obsidian 也没有自动更新。
+- 排查后确认：项目虽已有 `AGENTS.md`、memory 目录和知识同步清单，但没有把“新窗口必须读取当前状态”写成强制入口。
+- `ai-factory/memory/durable/architecture/current-state.md` 停留在 2026-05-18，未覆盖后端、Postgres、H5、Xcode 全链路进展。
+- 飞书和 Obsidian 当前是人工同步流程，不存在自动触发器；如果没有实际执行写入，不能声称已同步。
+
+修正内容：
+
+- `AGENTS.md` 新增“新窗口启动协议”，要求先读 `current-project-state.md` 和 memory index，再查看 git 状态和最近提交。
+- 新增 `ai-factory/memory/working/active-context/current-project-state.md`，作为新窗口恢复项目进展的第一入口。
+- 更新 memory index 和架构 durable memory，把 2026-05-23 的端到端链路事实写入结构化记忆。
+- 更新知识同步检查清单，明确 Obsidian/飞书不是自动同步，必须有实际写入证据。
+
+阶段价值：
+
+这次修正把“上下文连续性”从聊天里的隐性期待，变成仓库可审查的协作协议。后续任何新 Codex 窗口只要遵守 `AGENTS.md`，就能从当前状态文件恢复项目进展；如果外部知识库没有同步，也必须明确报告，而不是让用户误以为飞书或 Obsidian 会自动更新。

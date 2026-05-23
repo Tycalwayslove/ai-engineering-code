@@ -15,12 +15,14 @@
 
 | 领域  | 文件                                                                  | 状态   | 用途                         |
 | ----- | --------------------------------------------------------------------- | ------ | ---------------------------- |
+| active-context | `ai-factory/memory/working/active-context/current-project-state.md` | current | 新 Codex 窗口恢复项目进展的第一入口 |
 | tasks | `ai-factory/memory/working/tasks/ai-factory-spec-to-plan-workflow.md` | active | 首个真实工作流补齐任务上下文 |
 | tasks | `ai-factory/memory/working/tasks/factory-status-panel-v1.md`          | active | 工厂状态面板 v1 任务上下文   |
 
 ## 使用规则
 
 - AI 读取记忆时，应优先从本索引确定范围。
+- 新 Codex 窗口必须先读取 `current-project-state.md`，再读取其他 working memory。
 - 本索引不是数据库，不支持隐式检索。
 - 新增 durable memory 后必须更新本索引。
 - 阶段结束时必须复审 working memory。
