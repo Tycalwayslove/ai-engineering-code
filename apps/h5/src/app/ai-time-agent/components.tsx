@@ -16,6 +16,7 @@ import {
   calendarEventsToBackendElements,
   createAgentApiClient,
   executionLedgerToBackendElements,
+  removeConfirmationElement,
 } from "./backendApi";
 import {
   getNativeHostContext,
@@ -672,6 +673,8 @@ export function AgentWorkbench() {
     if (element.kind !== "confirmation" || !element.planId || !element.confirmToken) {
       return;
     }
+    const planId = element.planId;
+    const confirmToken = element.confirmToken;
 
     setExecutionStatus({
       description: "正在提交确认并写入数据库",
@@ -679,13 +682,13 @@ export function AgentWorkbench() {
     });
 
     try {
-      const response = await apiClient.confirmExecutionPlan(element.planId, {
-        confirmToken: element.confirmToken,
+      const response = await apiClient.confirmExecutionPlan(planId, {
+        confirmToken,
       });
       setElementsBySurface((current) => ({
         ...current,
         conversation: [
-          ...current.conversation,
+          ...removeConfirmationElement(current.conversation, planId),
           ...agentResponseToConversationElements(response),
         ],
       }));

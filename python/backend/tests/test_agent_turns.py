@@ -117,6 +117,31 @@ def test_confirmation_executes_calendar_event_and_writes_ledger() -> None:
     )
 
 
+def test_confirming_succeeded_plan_again_is_idempotent() -> None:
+    client = TestClient(app)
+
+    plan_response = client.post(
+        "/agent/turns",
+        json={
+            "conversationId": "conversation_repeat_confirm",
+            "input": "明天下午三点开会",
+            "clientContext": {
+                "now": "2026-05-21T09:00:00+08:00",
+                "timezone": "Asia/Shanghai",
+            },
+        },
+    ).json()
+    plan = plan_response["plan"]
+    request = {"confirmToken": plan["confirmation"]["confirmToken"]}
+
+    first_response = client.post(f"/execution-plans/{plan['id']}/confirm", json=request)
+    second_response = client.post(f"/execution-plans/{plan['id']}/confirm", json=request)
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert second_response.json()["plan"]["status"] == "succeeded"
+
+
 def test_agent_turn_returns_clarification_for_expense_amount() -> None:
     client = TestClient(app)
 

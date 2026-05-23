@@ -79,9 +79,15 @@ def test_agent_execution_flow_persists_to_postgres() -> None:
         plan_id=plan["id"],
         confirm_token=confirmation["confirmToken"],
     )
+    repeated_result = coordinator.confirm_plan(
+        plan_id=plan["id"],
+        confirm_token=confirmation["confirmToken"],
+    )
 
     assert result["kind"] == "execution_result"
     assert result["plan"]["status"] == "succeeded"
+    assert repeated_result["kind"] == "execution_result"
+    assert repeated_result["plan"]["status"] == "succeeded"
     turn_store.record_user_turn(
         conversation_id=conversation_id,
         input_text="明天下午三点开会",

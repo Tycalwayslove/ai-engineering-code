@@ -9,6 +9,7 @@ import {
   calendarEventsToBackendElements,
   executionLedgerToBackendElements,
   getDefaultApiBaseUrl,
+  removeConfirmationElement,
 } from "./backendApi";
 import type { BackendRenderedElement } from "./types";
 
@@ -112,6 +113,10 @@ confirmationCard?.confirmToken satisfies string | undefined;
 agentResponseToConversationElements(executionResponse) satisfies BackendRenderedElement[];
 calendarEventsToBackendElements(calendarEvents) satisfies BackendRenderedElement[];
 executionLedgerToBackendElements(ledger) satisfies BackendRenderedElement[];
+
+const nextElements = removeConfirmationElement(confirmationElements, "plan_create");
+nextElements satisfies BackendRenderedElement[];
+nextElements.some((element) => element.kind === "confirmation") satisfies boolean;
 
 getDefaultApiBaseUrl("http://192.168.1.238:3000/?native=ios") satisfies
   | "http://192.168.1.238:8000"

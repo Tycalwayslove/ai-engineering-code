@@ -122,6 +122,15 @@ export function executionLedgerToBackendElements(
   ];
 }
 
+export function removeConfirmationElement(
+  elements: BackendRenderedElement[],
+  planId: string,
+) {
+  return elements.filter(
+    (element) => element.kind !== "confirmation" || element.planId !== planId,
+  );
+}
+
 function actionToConfirmationAction(action: DomainAction) {
   return {
     id: action.id,

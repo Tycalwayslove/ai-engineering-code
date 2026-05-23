@@ -24,6 +24,15 @@ class ExecutionCoordinator:
         action_ids: list[str] | None = None,
     ) -> AgentTurnResponse:
         plan = self._store.get_plan(plan_id)
+        if plan["status"] == "succeeded" and self._store.verify_confirm_token(
+            plan_id,
+            confirm_token,
+        ):
+            return {
+                "kind": "execution_result",
+                "conversationId": plan["conversationId"],
+                "plan": plan,
+            }
         if plan["status"] != "awaiting_confirmation":
             raise ValueError("only awaiting confirmation plans can be confirmed")
 
