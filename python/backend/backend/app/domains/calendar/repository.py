@@ -1,4 +1,12 @@
+from typing import Protocol
+
 from backend.app.domains.calendar.models import CalendarEvent
+
+
+class CalendarEventRepository(Protocol):
+    def create_event(self, event: CalendarEvent) -> CalendarEvent: ...
+
+    def list_events(self) -> list[CalendarEvent]: ...
 
 
 class InMemoryCalendarEventRepository:

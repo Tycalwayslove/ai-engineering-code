@@ -43,4 +43,13 @@ V1 后端保持 FastAPI 薄网关定位，自然语言工作流通过 Orchestrat
 - `GET /execution-ledger` 读取执行审计事件。
 - `GET /calendar/events` 读取已确认 action 创建的日程事实。
 
-V1 使用 in-process repository，但 plan、action 和 ledger 的数据形态保持 Postgres-ready。领域 service 拥有业务校验和幂等控制。Agent runtime 的输出不能直接写入领域事实表。
+未设置 `DATABASE_URL` 时，V1 使用 in-process repository，便于测试和轻量本地运行。
+
+设置 `DATABASE_URL` 后，后端使用本地 Postgres repository：
+
+```bash
+DATABASE_URL=postgresql://ai_code:ai_code@127.0.0.1:5432/ai_code \
+  uvicorn backend.app.main:app --app-dir python/backend --reload
+```
+
+根目录 `pnpm dev:api` 和 `pnpm dev:full` 默认连接本地 Docker Compose Postgres。当前会持久化 `conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger` 和 `calendar_events`。领域 service 拥有业务校验和幂等控制。Agent runtime 的输出不能直接写入领域事实表。

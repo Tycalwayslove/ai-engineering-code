@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Literal, TypedDict
+from typing import Literal, Protocol, TypedDict
 
 RiskLevel = Literal["low", "medium", "high"]
 
@@ -59,6 +59,25 @@ class LedgerRecord(LedgerRecordRequired, total=False):
     actionId: str
 
 
+class ExecutionStore(Protocol):
+    def save_plan(self, plan: ExecutionPlanRecord) -> ExecutionPlanRecord: ...
+
+    def get_plan(self, plan_id: str) -> ExecutionPlanRecord: ...
+
+    def list_ledger(self) -> list[LedgerRecord]: ...
+
+    def append_ledger(
+        self,
+        plan_id: str,
+        event_type: str,
+        status: str,
+        message: str,
+        action_id: str | None = None,
+    ) -> LedgerRecord: ...
+
+    def verify_confirm_token(self, plan_id: str, confirm_token: str) -> bool: ...
+
+
 class InMemoryExecutionStore:
     def __init__(self) -> None:
         self._plans: dict[str, ExecutionPlanRecord] = {}
@@ -97,3 +116,7 @@ class InMemoryExecutionStore:
             record["actionId"] = action_id
         self._ledger.append(record)
         return record
+
+    def verify_confirm_token(self, plan_id: str, confirm_token: str) -> bool:
+        confirmation = self.get_plan(plan_id)["confirmation"]
+        return confirmation is not None and confirmation["confirmToken"] == confirm_token

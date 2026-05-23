@@ -5,7 +5,7 @@ from backend.app.services.execution_store import (
     ConfirmationRecord,
     DomainActionRecord,
     ExecutionPlanRecord,
-    InMemoryExecutionStore,
+    ExecutionStore,
 )
 
 from orchestrator.types import AgentTurnResponse
@@ -14,7 +14,7 @@ from orchestrator.types import AgentTurnResponse
 class ExecutionPlanner:
     def __init__(
         self,
-        store: InMemoryExecutionStore,
+        store: ExecutionStore,
         parser: RuleParser | None = None,
     ) -> None:
         self._store = store

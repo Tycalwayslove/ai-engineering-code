@@ -1,11 +1,11 @@
 from uuid import uuid4
 
 from backend.app.domains.calendar.models import CalendarEvent
-from backend.app.domains.calendar.repository import InMemoryCalendarEventRepository
+from backend.app.domains.calendar.repository import CalendarEventRepository
 
 
 class CalendarDomainService:
-    def __init__(self, repository: InMemoryCalendarEventRepository) -> None:
+    def __init__(self, repository: CalendarEventRepository) -> None:
         self._repository = repository
 
     def create_event(self, action_id: str, payload: dict[str, object]) -> CalendarEvent:

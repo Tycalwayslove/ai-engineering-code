@@ -2,7 +2,7 @@ from backend.app.domains.calendar.service import CalendarDomainService
 from backend.app.services.execution_store import (
     DomainActionRecord,
     ExecutionPlanRecord,
-    InMemoryExecutionStore,
+    ExecutionStore,
 )
 
 from orchestrator.types import AgentTurnResponse
@@ -11,7 +11,7 @@ from orchestrator.types import AgentTurnResponse
 class ExecutionCoordinator:
     def __init__(
         self,
-        store: InMemoryExecutionStore,
+        store: ExecutionStore,
         calendar_service: CalendarDomainService,
     ) -> None:
         self._store = store
@@ -30,7 +30,7 @@ class ExecutionCoordinator:
         confirmation = plan["confirmation"]
         if confirmation is None:
             raise ValueError("confirmation is required")
-        if confirmation["confirmToken"] != confirm_token:
+        if not self._store.verify_confirm_token(plan_id, confirm_token):
             raise ValueError("confirm token is invalid")
         if confirmation["status"] != "pending":
             raise ValueError("confirmation is not pending")
