@@ -10,6 +10,7 @@
 
 - `docker-compose.yml` 定义本地进程连接方式和暴露端口。
 - `infra/docker/` 拥有开发用容器镜像。
+- `infra/db/` 拥有 Postgres 数据库迁移文件。
 - 服务源码目录拥有各自的应用依赖和命令。
 - Kubernetes 或托管数据库等部署平台暂不在范围内，直到仓库需要生产环境定义。
 
