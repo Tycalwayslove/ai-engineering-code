@@ -42,9 +42,11 @@ export type BackendRenderedElement =
         label: string;
         meta: string;
       }[];
+      confirmToken?: string;
       description: string;
       id: string;
       kind: "confirmation";
+      planId?: string;
       title: string;
     }
   | {

@@ -24,6 +24,22 @@ def test_rule_parser_extracts_calendar_create_action() -> None:
     assert result.actions[0]["payload"]["end_at"] == "2026-05-22T16:00:00+08:00"
 
 
+def test_rule_parser_extracts_named_planning_meeting_duration() -> None:
+    parser = RuleParser()
+
+    result = parser.parse(
+        text="明天下午三点安排一个新年业务规划会，时间一个半小时",
+        now="2026-05-21T09:00:00+08:00",
+        timezone="Asia/Shanghai",
+    )
+
+    assert result.intent_count == 1
+    assert result.actions[0]["summary"] == "创建日程：新年业务规划会"
+    assert result.actions[0]["payload"]["title"] == "新年业务规划会"
+    assert result.actions[0]["payload"]["start_at"] == "2026-05-22T15:00:00+08:00"
+    assert result.actions[0]["payload"]["end_at"] == "2026-05-22T16:30:00+08:00"
+
+
 def test_rule_parser_extracts_multi_intent_calendar_and_expense() -> None:
     parser = RuleParser()
 

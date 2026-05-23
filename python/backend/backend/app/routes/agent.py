@@ -1,3 +1,4 @@
+from copy import deepcopy
 from uuid import uuid4
 
 from fastapi import APIRouter
@@ -41,7 +42,7 @@ def submit_turn(request: AgentTurnRequest) -> AgentTurnResponse:
     conversation_turn_store.record_assistant_turn(
         conversation_id=conversation_id,
         response_summary=_response_summary(response),
-        structured_response=dict(response),
+        structured_response=_response_for_storage(response),
     )
     return response
 
@@ -51,4 +52,17 @@ def _response_summary(response: AgentTurnResponse) -> str:
         return response["plan"]["summary"]
     if response["kind"] == "clarification_request":
         return response["question"]
+    if response["kind"] == "assistant_message":
+        return response["message"]
     return response["plan"]["summary"]
+
+
+def _response_for_storage(response: AgentTurnResponse) -> dict[str, object]:
+    stored = deepcopy(dict(response))
+    plan = stored.get("plan")
+    if isinstance(plan, dict):
+        confirmation = plan.get("confirmation")
+        if isinstance(confirmation, dict):
+            confirmation["confirmToken"] = "redacted"
+
+    return stored

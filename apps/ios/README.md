@@ -14,7 +14,7 @@
 - 拥有 App 头部 Header、底部输入框、主题切换入口。
 - 拥有点击菜单后出现的 Timepage 风格 Drawer、完整日历入口和执行记录入口。
 - 实现 `NativeBridge` 消息入口、宿主上下文回传、视图切换事件、输入提交事件、主题切换事件和 ACK / Error 回传。
-- 在无后端阶段提供可交互 mock：Header 跳转、Drawer 切换、Timepage 日期选择、原生文本输入、语音 / 图片入口 mock 文本。
+- 提供 Header 跳转、Drawer 切换、Timepage 日期选择、原生文本输入、语音 / 图片入口文本，并通过 H5 驱动后端 Agent 流程。
 
 H5 不再拥有 App 壳层 UI，只负责渲染后端返回的内容元素和接口驱动的页面内执行状态条。执行状态条视觉上固定在输入框上方，但数据与渲染归 H5。
 
@@ -29,10 +29,10 @@ H5 不再拥有 App 壳层 UI，只负责渲染后端返回的内容元素和接
 
 ## 本地调试
 
-1. 启动 H5：
+1. 启动前后端：
 
    ```bash
-   pnpm dev:h5
+   pnpm dev:full
    ```
 
 2. 用 Xcode 打开：
@@ -51,10 +51,10 @@ http://127.0.0.1:3000/?native=ios
 
 如果使用真机调试，`127.0.0.1` 会指向手机自己，不会指向 Mac。此时需要：
 
-1. 启动可被局域网访问的 H5：
+1. 启动可被局域网访问的 H5 和 API：
 
    ```bash
-   pnpm dev:h5:host
+   pnpm dev:full
    ```
 
 2. 查询 Mac 的局域网 IP：
@@ -69,7 +69,9 @@ http://127.0.0.1:3000/?native=ios
    http://你的-Mac-IP:3000/?native=ios
    ```
 
-4. 确保 Mac 和 iPhone 在同一个 Wi-Fi，且系统防火墙没有拦截 3000 端口。
+4. 确保 Mac 和 iPhone 在同一个 Wi-Fi，且系统防火墙没有拦截 `3000` 和 `8000` 端口。
+
+H5 会根据当前页面地址自动推导 API 地址：例如 H5 为 `http://192.168.1.238:3000/?native=ios&bridgeDebug=1` 时，API 会请求 `http://192.168.1.238:8000`。底部输入框提交“明天下午三点安排一个新年业务规划会，时间一个半小时”后，H5 会调用后端生成确认卡；点击确认后会写入 Postgres 的 `calendar_events` 和 `execution_ledger`。
 
 也可以用命令行临时覆盖：
 
@@ -97,7 +99,7 @@ xcodebuild \
 - Header 菜单、执行记录、日历按钮会打开对应 Native Drawer，并通过 `native.viewChanged` 通知 H5 切换后端元素。
 - Header 主题按钮会切换 iOS 深色 / 浅色壳层，并通过 `native.themeChanged` 通知 H5 同步主题。
 - 底部输入框支持语音态和文本态切换。文本提交后，iOS 通过 `native.inputSubmitted` 把原始文本交给 H5。
-- 当前 H5 使用 mock 数据模拟后端响应，真实语义解析、计划生成和写入内部日历仍属于后端后续工作。
+- H5 收到 `native.inputSubmitted` 后会调用后端 `/agent/turns`，渲染后端确认卡；用户确认后调用 `/execution-plans/{id}/confirm`，再刷新数据库日程和执行记录。
 
 ## xcodebuild 环境
 

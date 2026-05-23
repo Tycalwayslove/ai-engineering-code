@@ -49,7 +49,7 @@ V1 后端保持 FastAPI 薄网关定位，自然语言工作流通过 Orchestrat
 
 ```bash
 DATABASE_URL=postgresql://ai_code:ai_code@127.0.0.1:5432/ai_code \
-  uvicorn backend.app.main:app --app-dir python/backend --reload
+  uvicorn backend.app.main:app --app-dir python/backend --host 0.0.0.0 --port 8000 --reload
 ```
 
-根目录 `pnpm dev:api` 和 `pnpm dev:full` 默认连接本地 Docker Compose Postgres。当前会持久化 `conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger` 和 `calendar_events`。领域 service 拥有业务校验和幂等控制。Agent runtime 的输出不能直接写入领域事实表。
+根目录 `pnpm dev:api` 和 `pnpm dev:full` 默认连接本地 Docker Compose Postgres，并监听 `0.0.0.0:8000`，方便 Xcode / 真机 H5 通过 Mac 局域网 IP 访问。当前会持久化 `conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger` 和 `calendar_events`。领域 service 拥有业务校验和幂等控制。Agent runtime 的输出不能直接写入领域事实表。

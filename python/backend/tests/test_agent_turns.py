@@ -1,4 +1,5 @@
 from backend.app.main import app
+from backend.app.routes.agent import _response_for_storage, _response_summary
 from fastapi.testclient import TestClient
 
 
@@ -23,6 +24,53 @@ def test_agent_turn_returns_confirmation_required() -> None:
     assert body["conversationId"] == "conversation_001"
     assert body["plan"]["actions"][0]["actionType"] == "calendar.create_event"
     assert "result" not in body["plan"]["actions"][0]
+
+
+def test_agent_turn_storage_redacts_confirm_token() -> None:
+    client = TestClient(app)
+    response = client.post(
+        "/agent/turns",
+        json={
+            "conversationId": "conversation_storage_redaction",
+            "input": "明天下午三点开会",
+            "clientContext": {
+                "now": "2026-05-21T09:00:00+08:00",
+                "timezone": "Asia/Shanghai",
+            },
+        },
+    )
+
+    body = response.json()
+    stored = _response_for_storage(body)
+    stored_plan = stored["plan"]
+    assert isinstance(stored_plan, dict)
+    stored_confirmation = stored_plan["confirmation"]
+    assert isinstance(stored_confirmation, dict)
+
+    assert body["plan"]["confirmation"]["confirmToken"].startswith("confirm_")
+    assert stored_confirmation["confirmToken"] == "redacted"
+
+
+def test_agent_turn_stores_assistant_message_summary() -> None:
+    client = TestClient(app)
+    response = client.post(
+        "/agent/turns",
+        json={
+            "conversationId": "conversation_assistant_message",
+            "input": "你好",
+            "clientContext": {
+                "now": "2026-05-21T09:00:00+08:00",
+                "timezone": "Asia/Shanghai",
+            },
+        },
+    )
+
+    body = response.json()
+    stored = _response_for_storage(body)
+
+    assert body["kind"] == "assistant_message"
+    assert stored["message"] == body["message"]
+    assert _response_summary(body) == body["message"]
 
 
 def test_confirmation_executes_calendar_event_and_writes_ledger() -> None:

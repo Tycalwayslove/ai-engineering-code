@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -12,17 +13,18 @@ class RuleParser:
 
         actions: list[ParsedAction] = []
 
-        if "开会" in text or "会议" in text:
+        calendar_title = self._parse_calendar_title(text)
+        if calendar_title is not None:
             start_at = self._parse_meeting_start(text, current_time)
-            end_at = start_at + timedelta(hours=1)
+            end_at = start_at + self._parse_duration(text)
             actions.append(
                 {
                     "domain": "calendar",
                     "action_type": "calendar.create_event",
                     "risk_level": "medium",
-                    "summary": "创建日程：开会",
+                    "summary": f"创建日程：{calendar_title}",
                     "payload": {
-                        "title": "开会",
+                        "title": calendar_title,
                         "start_at": start_at.isoformat(),
                         "end_at": end_at.isoformat(),
                         "timezone": timezone,
@@ -48,6 +50,22 @@ class RuleParser:
 
         return ParseResult(actions=actions, trace_id="rule-parser-v1")
 
+    def _parse_calendar_title(self, text: str) -> str | None:
+        if "会议" in text:
+            return "开会"
+        if "开会" in text:
+            return "开会"
+
+        match = re.search(r"安排(?:一个|一场|一次)?([^，,。.!！?\s]{2,24}会)", text)
+        if match:
+            return match.group(1)
+
+        match = re.search(r"([^，,。.!！?\s]{2,24}会)", text)
+        if match and any(keyword in text for keyword in ("安排", "创建", "新增", "加一个")):
+            return match.group(1)
+
+        return None
+
     def _parse_meeting_start(self, text: str, now: datetime) -> datetime:
         target_day = now
         if "明天" in text:
@@ -55,3 +73,8 @@ class RuleParser:
 
         hour = 15 if "下午三点" in text or "下午3点" in text else 9
         return target_day.replace(hour=hour, minute=0, second=0, microsecond=0)
+
+    def _parse_duration(self, text: str) -> timedelta:
+        if "一个半小时" in text or "1.5小时" in text:
+            return timedelta(minutes=90)
+        return timedelta(hours=1)

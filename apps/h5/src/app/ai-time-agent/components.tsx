@@ -12,6 +12,12 @@ import type { CSSProperties, RefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  agentResponseToConversationElements,
+  calendarEventsToBackendElements,
+  createAgentApiClient,
+  executionLedgerToBackendElements,
+} from "./backendApi";
+import {
   getNativeHostContext,
   postNativeBridgeMessage,
   subscribeNativeBridge,
@@ -356,8 +362,8 @@ function BackendElementCard({
   onConfirm,
 }: {
   element: BackendRenderedElement;
-  onCancel: () => void;
-  onConfirm: () => void;
+  onCancel: (element: BackendRenderedElement) => void;
+  onConfirm: (element: BackendRenderedElement) => void;
 }) {
   if (element.kind === "message") {
     return (
@@ -372,8 +378,8 @@ function BackendElementCard({
       <ConfirmationCard
         actions={element.actions}
         description={element.description}
-        onCancel={onCancel}
-        onConfirm={onConfirm}
+        onCancel={() => onCancel(element)}
+        onConfirm={() => onConfirm(element)}
         title={element.title}
       />
     );
@@ -429,8 +435,8 @@ function BackendElementSurface({
   surface,
 }: {
   elements: BackendRenderedElement[];
-  onCancel: () => void;
-  onConfirm: () => void;
+  onCancel: (element: BackendRenderedElement) => void;
+  onConfirm: (element: BackendRenderedElement) => void;
   surfaceRef: RefObject<HTMLElement | null>;
   surface: AgentSurface;
 }) {
@@ -530,6 +536,14 @@ export function AgentWorkbench() {
   const [nativePlatform, setNativePlatform] = useState<"ios" | undefined>();
   const [theme, setTheme] = useState<AgentTheme>("dark");
   const interactionSequenceRef = useRef(0);
+  const apiClient = useMemo(
+    () =>
+      createAgentApiClient(
+        typeof window === "undefined" ? undefined : window.location.href,
+      ),
+    [],
+  );
+  const conversationIdRef = useRef(`conversation_h5_${Date.now()}`);
   const surfaceRef = useRef<HTMLElement | null>(null);
   const timeoutRefs = useRef<number[]>([]);
   const style = useMemo(() => themeVariables(theme), [theme]);
@@ -563,16 +577,28 @@ export function AgentWorkbench() {
     timeoutRefs.current.push(timeoutId);
   }
 
-  function handleSubmittedText(text: string) {
+  async function refreshBackendSnapshots() {
+    const [calendarEvents, ledger] = await Promise.all([
+      apiClient.getCalendarEvents(),
+      apiClient.getExecutionLedger(),
+    ]);
+    setElementsBySurface((current) => ({
+      ...current,
+      calendar: calendarEventsToBackendElements(calendarEvents),
+      ledger: executionLedgerToBackendElements(ledger),
+    }));
+  }
+
+  async function handleSubmittedText(text: string) {
     interactionSequenceRef.current += 1;
     const sequence = interactionSequenceRef.current;
-    const {
-      calendarElement,
-      conversationElements,
-      draft,
-      ledgerElement,
-      timelineElement,
-    } = makeInteractionElements(text, sequence);
+    const { draft, timelineElement } = makeInteractionElements(text, sequence);
+    const userElement: BackendRenderedElement = {
+      content: text,
+      id: `user-${sequence}-${Date.now()}`,
+      kind: "message",
+      role: "user",
+    };
 
     setActiveSurface("conversation");
     setExecutionStatus({
@@ -581,65 +607,111 @@ export function AgentWorkbench() {
     });
 
     setElementsBySurface((current) => ({
-      calendar: [calendarElement, ...current.calendar].slice(0, 4),
-      conversation: [...current.conversation, ...conversationElements],
-      ledger: [ledgerElement, ...current.ledger].slice(0, 4),
+      ...current,
+      conversation: [...current.conversation, userElement],
       timeline: [timelineElement, ...current.timeline].slice(0, 4),
     }));
 
-    scheduleStatus(
-      {
-        description: `已生成“${draft.title}”的日程草案`,
-        status: "planning",
-      },
-      420,
-    );
-    scheduleStatus(
-      {
-        description: `等待确认：${draft.time}，${draft.reminder}`,
-        status: "confirming",
-      },
-      900,
-    );
+    try {
+      const response = await apiClient.submitAgentTurn({
+        clientContext: {
+          locale: "zh-CN",
+          now: new Date().toISOString(),
+          timezone:
+            Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai",
+        },
+        conversationId: conversationIdRef.current,
+        input: text,
+      });
+      const responseElements = agentResponseToConversationElements(response);
+      setElementsBySurface((current) => ({
+        ...current,
+        conversation: [...current.conversation, ...responseElements],
+      }));
+      await refreshBackendSnapshots();
+      if (response.kind === "confirmation_required") {
+        setExecutionStatus({
+          description: `等待确认：${draft.title}`,
+          status: "confirming",
+        });
+        return;
+      }
+      if (response.kind === "clarification_request") {
+        setExecutionStatus({
+          description: response.question,
+          status: "idle",
+        });
+        return;
+      }
+      setExecutionStatus({
+        description: "后端已返回执行结果",
+        status: response.kind === "execution_result" ? "completed" : "idle",
+      });
+    } catch (error) {
+      setExecutionStatus({
+        description: error instanceof Error ? error.message : "后端请求失败",
+        status: "failed",
+      });
+      setElementsBySurface((current) => ({
+        ...current,
+        conversation: [
+          ...current.conversation,
+          {
+            content:
+              "后端暂时不可用。请确认 `pnpm dev:full` 已启动，并且 iOS 访问的是同一台 Mac 的 H5 地址。",
+            id: `api-error-${Date.now()}`,
+            kind: "message",
+            role: "assistant",
+          },
+        ],
+      }));
+    }
   }
 
-  function handleConfirm() {
+  async function handleConfirm(element: BackendRenderedElement) {
+    if (element.kind !== "confirmation" || !element.planId || !element.confirmToken) {
+      return;
+    }
+
     setExecutionStatus({
-      description: "已写入内部日历 mock store，并更新执行记录",
-      status: "completed",
+      description: "正在提交确认并写入数据库",
+      status: "executing",
     });
 
-    setElementsBySurface((current) => ({
-      ...current,
-      conversation: [
-        ...current.conversation,
-        {
-          content:
-            "已确认并完成 1 项操作。现在你可以打开日历、Timeline 或执行记录查看 mock 结果。",
-          id: `completed-${Date.now()}`,
-          kind: "message",
-          role: "assistant",
-        },
-      ],
-      ledger: current.ledger.map((element) =>
-        element.kind === "ledger"
-          ? {
-              ...element,
-              items: element.items.map((item) => ({
-                ...item,
-                completed: true,
-              })),
-            }
-          : element,
-      ),
-    }));
+    try {
+      const response = await apiClient.confirmExecutionPlan(element.planId, {
+        confirmToken: element.confirmToken,
+      });
+      setElementsBySurface((current) => ({
+        ...current,
+        conversation: [
+          ...current.conversation,
+          ...agentResponseToConversationElements(response),
+        ],
+      }));
+      await refreshBackendSnapshots();
+      setExecutionStatus({
+        description: "已确认执行，数据库日程和执行记录已刷新",
+        status: "completed",
+      });
+    } catch (error) {
+      setExecutionStatus({
+        description: error instanceof Error ? error.message : "确认执行失败",
+        status: "failed",
+      });
+    }
   }
 
-  function handleCancel() {
+  async function handleCancel(element: BackendRenderedElement) {
     setExecutionStatus({
-      description: "已取消本次 mock 操作，没有写入日程",
+      description: "已取消本次操作，没有写入日程",
       status: "idle",
     });
+
+    if (element.kind === "confirmation" && element.planId) {
+      await apiClient.rejectExecutionPlan(element.planId).catch(() => undefined);
+      await refreshBackendSnapshots().catch(() => undefined);
+    }
 
     setElementsBySurface((current) => ({
       ...current,
