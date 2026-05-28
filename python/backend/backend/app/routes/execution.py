@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from orchestrator.types import AgentTurnResponse
 from pydantic import BaseModel, Field
 
-from backend.app.runtime import execution_coordinator, execution_store
+from backend.app.runtime import (
+    confirm_plan_use_case,
+    execution_store,
+    reject_plan_use_case,
+)
 from backend.app.services.execution_store import (
     ExecutionPlanNotFound,
     ExecutionPlanRecord,
@@ -23,7 +27,7 @@ def confirm_execution_plan(
     request: ConfirmExecutionPlanRequest,
 ) -> AgentTurnResponse:
     try:
-        return execution_coordinator.confirm_plan(
+        return confirm_plan_use_case.execute(
             plan_id=plan_id,
             confirm_token=request.confirm_token,
             action_ids=request.action_ids,
@@ -40,7 +44,7 @@ def confirm_execution_plan(
 @router.post("/execution-plans/{plan_id}/reject")
 def reject_execution_plan(plan_id: str) -> ExecutionPlanRecord:
     try:
-        return execution_coordinator.reject_plan(plan_id)
+        return reject_plan_use_case.execute(plan_id)
     except ExecutionPlanNotFound as error:
         raise HTTPException(
             status_code=404,
@@ -62,5 +66,7 @@ def get_execution_plan(plan_id: str) -> ExecutionPlanRecord:
 
 
 @router.get("/execution-ledger")
-def get_execution_ledger() -> list[LedgerRecord]:
-    return execution_store.list_ledger()
+def get_execution_ledger(
+    conversation_id: str | None = Query(default=None, alias="conversationId"),
+) -> list[LedgerRecord]:
+    return execution_store.list_ledger(conversation_id=conversation_id)

@@ -29,6 +29,120 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AgentTurnResponse"
+  /attachments:
+    get:
+      operationId: listAttachments
+      parameters:
+        - name: conversationId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: Attachment metadata intakes for a conversation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttachmentIntake"
+  /attachments/intake:
+    post:
+      operationId: intakeAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachmentIntakeRequest"
+      responses:
+        "200":
+          description: Attachment metadata intake result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachmentIntake"
+  /attachments/upload:
+    post:
+      operationId: uploadAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachmentUploadRequest"
+      responses:
+        "200":
+          description: Attachment content upload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachmentIntake"
+  /agent/conversations/{conversationId}/debug:
+    get:
+      operationId: getAgentConversationDebug
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent planning debug events, decision traces, and pending clarifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentConversationDebug"
+  /agent/conversations/{conversationId}/turns:
+    get:
+      operationId: getAgentConversationTurns
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+      responses:
+        "200":
+          description: Recorded user and assistant turns for a conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentConversationTurns"
+  /agent/conversations/{conversationId}/pending-confirmations:
+    get:
+      operationId: getAgentPendingConfirmations
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Pending confirmation plans for a conversation with fresh recovery tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentPendingConfirmations"
   /execution-plans/{id}/confirm:
     post:
       operationId: confirmExecutionPlan
@@ -86,6 +200,13 @@ paths:
   /execution-ledger:
     get:
       operationId: getExecutionLedger
+      parameters:
+        - name: conversationId
+          in: query
+          required: false
+          description: 仅返回指定会话产生的执行记录；不传时返回全局列表。
+          schema:
+            type: string
       responses:
         "200":
           description: Execution ledger
@@ -98,6 +219,13 @@ paths:
   /calendar/events:
     get:
       operationId: getCalendarEvents
+      parameters:
+        - name: conversationId
+          in: query
+          required: false
+          description: 仅返回指定会话确认写入的日程；不传时返回全局列表。
+          schema:
+            type: string
       responses:
         "200":
           description: Calendar events
@@ -107,9 +235,66 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CalendarEvent"
+  /calendar/events/{id}/cancel:
+    post:
+      operationId: cancelCalendarEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 取消的会话归属；后端会校验目标日程属于该会话并写入执行流水。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canceled calendar event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEvent"
+  /calendar/events/{id}:
+    patch:
+      operationId: updateCalendarEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 编辑的会话归属；后端会校验目标日程属于该会话并写入执行流水。
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarEventUpdate"
+      responses:
+        "200":
+          description: Updated calendar event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEvent"
   /expenses:
     get:
       operationId: getExpenses
+      parameters:
+        - name: conversationId
+          in: query
+          required: false
+          description: 仅返回指定会话确认写入的费用记录；不传时返回全局列表。
+          schema:
+            type: string
       responses:
         "200":
           description: Expense records
@@ -119,9 +304,88 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ExpenseRecord"
+  /expenses/{id}/submit:
+    post:
+      operationId: submitExpense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 提交的会话归属；后端会校验目标费用属于该会话并写入执行流水。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submitted expense draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseRecord"
+  /expenses/{id}:
+    patch:
+      operationId: updateExpense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 编辑的会话归属；后端会校验目标费用属于该会话并写入执行流水。
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseRecordUpdate"
+      responses:
+        "200":
+          description: Updated expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseRecord"
+  /expenses/{id}/cancel:
+    post:
+      operationId: cancelExpense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 取消的会话归属；后端会校验目标费用属于该会话并写入执行流水。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canceled expense draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseRecord"
   /reminders:
     get:
       operationId: getReminders
+      parameters:
+        - name: conversationId
+          in: query
+          required: false
+          description: 仅返回指定会话确认写入的提醒；不传时返回全局列表。
+          schema:
+            type: string
       responses:
         "200":
           description: Reminders
@@ -131,6 +395,78 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Reminder"
+  /reminders/{id}:
+    patch:
+      operationId: updateReminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 编辑的会话归属；后端会校验目标提醒属于该会话并写入执行流水。
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderUpdate"
+      responses:
+        "200":
+          description: Updated reminder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+  /reminders/{id}/complete:
+    post:
+      operationId: completeReminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 完成的会话归属；后端会校验目标提醒属于该会话并写入执行流水。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Completed reminder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+  /reminders/{id}/cancel:
+    post:
+      operationId: cancelReminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: conversationId
+          in: query
+          required: true
+          description: 直接 UI 取消的会话归属；后端会校验目标提醒属于该会话并写入执行流水。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canceled reminder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
   /health:
     get:
       operationId: getHealth
@@ -210,6 +546,9 @@ components:
       properties:
         conversationId:
           type: string
+        displayInput:
+          type: string
+          description: Optional user-facing text to store in conversation history when input carries an internal stable value.
         input:
           type: string
         clientContext:
@@ -224,6 +563,80 @@ components:
           type: array
           items:
             type: string
+    AttachmentIntakeRequest:
+      type: object
+      required: [attachmentId, attachmentKind, attachmentName]
+      properties:
+        attachmentId:
+          type: string
+        attachmentKind:
+          type: string
+        attachmentName:
+          type: string
+        attachmentSizeBytes:
+          type: integer
+        attachmentType:
+          type: string
+        conversationId:
+          type: string
+        source:
+          type: string
+        text:
+          type: string
+    AttachmentUploadRequest:
+      type: object
+      required: [attachmentId, attachmentKind, attachmentName, base64Content]
+      properties:
+        attachmentId:
+          type: string
+        attachmentKind:
+          type: string
+        attachmentName:
+          type: string
+        attachmentType:
+          type: string
+        base64Content:
+          type: string
+          description: Base64-encoded attachment bytes. Current backend limit is 5MB decoded.
+        conversationId:
+          type: string
+        source:
+          type: string
+        text:
+          type: string
+          description: Optional caller-provided readable text. If omitted for text files, backend decodes UTF-8 text.
+    AttachmentIntake:
+      type: object
+      required: [id, attachmentId, kind, name, status, createdAt]
+      properties:
+        id:
+          type: string
+        attachmentId:
+          type: string
+        conversationId:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        sizeBytes:
+          type: integer
+        source:
+          type: string
+        status:
+          type: string
+          enum: [received]
+        contentSha256:
+          type: string
+        contentStatus:
+          type: string
+          enum: [content_received]
+        text:
+          type: string
+        type:
+          type: string
+        createdAt:
+          type: string
     DomainAction:
       type: object
       required: [id, planId, domain, actionType, status, riskLevel, summary, payload]
@@ -237,6 +650,7 @@ components:
           enum: [calendar, expense, reminder]
         actionType:
           type: string
+          enum: [calendar.cancel_event, calendar.create_event, calendar.query_events, calendar.update_event, expense.cancel_reimbursement, expense.create_reimbursement_draft, expense.submit_reimbursement, expense.update_reimbursement, reminder.cancel_reminder, reminder.complete_reminder, reminder.create_reminder, reminder.update_reminder]
         status:
           type: string
         riskLevel:
@@ -304,16 +718,232 @@ components:
           type: string
         question:
           type: string
+        clarificationId:
+          type: string
         missingFields:
           type: array
           items:
             type: string
+        quickReplies:
+          type: array
+          items:
+            type: string
+        quickReplyOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuickReplyOption"
         plan:
           $ref: "#/components/schemas/ExecutionPlan"
         structuredElements:
           type: array
           items:
             type: object
+    QuickReplyOption:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+    AgentDebugEvent:
+      type: object
+      required: [id, eventType, payload]
+      properties:
+        id:
+          type: string
+        eventType:
+          type: string
+        turnId:
+          type: string
+          nullable: true
+        planId:
+          type: string
+          nullable: true
+        traceId:
+          type: string
+          nullable: true
+        payload:
+          type: object
+    AgentDebugDecisionTrace:
+      type: object
+      required:
+        - id
+        - plannerMode
+        - contextSectionsUsed
+        - toolsConsidered
+        - toolsSelected
+        - missingInformation
+        - policyDecisions
+        - reasoningSummary
+      properties:
+        id:
+          type: string
+        plannerMode:
+          type: string
+        contextSectionsUsed:
+          type: array
+          items:
+            type: string
+        toolsConsidered:
+          type: array
+          items:
+            type: string
+        toolsSelected:
+          type: array
+          items:
+            type: string
+        missingInformation:
+          type: array
+          items:
+            type: string
+        policyDecisions:
+          type: array
+          items:
+            type: string
+        confirmationReason:
+          type: string
+          nullable: true
+        fallbackReason:
+          type: string
+          nullable: true
+        reasoningSummary:
+          type: array
+          items:
+            type: string
+        llmCall:
+          type: object
+          nullable: true
+          properties:
+            provider:
+              type: string
+            model:
+              type: string
+            mode:
+              type: string
+            status:
+              type: string
+            durationMs:
+              type: number
+            promptChars:
+              type: number
+            responseChars:
+              type: number
+            promptSha256:
+              type: string
+            errorType:
+              type: string
+            promptPreview:
+              type: string
+            responsePreview:
+              type: string
+    AgentDebugPendingClarification:
+      type: object
+      required:
+        - id
+        - domain
+        - actionType
+        - question
+        - missingFields
+        - partialPayload
+        - quickReplies
+        - status
+        - createdAt
+        - expiresAt
+      properties:
+        id:
+          type: string
+        domain:
+          type: string
+        actionType:
+          type: string
+          enum: [calendar.cancel_event, calendar.create_event, calendar.query_events, calendar.update_event, expense.cancel_reimbursement, expense.create_reimbursement_draft, expense.submit_reimbursement, expense.update_reimbursement, reminder.cancel_reminder, reminder.complete_reminder, reminder.create_reminder, reminder.update_reminder]
+        question:
+          type: string
+        missingFields:
+          type: array
+          items:
+            type: string
+        partialPayload:
+          type: object
+        quickReplies:
+          type: array
+          items:
+            type: string
+        quickReplyOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuickReplyOption"
+        status:
+          type: string
+        createdAt:
+          type: string
+        expiresAt:
+          type: string
+        resolvedAt:
+          type: string
+          nullable: true
+    AgentConversationDebug:
+      type: object
+      required: [conversationId, events, decisionTraces, pendingClarifications]
+      properties:
+        conversationId:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentDebugEvent"
+        decisionTraces:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentDebugDecisionTrace"
+        pendingClarifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentDebugPendingClarification"
+    AgentConversationTurn:
+      type: object
+      required: [id, role, summary, createdAt]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [assistant, system, user]
+        summary:
+          type: string
+        inputText:
+          type: string
+          nullable: true
+        rawContent:
+          type: object
+          nullable: true
+        structuredResponse:
+          allOf:
+            - $ref: "#/components/schemas/AgentTurnResponse"
+          nullable: true
+        createdAt:
+          type: string
+    AgentConversationTurns:
+      type: object
+      required: [conversationId, turns]
+      properties:
+        conversationId:
+          type: string
+        turns:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentConversationTurn"
+    AgentPendingConfirmations:
+      type: object
+      required: [conversationId, plans]
+      properties:
+        conversationId:
+          type: string
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExecutionPlan"
     ExecutionLedgerItem:
       type: object
       required: [id, planId, eventType, status, message, createdAt]
@@ -348,7 +978,19 @@ components:
           type: string
         status:
           type: string
+          enum: [scheduled, canceled]
         sourceActionId:
+          type: string
+    CalendarEventUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        startAt:
+          type: string
+        endAt:
+          type: string
+        timezone:
           type: string
     ExpenseRecord:
       type: object
@@ -366,7 +1008,19 @@ components:
           type: string
         status:
           type: string
+          enum: [draft, submitted, canceled]
         sourceActionId:
+          type: string
+    ExpenseRecordUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        occurredOn:
           type: string
     Reminder:
       type: object
@@ -380,5 +1034,13 @@ components:
           type: string
         status:
           type: string
+          enum: [scheduled, done, canceled]
         sourceActionId:
+          type: string
+    ReminderUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        dueAt:
           type: string

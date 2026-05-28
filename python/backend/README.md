@@ -53,3 +53,67 @@ DATABASE_URL=postgresql://ai_code:ai_code@127.0.0.1:5432/ai_code \
 ```
 
 根目录 `pnpm dev:api` 和 `pnpm dev:full` 默认连接本地 Docker Compose Postgres，并监听 `0.0.0.0:8000`，方便 Xcode / 真机 H5 通过 Mac 局域网 IP 访问。当前会持久化 `conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger` 和 `calendar_events`。领域 service 拥有业务校验和幂等控制。Agent runtime 的输出不能直接写入领域事实表。
+
+## 本地 `.env.local`
+
+后端会自动查找并读取仓库根目录的 `.env.local`，用于本机密钥和模型 provider 配置；已存在的终端环境变量优先级更高。
+
+DeepSeek 示例：
+
+```bash
+AI_PLANNER_MODE=llm_first
+AI_PLANNER_PROVIDER=deepseek
+AI_PLANNER_MODEL=deepseek-v4-flash
+DEEPSEEK_API_KEY=你的_deepseek_key
+```
+
+OpenAI 示例：
+
+```bash
+AI_PLANNER_MODE=llm_first
+AI_PLANNER_PROVIDER=openai
+AI_PLANNER_MODEL=gpt-4.1-mini
+OPENAI_API_KEY=你的_openai_key
+```
+
+## LLM 调用日志
+
+后端会为每次 LLM provider 调用输出安全摘要，便于观察 DeepSeek/OpenAI 的耗时和 prompt 大小：
+
+```text
+LLM planner provider call completed provider=DeepSeekLlmProvider model=deepseek-v4-flash mode=llm duration_ms=1234 prompt_chars=5678 response_chars=901 prompt_sha256=...
+```
+
+默认不打印完整 prompt。需要临时查看时，在 `.env.local` 中开启：
+
+```bash
+AI_PLANNER_LOG_PROMPT=1
+```
+
+需要查看模型原始响应时开启：
+
+```bash
+AI_PLANNER_LOG_RESPONSE=1
+```
+
+完整 prompt 和响应可能包含用户输入、上下文摘要和待确认计划，调试结束后应改回 `0`。
+
+## LLM 调试快照
+
+`GET /agent/conversations/{conversationId}/debug` 的 `decisionTraces[].llmCall` 会返回最近一次 provider 调用的安全摘要：
+
+- `provider` / `model` / `mode`
+- `status`
+- `durationMs`
+- `promptChars` / `responseChars`
+- `promptSha256`
+- 可选 `errorType`
+
+默认不把完整 prompt 或 response 写入 debug 快照。需要临时在 H5 设置页 / Postman debug 响应中查看原文时，可以显式开启：
+
+```bash
+AI_PLANNER_TRACE_PROMPT=1
+AI_PLANNER_TRACE_RESPONSE=1
+```
+
+真实 provider 请求默认超时为 20 秒，可用 `AI_PLANNER_REQUEST_TIMEOUT_SECONDS` 调整。完整 prompt 和 response 可能包含用户输入与上下文摘要，调试结束后应关闭 trace preview。

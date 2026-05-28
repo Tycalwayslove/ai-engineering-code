@@ -1,0 +1,2143 @@
+{
+  "info": {
+    "_postman_id": "8c3cd9cc-b99d-4302-a350-e7aac5be62cd",
+    "name": "AI Code Backend API",
+    "description": {
+      "content": "AI 时间管理 Agent 后端接口集合。\n\n使用方式：\n1. 先导入 `ai-code-backend.postman_environment.json` 并选择 `AI Code Backend Local` 环境。\n2. 启动后端：`pnpm dev:api` 或 `pnpm dev:full`。\n3. 先跑“基础检查”，再跑“Agent 对话 -> 提交对话”。提交成功后会自动写入 collection/environment 变量：`planId`、`confirmToken`、`firstActionId`、`actionIdsJson`。\n4. 附件入口可先跑“附件资源 -> 接收附件元数据”，它只记录原生附件元数据，不触发 Agent 执行。\n5. 再跑“执行计划 -> 确认执行计划”，最后查询日程、费用、提醒和执行日志。\n\n注意：不带 `DATABASE_URL` 启动时是内存模式，服务重启数据会丢；带 Postgres 时需要确保本地数据库和 migration 可用。",
+      "type": "text/markdown"
+    },
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "postman_conversation_001",
+      "type": "string"
+    },
+    {
+      "key": "now",
+      "value": "2026-05-27T10:00:00+08:00",
+      "type": "string"
+    },
+    {
+      "key": "timezone",
+      "value": "Asia/Shanghai",
+      "type": "string"
+    },
+    {
+      "key": "planId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "confirmToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "firstActionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "actionIdsJson",
+      "value": "[]",
+      "type": "string"
+    },
+    {
+      "key": "calendarEventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reminderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expenseId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "attachmentId",
+      "value": "native_attachment_postman_001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "基础检查",
+      "description": "用于确认 API 服务是否启动，以及当前服务版本。",
+      "item": [
+        {
+          "name": "健康检查",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "确认 FastAPI 服务是否可访问。\n\n响应示例：`{\"status\":\"ok\"}`。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('health returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('service status is ok', function () {",
+                  "  pm.expect(pm.response.json().status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "版本信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "version"
+              ]
+            },
+            "description": "查看 API 名称和版本。\n\n响应字段：\n- `name`：服务名。\n- `version`：当前 API 版本。"
+          }
+        },
+        {
+          "name": "工厂状态",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/factory/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "factory",
+                "status"
+              ]
+            },
+            "description": "查看 AI Code Factory 当前能力、状态和下一步建议。\n\n主要字段：\n- `name`：工厂名称。\n- `status`：`ready` 或 `degraded`。\n- `capabilities`：当前已注册能力。\n- `nextActions`：建议动作。"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agent 对话",
+      "description": "自然语言输入入口。后端会解析用户输入，返回普通消息、补充信息问题，或待确认执行计划。",
+      "item": [
+        {
+          "name": "提交对话 - 创建提醒",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"明天上午九点提醒我带电脑\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "提交一轮用户自然语言输入。\n\n请求字段：\n- `conversationId`：会话 ID，可固定用于连续测试；为空时后端会生成新会话。\n- `input`：用户输入文本。\n- `clientContext.locale`：客户端语言，默认 `zh-CN`。\n- `clientContext.now`：客户端当前时间，ISO 8601，例如 `2026-05-27T10:00:00+08:00`。\n- `clientContext.timezone`：时区，例如 `Asia/Shanghai`。\n\n成功响应：\n- `kind=confirmation_required`：识别到可执行动作，需要用户确认。\n- `kind=clarification_request`：识别到意图但缺少关键信息，会返回 `question`、`missingFields`、`quickReplies` 和 `clarificationId`。\n- `kind=assistant_message`：普通聊天或非动作输入。\n- `plan.id`：执行计划 ID。\n- `plan.actions[].actionType`：计划动作，例如 `reminder.create_reminder`。\n- `plan.confirmation.confirmToken`：确认令牌，调用确认接口时必填。\n\n本请求的 Postman 测试脚本会自动保存 `planId`、`confirmToken`、`firstActionId`、`actionIdsJson` 和 `clarificationId`。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('submit turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('response kind exists', function () {",
+                  "  pm.expect(json.kind).to.be.a('string');",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}",
+                  "if (json.clarificationId) {",
+                  "  pm.collectionVariables.set('clarificationId', json.clarificationId);",
+                  "  pm.environment.set('clarificationId', json.clarificationId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 多动作计划",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"postman_multi_action_001\",\n  \"input\": \"明天下午三点开会，顺便把昨天 58 元打车票报销，再提醒我带电脑\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试一轮输入同时生成多个待确认动作。\n\n预期动作顺序：\n1. `calendar.create_event`\n2. `expense.create_reimbursement_draft`\n3. `reminder.create_reminder`\n\n确认后应分别写入日程、费用和提醒。测试脚本同样会保存 `planId`、`confirmToken` 和 action ID 列表。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('multi-action submit returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  pm.collectionVariables.set('actionIdsJson', JSON.stringify(actions.map((action) => action.id)));",
+                  "  pm.environment.set('actionIdsJson', JSON.stringify(actions.map((action) => action.id)));",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}",
+                  "pm.test('multi-action plan has three actions when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions.length).to.eql(3);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 缺少日程时间",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"postman_calendar_clarification_001\",\n  \"input\": \"明天上午我要去开会\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"2026-05-21T09:00:00+08:00\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试缺少日程开始时间时的追问。\n\n预期响应：\n- `kind=clarification_request`\n- `question=明天上午几点开始开会？`\n- `missingFields=[\"start_at\"]`\n- `quickReplies=[\"明天上午9点\", \"明天上午10点\", \"我再说具体时间\"]`\n- `clarificationId` 以 `pending_` 开头。\n\n后续使用同一个 `conversationId` 调用“提交对话 - 补全日程时间”。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('calendar clarification returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('calendar clarification response', function () {",
+                  "  pm.expect(json.kind).to.eql('clarification_request');",
+                  "  pm.expect(json.missingFields).to.eql(['start_at']);",
+                  "  pm.expect(json.quickReplies).to.include('明天上午10点');",
+                  "  pm.expect(json.clarificationId).to.match(/^pending_/);",
+                  "});",
+                  "pm.collectionVariables.set('clarificationId', json.clarificationId);",
+                  "pm.environment.set('clarificationId', json.clarificationId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 补全日程时间",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"postman_calendar_clarification_001\",\n  \"input\": \"十点\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"2026-05-21T09:01:00+08:00\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "使用同一个 `conversationId` 补充上一轮追问的时间。\n\n预期响应：\n- `kind=confirmation_required`\n- 第一条 action 为 `calendar.create_event`\n- `payload.start_at=2026-05-22T10:00:00+08:00`\n- `payload.end_at=2026-05-22T11:00:00+08:00`\n\n测试脚本会保存 `planId` 和 `confirmToken`，可继续调用确认接口。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('resolved clarification returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('resolved clarification creates confirmation plan', function () {",
+                  "  pm.expect(json.kind).to.eql('confirmation_required');",
+                  "  const action = json.plan.actions[0];",
+                  "  pm.expect(action.actionType).to.eql('calendar.create_event');",
+                  "  pm.expect(action.payload.start_at).to.eql('2026-05-22T10:00:00+08:00');",
+                  "});",
+                  "pm.collectionVariables.set('planId', json.plan.id);",
+                  "pm.environment.set('planId', json.plan.id);",
+                  "pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 缺少费用金额",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"postman_clarification_001\",\n  \"input\": \"把昨天打车票报销\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试缺少费用金额时的追问。\n\n预期响应：\n- `kind=clarification_request`\n- `missingFields=[\"amount\"]`\n- `question=打车票报销需要补充金额。`\n- `quickReplies=[\"58 元\", \"100 元\", \"我再说具体金额\"]`\n- `clarificationId` 以 `pending_` 开头。\n\n后续使用同一个 `conversationId` 调用“提交对话 - 补全费用金额”。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expense clarification returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('expense clarification response', function () {",
+                  "  pm.expect(json.kind).to.eql('clarification_request');",
+                  "  pm.expect(json.missingFields).to.eql(['amount']);",
+                  "  pm.expect(json.quickReplies).to.include('58 元');",
+                  "  pm.expect(json.clarificationId).to.match(/^pending_/);",
+                  "});",
+                  "pm.collectionVariables.set('clarificationId', json.clarificationId);",
+                  "pm.environment.set('clarificationId', json.clarificationId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 补全费用金额",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"postman_clarification_001\",\n  \"input\": \"58 元\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "使用同一个 `conversationId` 补充上一轮费用金额。\n\n预期响应：\n- `kind=confirmation_required`\n- 第一条 action 为 `expense.create_reimbursement_draft`\n- `payload.amount=58`\n- `payload.occurred_on` 保留上一轮“昨天”解析结果。\n\n测试脚本会保存 `planId` 和 `confirmToken`，可继续调用确认接口。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('resolved expense amount returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('resolved expense amount creates confirmation plan', function () {",
+                  "  pm.expect(json.kind).to.eql('confirmation_required');",
+                  "  const action = json.plan.actions[0];",
+                  "  pm.expect(action.actionType).to.eql('expense.create_reimbursement_draft');",
+                  "  pm.expect(action.payload.amount).to.eql(58);",
+                  "});",
+                  "pm.collectionVariables.set('planId', json.plan.id);",
+                  "pm.environment.set('planId', json.plan.id);",
+                  "pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 普通消息",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"postman_message_001\",\n  \"input\": \"你好\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试无法识别可执行动作时的普通 assistant message。\n\n预期响应：`kind=assistant_message`。"
+          }
+        },
+        {
+          "name": "提交对话 - 查询明天安排",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"明天我有什么安排？\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "基于当前 `conversationId` 的会话摘要查询明天日程和提醒。\n\n使用建议：先在同一会话里创建并确认一个明天日程或提醒。\n\n预期响应：\n- `kind=assistant_message`\n- 不生成确认卡\n- `message` 包含当前会话里明天的日程或提醒\n- `structuredElements[0].kind=summary-list`，H5 可渲染为查询结果列表。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('query schedule returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('query schedule returns assistant message without plan', function () {",
+                  "  pm.expect(json.kind).to.eql('assistant_message');",
+                  "  pm.expect(json.plan).to.eql(undefined);",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.structuredElements[0].kind).to.eql('summary-list');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 查询费用",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"我有哪些费用？\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "基于当前 `conversationId` 的会话摘要查询费用记录。\n\n使用建议：先在同一会话里创建并确认一个费用草稿。\n\n预期响应：\n- `kind=assistant_message`\n- 不生成确认卡\n- `message` 包含当前会话里的费用标题、金额、日期和状态\n- `structuredElements[0].kind=summary-list`，H5 可渲染为查询结果列表。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('query expenses returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('query expenses returns assistant message without plan', function () {",
+                  "  pm.expect(json.kind).to.eql('assistant_message');",
+                  "  pm.expect(json.plan).to.eql(undefined);",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.structuredElements[0].kind).to.eql('summary-list');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 附件票据追问",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"把 receipt.jpg 作为费用票据处理\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "在同一个 `conversationId` 已运行“附件资源 / 接收附件元数据”后，测试把最近附件作为费用票据处理。\n\n预期响应：\n- `kind=clarification_request`\n- `missingFields=[\"amount\"]`\n- `question=receipt.jpg 报销需要补充金额。`\n- `quickReplies` 包含 `58 元`。\n\n后续可继续发送 `58 元`，生成 `expense.create_reimbursement_draft` 确认计划。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('attachment receipt clarification returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('attachment receipt asks for amount', function () {",
+                  "  pm.expect(json.kind).to.eql('clarification_request');",
+                  "  pm.expect(json.missingFields).to.eql(['amount']);",
+                  "  pm.expect(json.quickReplies).to.include('58 元');",
+                  "});",
+                  "if (json.clarificationId) {",
+                  "  pm.collectionVariables.set('clarificationId', json.clarificationId);",
+                  "  pm.environment.set('clarificationId', json.clarificationId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 附件日程材料追问",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"把 receipt.jpg 作为日程材料处理\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "在同一个 `conversationId` 已运行“附件资源 / 接收附件元数据”后，测试把最近附件作为日程材料处理。\n\n预期响应：\n- `kind=clarification_request`\n- `missingFields=[\"start_at\"]`\n- `question=receipt.jpg 要关联到哪个时间的日程？`\n- `quickReplies` 包含 `明天上午10点`。\n\n后续可继续发送 `明天上午10点`，生成 `calendar.create_event` 确认计划，payload 会保留 `attachment_id` 和 `attachment_name`。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('attachment calendar material clarification returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('attachment calendar material asks for start time', function () {",
+                  "  pm.expect(json.kind).to.eql('clarification_request');",
+                  "  pm.expect(json.missingFields).to.eql(['start_at']);",
+                  "  pm.expect(json.quickReplies).to.include('明天上午10点');",
+                  "});",
+                  "if (json.clarificationId) {",
+                  "  pm.collectionVariables.set('clarificationId', json.clarificationId);",
+                  "  pm.environment.set('clarificationId', json.clarificationId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 取消刚才的提醒",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"取消刚才的提醒\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有提醒：定位最近的 scheduled reminder，生成取消提醒确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('reminder.cancel_reminder');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 提交刚才的费用",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"提交刚才的费用\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有费用：定位最近的 draft expense，生成提交费用确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('expense.submit_reimbursement');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 修改明天会议时间",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"把明天的会议改到十点\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有日程：定位当前会话明天的 scheduled calendar event，生成改期确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('calendar.update_event');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 完成刚才的提醒",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"完成刚才的提醒\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有提醒：定位最近的 scheduled reminder，生成完成提醒确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('reminder.complete_reminder');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 修改刚才的提醒时间",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"把刚才的提醒改到明天上午十点\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有提醒：定位最近的 scheduled reminder，生成修改提醒时间确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('reminder.update_reminder');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 取消刚才的费用",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"取消刚才的费用\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有费用：定位最近的 draft expense，生成取消费用确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('expense.cancel_reimbursement');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 修改刚才的费用金额",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"把刚才的费用改成 88 元\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有费用：定位最近的 draft expense，生成修改费用金额确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('expense.update_reimbursement');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "提交对话 - 取消明天会议",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"input\": \"取消明天的会议\",\n  \"clientContext\": {\n    \"locale\": \"zh-CN\",\n    \"now\": \"{{now}}\",\n    \"timezone\": \"{{timezone}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/agent/turns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "turns"
+              ]
+            },
+            "description": "测试自然语言管理已有日程：定位当前会话明天的 scheduled calendar event，生成取消日程确认计划。\n\n使用前建议：先在同一个 `conversationId` 下创建并确认对应事项，然后运行本请求。响应应为 `confirmation_required`，确认后才会改写业务事实。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manage turn returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('manage turn has expected action when planning succeeds', function () {",
+                  "  if (json.kind === 'confirmation_required') {",
+                  "    pm.expect(json.plan.actions[0].actionType).to.eql('calendar.cancel_event');",
+                  "    pm.expect(json.plan.actions[0].payload.target_id).to.be.a('string');",
+                  "  }",
+                  "});",
+                  "if (json.plan) {",
+                  "  pm.collectionVariables.set('planId', json.plan.id);",
+                  "  pm.environment.set('planId', json.plan.id);",
+                  "  const actions = json.plan.actions || [];",
+                  "  if (actions[0]) {",
+                  "    pm.collectionVariables.set('firstActionId', actions[0].id);",
+                  "    pm.environment.set('firstActionId', actions[0].id);",
+                  "  }",
+                  "  const actionIdsJson = JSON.stringify(actions.map((action) => action.id));",
+                  "  pm.collectionVariables.set('actionIdsJson', actionIdsJson);",
+                  "  pm.environment.set('actionIdsJson', actionIdsJson);",
+                  "  if (json.plan.confirmation) {",
+                  "    pm.collectionVariables.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "    pm.environment.set('confirmToken', json.plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "查看对话调试信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/agent/conversations/{{conversationId}}/debug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "conversations",
+                "{{conversationId}}",
+                "debug"
+              ]
+            },
+            "description": "查看某个 `conversationId` 的后端规划调试信息。\n\n路径参数：\n- `conversationId`：会话 ID，通常与前面的“提交对话”请求保持一致。\n\n响应字段：\n- `events`：Agent 事件流水，例如 `planning_started`、`planning_clarification_requested`、`execution_plan_created`。\n- `events[].traceId`：该事件关联的决策 trace ID，若有。\n- `decisionTraces`：规划器模式、上下文分段、候选工具、选中工具、缺失字段、策略结论、fallback 原因和 reasoning 摘要。\n- `pendingClarifications`：当前会话下保存过的追问上下文，可用于确认后端是否正在等待用户补字段。\n\n这个接口是只读诊断接口，适合排查 LLM 是否走了 fallback、为什么触发追问、以及某轮输入是否生成了执行计划。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('debug returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('debug response has sections', function () {",
+                  "  pm.expect(json.conversationId).to.be.a('string');",
+                  "  pm.expect(json.events).to.be.an('array');",
+                  "  pm.expect(json.decisionTraces).to.be.an('array');",
+                  "  pm.expect(json.pendingClarifications).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "查看对话历史",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/agent/conversations/{{conversationId}}/turns?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "conversations",
+                "{{conversationId}}",
+                "turns"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "查看某个 `conversationId` 已记录的用户和助手对话 turn。\n\n路径参数：\n- `conversationId`：会话 ID，通常与前面的“提交对话”请求保持一致。\n\n查询参数：\n- `limit`：最多返回多少条，默认 50，范围 1 到 200。\n\n响应字段：\n- `conversationId`：会话 ID。\n- `turns`：按时间排序的历史 turn。\n- `turns[].role`：`user` / `assistant` / `system`。\n- `turns[].summary`：用于恢复 transcript 的安全摘要。\n- `turns[].inputText`：用户 turn 的展示文本；当提交 `/agent/turns` 时传入了 `displayInput`，这里会保存 `displayInput` 而不是内部稳定 `input`。\n- `turns[].rawContent.submittedInput`：真实提交给 Planner 的原始 `input`，用于排查 quickReplyOptions.value / target_id 等内部选择值。\n- `turns[].structuredResponse`：助手结构化响应，确认令牌会被 redacted，不能直接用于确认执行。"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('conversation turns returned', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.conversationId).to.be.a('string');",
+                  "  pm.expect(json.turns).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "查看待确认计划",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/agent/conversations/{{conversationId}}/pending-confirmations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "conversations",
+                "{{conversationId}}",
+                "pending-confirmations"
+              ]
+            },
+            "description": "查看当前 `conversationId` 下仍在等待确认的执行计划，并由后端签发新的短期恢复 `confirmToken`。\n\n使用场景：App 刷新、重开或跨设备恢复时，前端不能使用历史 turn 中的 `redacted` token，而应调用此接口拿到仍 pending 的确认卡数据。\n\n响应字段：\n- `conversationId`：当前会话 ID。\n- `plans`：仍处于 `awaiting_confirmation` 且 confirmation 为 `pending` 的计划列表。\n- `plans[].confirmation.confirmToken`：本次恢复用的新 token，可直接用于“确认执行计划”。\n\n确认或拒绝后再次调用，本接口应不再返回该计划。"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"pending confirmations response is valid\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.conversationId).to.eql(pm.collectionVariables.get(\"conversationId\"));",
+                  "  pm.expect(json.plans).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.plans && json.plans.length > 0) {",
+                  "  const plan = json.plans[0];",
+                  "  pm.collectionVariables.set(\"planId\", plan.id);",
+                  "  if (plan.confirmation && plan.confirmation.confirmToken) {",
+                  "    pm.collectionVariables.set(\"confirmToken\", plan.confirmation.confirmToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "查询当前会话附件列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attachments?conversationId={{conversationId}}&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attachments"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "当前对话 ID，只返回该会话下已 intake 的附件元数据。"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "最多返回多少条附件记录，后端会限制在 1 到 50 之间。"
+                }
+              ]
+            },
+            "description": "查询当前 `conversationId` 下已接收的附件元数据列表。\n\n使用方式：先运行“接收附件元数据”，再运行本请求。\n\n成功响应：返回 `AttachmentIntake[]`，按创建时间保留最近记录。该接口只读元数据，不返回文件二进制、base64、OCR 结果或票据解析结果。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('attachment list returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('attachment list is an array', function () {",
+                  "  pm.expect(json).to.be.an('array');",
+                  "});",
+                  "pm.test('attachment list belongs to current conversation when not empty', function () {",
+                  "  if (json.length > 0) {",
+                  "    pm.expect(json[json.length - 1].conversationId).to.eql(pm.variables.get('conversationId'));",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "附件资源",
+      "description": "原生照片或文件选择后，先把附件元数据写入后端资源层。这个接口不传输文件二进制或 base64，也不会直接触发日程、费用或提醒执行。",
+      "item": [
+        {
+          "name": "接收附件元数据",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attachmentId\": \"{{attachmentId}}\",\n  \"attachmentKind\": \"image\",\n  \"attachmentName\": \"receipt.jpg\",\n  \"attachmentSizeBytes\": 245678,\n  \"attachmentType\": \"public.jpeg\",\n  \"conversationId\": \"{{conversationId}}\",\n  \"source\": \"native.composer.attachment.photo\",\n  \"text\": \"已选择附件：receipt.jpg（image，245678 bytes）。\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attachments/intake",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attachments",
+                "intake"
+              ]
+            },
+            "description": "接收 Native 选择器提交的附件元数据。\n\n请求字段：\n- `attachmentId`：原生端生成的附件 ID。\n- `attachmentKind`：附件类型，例如 `image` 或 `file`。\n- `attachmentName`：展示名称。\n- `attachmentSizeBytes`：附件大小，单位 bytes，可选。\n- `attachmentType`：系统类型标识，例如 `public.jpeg`，可选。\n- `conversationId`：当前对话 ID，可选，用于关联后续上下文。\n- `source`：来源入口，例如 `native.composer.attachment.photo`。\n- `text`：原生端展示给用户的可读描述。\n\n成功响应：返回 `AttachmentIntake`，`status=received`。注意：这个接口只记录元数据，不会解析图片内容，也不会直接创建费用、日程或提醒。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('attachment intake returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('attachment intake is received', function () {",
+                  "  pm.expect(json.status).to.eql('received');",
+                  "  pm.expect(json.attachmentId).to.eql(pm.variables.get('attachmentId'));",
+                  "  pm.expect(json.name).to.eql('receipt.jpg');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "上传附件内容",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attachmentId\": \"{{attachmentId}}\",\n  \"attachmentKind\": \"file\",\n  \"attachmentName\": \"receipt.txt\",\n  \"attachmentType\": \"text/plain\",\n  \"base64Content\": \"5Ye656ef6YeR6aKdIDg4LjUg5YWD\",\n  \"conversationId\": \"{{conversationId}}\",\n  \"source\": \"postman.attachment.upload\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attachments/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attachments",
+                "upload"
+              ]
+            },
+            "description": "上传附件内容并登记为当前会话附件资源。\n\n请求字段：\n- `attachmentId`：调用端生成的附件 ID。\n- `attachmentKind`：附件类型，例如 `file` 或 `image`。\n- `attachmentName`：展示名称。\n- `attachmentType`：MIME/系统类型，例如 `text/plain`。\n- `base64Content`：附件字节的 base64 内容，当前后端限制解码后不超过 5MB。\n- `conversationId`：当前对话 ID，用于进入后续 Agent 上下文。\n- `text`：可选；如果不传且是文本文件，后端会按 UTF-8 抽取可读文本。\n\n成功响应：返回 `AttachmentIntake`，其中 `contentStatus=content_received`，`contentSha256` 可用于排查重复内容。此接口只登记附件资源，不直接创建费用、日程或提醒。"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('attachment upload returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('attachment upload stores content metadata', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.contentStatus).to.eql('content_received');",
+                  "  pm.expect(json.contentSha256).to.be.a('string');",
+                  "  pm.expect(json.text).to.eql('出租金额 88.5 元');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "执行计划",
+      "description": "对 `/agent/turns` 返回的执行计划进行确认、拒绝、查询。",
+      "item": [
+        {
+          "name": "确认执行计划",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirmToken\": \"{{confirmToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/execution-plans/{{planId}}/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-plans",
+                "{{planId}}",
+                "confirm"
+              ]
+            },
+            "description": "确认待执行计划。\n\n路径参数：\n- `planId`：来自 `/agent/turns` 响应的 `plan.id`。\n\n请求字段：\n- `confirmToken`：来自 `plan.confirmation.confirmToken`。\n- `actionIds`：可选，当前后端暂不支持部分确认；通常不要传。\n\n成功响应：\n- `kind=execution_result`\n- `plan.status=succeeded` 或 `failed`\n- `plan.actions[].result`：领域执行结果。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('confirm returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('confirm response is execution result', function () {",
+                  "  pm.expect(json.kind).to.eql('execution_result');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "查询执行计划",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/execution-plans/{{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-plans",
+                "{{planId}}"
+              ]
+            },
+            "description": "按计划 ID 查询执行计划。\n\n路径参数：\n- `planId`：执行计划 ID。\n\n常见状态：\n- `awaiting_confirmation`：等待确认。\n- `executing`：执行中。\n- `succeeded`：全部动作执行成功。\n- `failed`：存在失败动作。\n- `rejected`：用户拒绝。"
+          }
+        },
+        {
+          "name": "拒绝执行计划",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/execution-plans/{{planId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-plans",
+                "{{planId}}",
+                "reject"
+              ]
+            },
+            "description": "拒绝仍处于 `awaiting_confirmation` 的计划。\n\n注意：已经确认并执行成功的计划不能再拒绝，后端会返回 `400`。"
+          }
+        },
+        {
+          "name": "查询执行日志",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/execution-ledger?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-ledger"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "可选。只查看当前会话产生的执行记录；删除该参数可查看全局执行日志。"
+                }
+              ]
+            },
+            "description": "查询执行日志。默认带 conversationId，便于验证当前 iOS/H5 会话的执行闭环；如需排查全局历史，可删除 query 参数。"
+          }
+        }
+      ]
+    },
+    {
+      "name": "领域数据查询",
+      "description": "确认执行后，用这些接口检查日程、费用、提醒是否写入。",
+      "item": [
+        {
+          "name": "查询日程列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const events = pm.response.json();",
+                  "const latest = events.slice().reverse().find((event) => event.status === 'scheduled') || events.at(-1);",
+                  "if (latest && latest.id) {",
+                  "  pm.environment.set('calendarEventId', latest.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar/events?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calendar",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "可选。只返回当前会话确认写入的日程；删除该参数可查看全局日程。"
+                }
+              ]
+            },
+            "description": "查询日程列表。默认按当前会话过滤，避免 Postman 或 App 测试时混入其他会话的日程。"
+          }
+        },
+        {
+          "name": "编辑日程",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('calendar event is updated', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().title).to.eql('业务规划会');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"业务规划会\",\n  \"startAt\": \"2026-05-27T16:00:00+08:00\",\n  \"endAt\": \"2026-05-27T17:30:00+08:00\",\n  \"timezone\": \"Asia/Shanghai\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/calendar/events/{{calendarEventId}}?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calendar",
+                "events",
+                "{{calendarEventId}}"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验日程属于当前会话，并把直接编辑写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "编辑指定日程的业务内容字段。\n\n路径参数：\n- `calendarEventId`：日程 ID，可先运行“查询日程列表”自动提取最近一条 scheduled 日程。\n\n查询参数：\n- `conversationId`：必填，用于校验日程属于当前会话，并把直接编辑写入执行流水。\n\n请求字段均可按需传入：\n- `title`：日程标题。\n- `startAt`：开始时间 ISO 字符串。\n- `endAt`：结束时间 ISO 字符串。\n- `timezone`：时区。\n\n不会修改 `status` 或 `sourceActionId`。"
+          }
+        },
+        {
+          "name": "取消日程",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('calendar event is canceled', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('canceled');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar/events/{{calendarEventId}}/cancel?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calendar",
+                "events",
+                "{{calendarEventId}}",
+                "cancel"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验日程属于当前会话，并把直接取消写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "取消指定日程。\n\n路径参数：\n- `calendarEventId`：日程 ID，可先运行“查询日程列表”自动提取最近一条 scheduled 日程。\n\n查询参数：\n- `conversationId`：必填，用于校验日程属于当前会话，并把直接取消写入执行流水。\n\n返回字段：完整 `CalendarEvent` 对象，`status` 应为 `canceled`。"
+          }
+        },
+        {
+          "name": "查询费用草稿列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expenses = pm.response.json();",
+                  "const latest = expenses.slice().reverse().find((expense) => expense.status === 'draft') || expenses.at(-1);",
+                  "if (latest && latest.id) {",
+                  "  pm.environment.set('expenseId', latest.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/expenses?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "expenses"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "可选。只返回当前会话确认写入的费用记录；删除该参数可查看全局费用。"
+                }
+              ]
+            },
+            "description": "查询费用草稿列表。默认按当前会话过滤，适合验证某次对话确认后的费用草稿。"
+          }
+        },
+        {
+          "name": "编辑费用草稿",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expense is updated', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().title).to.eql('客户午餐报销');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"客户午餐报销\",\n  \"amount\": 88.5,\n  \"currency\": \"CNY\",\n  \"occurredOn\": \"2026-05-27\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/expenses/{{expenseId}}?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "expenses",
+                "{{expenseId}}"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验费用属于当前会话，并把直接编辑写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "编辑指定费用草稿的业务内容字段。\n\n路径参数：\n- `expenseId`：费用记录 ID，可先运行“查询费用草稿列表”自动提取最近一条 draft 费用。\n\n查询参数：\n- `conversationId`：必填，用于校验费用属于当前会话，并把直接编辑写入执行流水。\n\n请求字段均可按需传入：\n- `title`：费用标题。\n- `amount`：金额。\n- `currency`：币种。\n- `occurredOn`：发生日期。\n\n不会修改 `status` 或 `sourceActionId`。"
+          }
+        },
+        {
+          "name": "提交费用草稿",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expense is submitted', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('submitted');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/expenses/{{expenseId}}/submit?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "expenses",
+                "{{expenseId}}",
+                "submit"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验费用属于当前会话，并把直接提交写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "提交指定费用草稿。\n\n路径参数：\n- `expenseId`：费用记录 ID，可先运行“查询费用草稿列表”自动提取最近一条 draft 费用。\n\n查询参数：\n- `conversationId`：必填，用于校验费用属于当前会话，并把直接提交写入执行流水。\n\n返回字段：完整 `ExpenseRecord` 对象，`status` 应为 `submitted`。"
+          }
+        },
+        {
+          "name": "取消费用草稿",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expense is canceled', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('canceled');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/expenses/{{expenseId}}/cancel?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "expenses",
+                "{{expenseId}}",
+                "cancel"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验费用属于当前会话，并把直接取消写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "取消指定费用草稿。\n\n路径参数：\n- `expenseId`：费用记录 ID，可先运行“查询费用草稿列表”自动提取最近一条 draft 费用。\n\n查询参数：\n- `conversationId`：必填，用于校验费用属于当前会话，并把直接取消写入执行流水。\n\n返回字段：完整 `ExpenseRecord` 对象，`status` 应为 `canceled`。"
+          }
+        },
+        {
+          "name": "查询提醒列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const reminders = pm.response.json();",
+                  "const latest = reminders.slice().reverse().find((reminder) => reminder.status === 'scheduled') || reminders.at(-1);",
+                  "if (latest && latest.id) {",
+                  "  pm.environment.set('reminderId', latest.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reminders?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reminders"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "可选。只返回当前会话确认写入的提醒；删除该参数可查看全局提醒。"
+                }
+              ]
+            },
+            "description": "查询提醒列表。默认按当前会话过滤，App Timeline 与提醒页使用同样的读取方式。"
+          }
+        },
+        {
+          "name": "编辑提醒",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('reminder is updated', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().title).to.eql('带电脑和工牌');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"带电脑和工牌\",\n  \"dueAt\": \"2026-05-27T10:00:00+08:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reminders/{{reminderId}}?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reminders",
+                "{{reminderId}}"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验提醒属于当前会话，并把直接编辑写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "编辑指定提醒的业务内容字段。\n\n路径参数：\n- `reminderId`：提醒 ID，可先运行“查询提醒列表”自动提取最近一条 scheduled 提醒。\n\n查询参数：\n- `conversationId`：必填，用于校验提醒属于当前会话，并把直接编辑写入执行流水。\n\n请求字段均可按需传入：\n- `title`：提醒标题。\n- `dueAt`：提醒时间 ISO 字符串。\n\n不会修改 `status` 或 `sourceActionId`。"
+          }
+        },
+        {
+          "name": "完成提醒",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reminders/{{reminderId}}/complete?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reminders",
+                "{{reminderId}}",
+                "complete"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验提醒属于当前会话，并把直接完成写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "把指定提醒标记为已完成。\n\n路径参数：\n- `reminderId`：提醒 ID，可先运行“查询提醒列表”自动提取最近一条 scheduled 提醒。\n\n查询参数：\n- `conversationId`：必填，用于校验提醒属于当前会话，并把直接完成写入执行流水。\n\n返回字段：完整 `Reminder` 对象，`status` 应为 `done`。"
+          }
+        },
+        {
+          "name": "取消提醒",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reminders/{{reminderId}}/cancel?conversationId={{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reminders",
+                "{{reminderId}}",
+                "cancel"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}",
+                  "description": "必填。用于校验提醒属于当前会话，并把直接取消写入执行流水；缺失会返回 400。"
+                }
+              ]
+            },
+            "description": "把指定提醒标记为已取消。\n\n路径参数：\n- `reminderId`：提醒 ID，可先运行“查询提醒列表”自动提取最近一条 scheduled 提醒。\n\n查询参数：\n- `conversationId`：必填，用于校验提醒属于当前会话，并把直接取消写入执行流水。\n\n返回字段：完整 `Reminder` 对象，`status` 应为 `canceled`。"
+          }
+        }
+      ]
+    }
+  ]
+}

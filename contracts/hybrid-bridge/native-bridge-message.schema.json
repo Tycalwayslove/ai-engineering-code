@@ -18,6 +18,9 @@
         "ui.openCalendar",
         "ui.openExecutionLedger",
         "input.voice.start",
+        "input.voice.stop",
+        "calendar.events.sync",
+        "notifications.reminders.sync",
         "input.keyboard.open",
         "native.hostContext",
         "native.viewChanged",
@@ -39,5 +42,121 @@
       "type": "string",
       "format": "date-time"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "calendar.events.sync"
+          }
+        }
+      },
+      "then": {
+        "required": ["payload"],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["events"],
+            "additionalProperties": true,
+            "properties": {
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "title",
+                    "startAt",
+                    "endAt",
+                    "timezone",
+                    "status",
+                    "sourceActionId"
+                  ],
+                  "additionalProperties": true,
+                  "properties": {
+                    "endAt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sourceActionId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "startAt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "status": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "timezone": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "notifications.reminders.sync"
+          }
+        }
+      },
+      "then": {
+        "required": ["payload"],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["reminders"],
+            "additionalProperties": true,
+            "properties": {
+              "reminders": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "title", "dueAt", "status"],
+                  "additionalProperties": true,
+                  "properties": {
+                    "dueAt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "status": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

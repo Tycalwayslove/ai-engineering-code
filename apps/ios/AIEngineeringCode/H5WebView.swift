@@ -91,6 +91,11 @@ struct H5WebView: UIViewRepresentable {
     @Binding var diagnostics: WebViewDiagnostics
     @Binding var loadState: WebViewLoadState
     let outboundEvent: NativeBridgeOutboundEvent?
+    let onKeyboardInputRequested: () -> Void
+    let onVoiceInputRequested: () -> Void
+    let onVoiceInputStopRequested: () -> Void
+    let onCalendarEventsSyncRequested: ([[String: String]]) -> Void
+    let onReminderNotificationsSyncRequested: ([[String: String]]) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -221,16 +226,59 @@ struct H5WebView: UIViewRepresentable {
             case "ui.openTimeline", "ui.openCalendar", "ui.openExecutionLedger":
                 sendNativeAck(type: type, replyTo: id)
             case "input.voice.start":
+                parent.onVoiceInputRequested()
                 sendNativeAck(
                     type: type,
                     payload: [
-                        "status": "notImplemented",
-                        "reason": "iOS voice input will be connected after the Bridge contract is stabilized.",
+                        "status": "started",
+                        "source": "h5.input.voice.start",
+                    ],
+                    replyTo: id
+                )
+            case "input.voice.stop":
+                parent.onVoiceInputStopRequested()
+                sendNativeAck(
+                    type: type,
+                    payload: [
+                        "status": "stopped",
+                        "source": "h5.input.voice.stop",
+                    ],
+                    replyTo: id
+                )
+            case "calendar.events.sync":
+                let events = extractCalendarEvents(from: envelope)
+                parent.onCalendarEventsSyncRequested(events)
+                sendNativeAck(
+                    type: type,
+                    payload: [
+                        "count": "\(events.count)",
+                        "status": "received",
+                        "source": "h5.calendar.events.sync",
+                    ],
+                    replyTo: id
+                )
+            case "notifications.reminders.sync":
+                let reminders = extractReminderNotifications(from: envelope)
+                parent.onReminderNotificationsSyncRequested(reminders)
+                sendNativeAck(
+                    type: type,
+                    payload: [
+                        "count": "\(reminders.count)",
+                        "status": "received",
+                        "source": "h5.notifications.reminders.sync",
                     ],
                     replyTo: id
                 )
             case "input.keyboard.open":
-                sendNativeAck(type: type, replyTo: id)
+                parent.onKeyboardInputRequested()
+                sendNativeAck(
+                    type: type,
+                    payload: [
+                        "status": "opened",
+                        "source": "h5.input.keyboard.open",
+                    ],
+                    replyTo: id
+                )
             default:
                 sendNativeError(
                     payload: [
@@ -238,6 +286,66 @@ struct H5WebView: UIViewRepresentable {
                     ],
                     replyTo: id
                 )
+            }
+        }
+
+        private func extractCalendarEvents(from envelope: [String: Any]) -> [[String: String]] {
+            guard
+                let payload = envelope["payload"] as? [String: Any],
+                let events = payload["events"] as? [[String: Any]]
+            else {
+                return []
+            }
+
+            return events.compactMap { event in
+                guard
+                    let endAt = event["endAt"] as? String,
+                    let id = event["id"] as? String,
+                    let sourceActionId = event["sourceActionId"] as? String,
+                    let startAt = event["startAt"] as? String,
+                    let status = event["status"] as? String,
+                    let timezone = event["timezone"] as? String,
+                    let title = event["title"] as? String
+                else {
+                    return nil
+                }
+
+                return [
+                    "endAt": endAt,
+                    "id": id,
+                    "sourceActionId": sourceActionId,
+                    "startAt": startAt,
+                    "status": status,
+                    "timezone": timezone,
+                    "title": title,
+                ]
+            }
+        }
+
+        private func extractReminderNotifications(from envelope: [String: Any]) -> [[String: String]] {
+            guard
+                let payload = envelope["payload"] as? [String: Any],
+                let reminders = payload["reminders"] as? [[String: Any]]
+            else {
+                return []
+            }
+
+            return reminders.compactMap { reminder in
+                guard
+                    let id = reminder["id"] as? String,
+                    let title = reminder["title"] as? String,
+                    let dueAt = reminder["dueAt"] as? String,
+                    let status = reminder["status"] as? String
+                else {
+                    return nil
+                }
+
+                return [
+                    "dueAt": dueAt,
+                    "id": id,
+                    "status": status,
+                    "title": title,
+                ]
             }
         }
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from uuid import uuid4
 
@@ -96,7 +96,52 @@ class PostgresExecutionStore:
             "confirmation": confirmation,
         }
 
-    def list_ledger(self) -> list[LedgerRecord]:
+    def list_pending_plans_for_conversation(
+        self,
+        conversation_id: str,
+    ) -> list[ExecutionPlanRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select id
+                from execution_plans
+                where conversation_id = %s and status = 'awaiting_confirmation'
+                order by created_at, id
+                """,
+                (conversation_id,),
+            ).fetchall()
+
+        pending_plans: list[ExecutionPlanRecord] = []
+        for row in rows:
+            plan = self.get_plan(str(row["id"]))
+            confirmation = plan["confirmation"]
+            if confirmation is None or confirmation["status"] != "pending":
+                continue
+            confirmation["confirmToken"] = self._issue_recovery_confirm_token(
+                plan_id=plan["id"],
+                confirmation_id=confirmation["id"],
+            )
+            pending_plans.append(plan)
+        return pending_plans
+
+    def list_action_ids_for_conversation(self, conversation_id: str) -> list[str]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select domain_actions.id
+                from domain_actions
+                join execution_plans on execution_plans.id = domain_actions.plan_id
+                where execution_plans.conversation_id = %s
+                order by domain_actions.created_at, domain_actions.id
+                """,
+                (conversation_id,),
+            ).fetchall()
+        return [str(row["id"]) for row in rows]
+
+    def list_ledger(self, conversation_id: str | None = None) -> list[LedgerRecord]:
+        if conversation_id is not None:
+            return self._list_ledger_for_conversation(conversation_id)
+
         with self._connect() as connection:
             rows = connection.execute(
                 """
@@ -104,6 +149,23 @@ class PostgresExecutionStore:
                 from execution_ledger
                 order by created_at, id
                 """
+            ).fetchall()
+        return [self._ledger_from_row(row) for row in rows]
+
+    def _list_ledger_for_conversation(self, conversation_id: str) -> list[LedgerRecord]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                select execution_ledger.id, execution_ledger.plan_id,
+                  execution_ledger.action_id, execution_ledger.event_type,
+                  execution_ledger.status, execution_ledger.message,
+                  execution_ledger.created_at
+                from execution_ledger
+                join execution_plans on execution_plans.id = execution_ledger.plan_id
+                where execution_plans.conversation_id = %s
+                order by execution_ledger.created_at, execution_ledger.id
+                """,
+                (conversation_id,),
             ).fetchall()
         return [self._ledger_from_row(row) for row in rows]
 
@@ -139,7 +201,50 @@ class PostgresExecutionStore:
                 """,
                 (plan_id, self._hash_token(confirm_token)),
             ).fetchone()
-        return row is not None
+            if row is not None:
+                return True
+
+            session = connection.execute(
+                """
+                select 1
+                from confirmation_token_sessions
+                where plan_id = %s
+                  and confirm_token_hash = %s
+                  and status = 'active'
+                  and expires_at > now()
+                """,
+                (plan_id, self._hash_token(confirm_token)),
+            ).fetchone()
+        return session is not None
+
+    def _issue_recovery_confirm_token(
+        self,
+        plan_id: str,
+        confirmation_id: str,
+    ) -> str:
+        token = f"confirm_{uuid4().hex}"
+        expires_at = datetime.now(UTC) + timedelta(minutes=30)
+        with self._connect() as connection:
+            connection.execute(
+                """
+                insert into confirmation_token_sessions (
+                  id,
+                  confirmation_id,
+                  plan_id,
+                  confirm_token_hash,
+                  expires_at
+                )
+                values (%s, %s, %s, %s, %s)
+                """,
+                (
+                    f"confirmation_token_{uuid4().hex}",
+                    confirmation_id,
+                    plan_id,
+                    self._hash_token(token),
+                    expires_at,
+                ),
+            )
+        return token
 
     def _connect(self) -> psycopg.Connection[dict[str, object]]:
         return psycopg.connect(self._settings.url, row_factory=dict_row)

@@ -15,6 +15,9 @@ class AgentTurnResponse(TypedDict, total=False):
     conversationId: str
     message: str
     question: str
+    clarificationId: str
     missingFields: list[str]
+    quickReplies: list[str]
+    quickReplyOptions: list[dict[str, str]]
     plan: ExecutionPlanRecord
     structuredElements: list[dict[str, object]]

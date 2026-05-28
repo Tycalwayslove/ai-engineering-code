@@ -4,6 +4,8 @@ from typing import Any
 
 import psycopg
 
+from backend.app.env import load_env_local
+
 
 @dataclass(frozen=True)
 class DatabaseSettings:
@@ -12,6 +14,7 @@ class DatabaseSettings:
 
 
 def get_database_settings() -> DatabaseSettings | None:
+    load_env_local()
     url = environ.get("DATABASE_URL")
     if url is None or url.strip() == "":
         return None

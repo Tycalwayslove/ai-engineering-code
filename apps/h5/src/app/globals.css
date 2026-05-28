@@ -550,6 +550,21 @@ p {
   padding: 0.7rem;
 }
 
+.ai-agent-backend-row-highlighted {
+  background: color-mix(
+    in srgb,
+    var(--ai-color-primary) 14%,
+    var(--ai-color-background-inset)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--ai-color-primary) 55%,
+    var(--ai-color-border)
+  );
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--ai-color-primary) 34%, transparent);
+}
+
 .ai-agent-backend-row > div {
   display: grid;
   gap: 0.15rem;
@@ -566,6 +581,55 @@ p {
   color: var(--ai-color-text-muted);
   font-size: 0.78rem;
   line-height: 1.4;
+}
+
+.ai-agent-backend-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.25rem;
+}
+
+.ai-agent-inline-action {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--ai-color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+  padding: 0;
+  text-align: left;
+}
+
+.ai-agent-inline-action:hover {
+  color: var(--ai-color-text);
+}
+
+.ai-agent-quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+}
+
+.ai-agent-quick-reply-button {
+  background: var(--ai-color-background-elevated);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 999px;
+  color: var(--ai-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.ai-agent-quick-reply-button:hover {
+  border-color: var(--ai-color-accent);
 }
 
 .ai-agent-status-dock {
@@ -661,12 +725,133 @@ p {
   color: var(--ai-color-danger);
 }
 
+.ai-agent-edit-backdrop {
+  align-items: end;
+  background: color-mix(in srgb, var(--ai-color-background) 72%, transparent);
+  display: grid;
+  inset: 0;
+  padding: 1rem;
+  pointer-events: auto;
+  position: fixed;
+  z-index: 30;
+}
+
+.ai-agent-edit-panel {
+  background: var(--ai-color-background-elevated);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 8px;
+  box-shadow: var(--ai-shadow-panel);
+  display: grid;
+  gap: 0.85rem;
+  margin-inline: auto;
+  max-height: min(82vh, 34rem);
+  overflow: auto;
+  padding: 1rem;
+  width: min(100%, 26rem);
+}
+
+.ai-agent-edit-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.ai-agent-edit-heading strong {
+  color: var(--ai-color-text);
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.ai-agent-edit-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ai-agent-edit-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ai-agent-edit-form label span {
+  color: var(--ai-color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ai-agent-edit-form input {
+  background: var(--ai-color-background-inset);
+  border: 1px solid var(--ai-color-border);
+  border-radius: 8px;
+  color: var(--ai-color-text);
+  font: inherit;
+  font-size: 0.86rem;
+  min-height: 2.55rem;
+  outline: none;
+  padding: 0 0.75rem;
+  width: 100%;
+}
+
+.ai-agent-edit-form input:focus {
+  border-color: var(--ai-color-primary);
+  box-shadow: 0 0 0 3px var(--ai-color-primary-soft);
+}
+
+.ai-agent-edit-actions {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0.25rem;
+}
+
+.ai-agent-icon-button,
+.ai-agent-primary-button,
+.ai-agent-secondary-button {
+  align-items: center;
+  appearance: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 800;
+  justify-content: center;
+}
+
+.ai-agent-icon-button {
+  background: var(--ai-color-background-inset);
+  border: 1px solid var(--ai-color-border);
+  color: var(--ai-color-text);
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.ai-agent-primary-button,
+.ai-agent-secondary-button {
+  min-height: 2.65rem;
+  padding: 0 0.85rem;
+}
+
+.ai-agent-primary-button {
+  background: var(--ai-color-primary);
+  border: 1px solid var(--ai-color-primary);
+  color: var(--ai-color-primary-text);
+}
+
+.ai-agent-secondary-button {
+  background: transparent;
+  border: 1px solid var(--ai-color-border);
+  color: var(--ai-color-text);
+}
+
 .ai-agent-segmented-control,
 .ai-agent-theme-switcher {
   background: var(--ai-color-background-inset);
   border: 1px solid var(--ai-color-border);
-  border-radius: 999px;
+  border-radius: 12px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
   padding: 0.25rem;
 }
 
@@ -712,7 +897,7 @@ p {
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
-  min-height: 2rem;
+  min-height: 2.75rem;
   min-width: 4rem;
   padding: 0 0.75rem;
 }

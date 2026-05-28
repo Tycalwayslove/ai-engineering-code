@@ -16,7 +16,14 @@ const contractFiles = {
 };
 
 const expectedOperations = {
+  cancelCalendarEvent: "cancelCalendarEvent",
+  cancelExpense: "cancelExpense",
+  cancelReminder: "cancelReminder",
   confirmExecutionPlan: "confirmExecutionPlan",
+  completeReminder: "completeReminder",
+  getAgentConversationDebug: "getAgentConversationDebug",
+  getAgentConversationTurns: "getAgentConversationTurns",
+  getAgentPendingConfirmations: "getAgentPendingConfirmations",
   getCalendarEvents: "getCalendarEvents",
   getExecutionLedger: "getExecutionLedger",
   getExecutionPlan: "getExecutionPlan",
@@ -25,9 +32,27 @@ const expectedOperations = {
   getHealth: "getHealth",
   getReminders: "getReminders",
   getVersion: "getVersion",
+  intakeAttachment: "intakeAttachment",
+  listAttachments: "getAttachments",
   rejectExecutionPlan: "rejectExecutionPlan",
   submitAgentTurn: "submitAgentTurn",
+  submitExpense: "submitExpense",
+  updateCalendarEvent: "updateCalendarEvent",
+  updateExpense: "updateExpense",
+  updateReminder: "updateReminder",
+  uploadAttachment: "uploadAttachment",
 };
+
+const directMutationOperations = [
+  ["patch", "/calendar/events/{id}", "updateCalendarEvent"],
+  ["post", "/calendar/events/{id}/cancel", "cancelCalendarEvent"],
+  ["patch", "/expenses/{id}", "updateExpense"],
+  ["post", "/expenses/{id}/submit", "submitExpense"],
+  ["post", "/expenses/{id}/cancel", "cancelExpense"],
+  ["patch", "/reminders/{id}", "updateReminder"],
+  ["post", "/reminders/{id}/complete", "completeReminder"],
+  ["post", "/reminders/{id}/cancel", "cancelReminder"],
+];
 
 const expectedFactoryCapabilityFields = [
   "id",
@@ -53,6 +78,21 @@ const expectedExecutionPlanFields = [
   "summary",
   "decisionTraceId",
   "actions",
+];
+
+const expectedDomainActionTypes = [
+  "calendar.cancel_event",
+  "calendar.create_event",
+  "calendar.query_events",
+  "calendar.update_event",
+  "expense.cancel_reimbursement",
+  "expense.create_reimbursement_draft",
+  "expense.submit_reimbursement",
+  "expense.update_reimbursement",
+  "reminder.cancel_reminder",
+  "reminder.complete_reminder",
+  "reminder.create_reminder",
+  "reminder.update_reminder",
 ];
 
 const failures = [];
@@ -301,10 +341,45 @@ function validateJsonSchema(relativePath) {
     }
 
     assertObject(schema.properties, "schema properties");
+    if (relativePath === contractFiles.hybridBridgeSchema) {
+      validateHybridBridgePayloadSchemas(relativePath, schema);
+    }
     console.log(`ok - ${relativePath} parses as JSON Schema document`);
   } catch (error) {
     reportFailure(relativePath, error.message);
   }
+}
+
+function validateHybridBridgePayloadSchemas(relativePath, schema) {
+  const conditionalSchemas = Array.isArray(schema.allOf) ? schema.allOf : [];
+  const calendarSchema = conditionalSchemas.find(
+    (entry) =>
+      entry?.if?.properties?.type?.const === "calendar.events.sync",
+  );
+  const reminderSchema = conditionalSchemas.find(
+    (entry) =>
+      entry?.if?.properties?.type?.const === "notifications.reminders.sync",
+  );
+
+  const calendarEventRequired =
+    calendarSchema?.then?.properties?.payload?.properties?.events?.items
+      ?.required;
+  assertArrayIncludesAll(
+    relativePath,
+    "calendar.events.sync.payload.events[].required",
+    calendarEventRequired,
+    ["id", "title", "startAt", "endAt", "timezone", "status", "sourceActionId"],
+  );
+
+  const reminderRequired =
+    reminderSchema?.then?.properties?.payload?.properties?.reminders?.items
+      ?.required;
+  assertArrayIncludesAll(
+    relativePath,
+    "notifications.reminders.sync.payload.reminders[].required",
+    reminderRequired,
+    ["id", "title", "dueAt", "status"],
+  );
 }
 
 function validateOpenApiYaml(relativePath) {
@@ -399,6 +474,52 @@ function validateFactoryStatusSlice(openapiDocument) {
     }
   }
 
+  for (const [method, pathName, operationId] of directMutationOperations) {
+    const parameters = getPathValue(openapiDocument, [
+      "paths",
+      pathName,
+      method,
+      "parameters",
+    ]);
+    const conversationParam = Array.isArray(parameters)
+      ? parameters.find(
+          (parameter) =>
+            parameter !== null &&
+            typeof parameter === "object" &&
+            parameter.name === "conversationId" &&
+            parameter.in === "query",
+        )
+      : undefined;
+    if (conversationParam?.required !== true) {
+      reportFailure(
+        contractFiles.openapi,
+        `${operationId} must require query parameter "conversationId"`,
+      );
+    }
+  }
+
+  for (const [, , sdkMethod] of directMutationOperations) {
+    const methodIndex =
+      sdkSource === undefined ? -1 : sdkSource.indexOf(`async ${sdkMethod}(`);
+    const nextMethodIndex =
+      methodIndex < 0 || sdkSource === undefined
+        ? -1
+        : sdkSource.indexOf("\n  async ", methodIndex + 1);
+    const methodSource =
+      methodIndex < 0 || sdkSource === undefined
+        ? ""
+        : sdkSource.slice(
+            methodIndex,
+            nextMethodIndex > methodIndex ? nextMethodIndex : undefined,
+          );
+    if (!methodSource.includes("conversationId: string")) {
+      reportFailure(
+        contractFiles.sdk,
+        `${sdkMethod} must require conversationId: string`,
+      );
+    }
+  }
+
   const capabilityRequired = getPathValue(openapiDocument, [
     "components",
     "schemas",
@@ -438,6 +559,36 @@ function validateFactoryStatusSlice(openapiDocument) {
     expectedExecutionPlanFields,
   );
 
+  const domainActionTypeEnum = getPathValue(openapiDocument, [
+    "components",
+    "schemas",
+    "DomainAction",
+    "properties",
+    "actionType",
+    "enum",
+  ]);
+  assertArrayIncludesAll(
+    contractFiles.openapi,
+    "DomainAction.actionType.enum",
+    domainActionTypeEnum,
+    expectedDomainActionTypes,
+  );
+
+  const debugPendingActionTypeEnum = getPathValue(openapiDocument, [
+    "components",
+    "schemas",
+    "AgentDebugPendingClarification",
+    "properties",
+    "actionType",
+    "enum",
+  ]);
+  assertArrayIncludesAll(
+    contractFiles.openapi,
+    "AgentDebugPendingClarification.actionType.enum",
+    debugPendingActionTypeEnum,
+    expectedDomainActionTypes,
+  );
+
   if (sharedTypesSource === undefined) {
     return;
   }
@@ -451,6 +602,21 @@ function validateFactoryStatusSlice(openapiDocument) {
     }
   }
 
+  for (const actionType of expectedDomainActionTypes) {
+    if (!sharedTypesSource.includes(`"${actionType}"`)) {
+      reportFailure(
+        contractFiles.sharedTypes,
+        `missing DomainActionType "${actionType}"`,
+      );
+    }
+  }
+  if (!sharedTypesSource.includes("actionType: DomainActionType")) {
+    reportFailure(
+      contractFiles.sharedTypes,
+      "AgentDebugPendingClarification.actionType must use DomainActionType",
+    );
+  }
+
   if (failures.length === failureCountBeforeSlice) {
     console.log(
       "ok - factory status slice has lightweight cross-runtime checks",
@@ -458,8 +624,82 @@ function validateFactoryStatusSlice(openapiDocument) {
   }
 }
 
+function validateOpenApiContentSchemas(openapiDocument) {
+  if (openapiDocument === undefined) {
+    return;
+  }
+
+  const methods = new Set([
+    "delete",
+    "get",
+    "patch",
+    "post",
+    "put",
+  ]);
+
+  for (const [pathName, pathItem] of Object.entries(openapiDocument.paths)) {
+    if (typeof pathItem !== "object" || pathItem === null) {
+      continue;
+    }
+
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (!methods.has(method) || typeof operation !== "object" || operation === null) {
+        continue;
+      }
+
+      for (const [statusCode, response] of Object.entries(operation.responses ?? {})) {
+        if (typeof response !== "object" || response === null) {
+          continue;
+        }
+
+        const content = response.content;
+        if (content === undefined) {
+          continue;
+        }
+        if (typeof content !== "object" || content === null || Array.isArray(content)) {
+          reportFailure(
+            contractFiles.openapi,
+            `${method.toUpperCase()} ${pathName} ${statusCode} content must be an object`,
+          );
+          continue;
+        }
+        if (Object.hasOwn(content, "schema")) {
+          reportFailure(
+            contractFiles.openapi,
+            `${method.toUpperCase()} ${pathName} ${statusCode} has schema at content level instead of media type level`,
+          );
+        }
+
+        for (const [mediaType, mediaConfig] of Object.entries(content)) {
+          if (!mediaType.includes("/")) {
+            continue;
+          }
+          if (
+            typeof mediaConfig !== "object" ||
+            mediaConfig === null ||
+            Array.isArray(mediaConfig)
+          ) {
+            reportFailure(
+              contractFiles.openapi,
+              `${method.toUpperCase()} ${pathName} ${statusCode} ${mediaType} must be an object`,
+            );
+            continue;
+          }
+          if (!Object.hasOwn(mediaConfig, "schema")) {
+            reportFailure(
+              contractFiles.openapi,
+              `${method.toUpperCase()} ${pathName} ${statusCode} ${mediaType} is missing schema`,
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
 function runValidation() {
   const openapiDocument = validateOpenApiYaml(contractFiles.openapi);
+  validateOpenApiContentSchemas(openapiDocument);
   validateJsonSchema(contractFiles.memorySchema);
   validateJsonSchema(contractFiles.workflowSchema);
   validateJsonSchema(contractFiles.hybridBridgeSchema);

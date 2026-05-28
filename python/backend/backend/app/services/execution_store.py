@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from typing import Literal, Protocol, TypedDict
+from uuid import uuid4
 
 RiskLevel = Literal["low", "medium", "high"]
 
@@ -64,7 +65,14 @@ class ExecutionStore(Protocol):
 
     def get_plan(self, plan_id: str) -> ExecutionPlanRecord: ...
 
-    def list_ledger(self) -> list[LedgerRecord]: ...
+    def list_pending_plans_for_conversation(
+        self,
+        conversation_id: str,
+    ) -> list[ExecutionPlanRecord]: ...
+
+    def list_action_ids_for_conversation(self, conversation_id: str) -> list[str]: ...
+
+    def list_ledger(self, conversation_id: str | None = None) -> list[LedgerRecord]: ...
 
     def append_ledger(
         self,
@@ -82,9 +90,15 @@ class InMemoryExecutionStore:
     def __init__(self) -> None:
         self._plans: dict[str, ExecutionPlanRecord] = {}
         self._ledger: list[LedgerRecord] = []
+        self._confirm_tokens_by_plan_id: dict[str, set[str]] = {}
 
     def save_plan(self, plan: ExecutionPlanRecord) -> ExecutionPlanRecord:
         self._plans[plan["id"]] = plan
+        confirmation = plan["confirmation"]
+        if confirmation is not None and confirmation["confirmToken"] != "redacted":
+            self._confirm_tokens_by_plan_id.setdefault(plan["id"], set()).add(
+                confirmation["confirmToken"],
+            )
         return plan
 
     def get_plan(self, plan_id: str) -> ExecutionPlanRecord:
@@ -93,8 +107,46 @@ class InMemoryExecutionStore:
         except KeyError as error:
             raise ExecutionPlanNotFound(plan_id) from error
 
-    def list_ledger(self) -> list[LedgerRecord]:
-        return self._ledger
+    def list_pending_plans_for_conversation(
+        self,
+        conversation_id: str,
+    ) -> list[ExecutionPlanRecord]:
+        plans = [
+            plan
+            for plan in self._plans.values()
+            if plan["conversationId"] == conversation_id
+            and plan["status"] == "awaiting_confirmation"
+            and plan["confirmation"] is not None
+            and plan["confirmation"]["status"] == "pending"
+        ]
+        for plan in plans:
+            confirmation = plan["confirmation"]
+            if confirmation is None:
+                continue
+            recovery_token = f"confirm_{uuid4().hex}"
+            self._confirm_tokens_by_plan_id.setdefault(plan["id"], set()).add(
+                recovery_token,
+            )
+            confirmation["confirmToken"] = recovery_token
+        return plans
+
+    def list_action_ids_for_conversation(self, conversation_id: str) -> list[str]:
+        return [
+            action["id"]
+            for plan in self._plans.values()
+            if plan["conversationId"] == conversation_id
+            for action in plan["actions"]
+        ]
+
+    def list_ledger(self, conversation_id: str | None = None) -> list[LedgerRecord]:
+        if conversation_id is None:
+            return self._ledger
+        plan_ids = {
+            plan["id"]
+            for plan in self._plans.values()
+            if plan["conversationId"] == conversation_id
+        }
+        return [record for record in self._ledger if record["planId"] in plan_ids]
 
     def append_ledger(
         self,
@@ -119,4 +171,7 @@ class InMemoryExecutionStore:
 
     def verify_confirm_token(self, plan_id: str, confirm_token: str) -> bool:
         confirmation = self.get_plan(plan_id)["confirmation"]
-        return confirmation is not None and confirmation["confirmToken"] == confirm_token
+        return confirmation is not None and confirm_token in self._confirm_tokens_by_plan_id.get(
+            plan_id,
+            set(),
+        )

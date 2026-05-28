@@ -48,19 +48,66 @@ export type DomainActionStatus =
 export type DomainName = "calendar" | "expense" | "reminder";
 
 export type DomainActionType =
+  | "calendar.cancel_event"
   | "calendar.create_event"
   | "calendar.query_events"
+  | "calendar.update_event"
+  | "expense.cancel_reimbursement"
   | "expense.create_reimbursement_draft"
-  | "reminder.create_reminder";
+  | "expense.submit_reimbursement"
+  | "expense.update_reimbursement"
+  | "reminder.cancel_reminder"
+  | "reminder.complete_reminder"
+  | "reminder.create_reminder"
+  | "reminder.update_reminder";
 
 export type AgentTurnRequest = {
   conversationId?: string;
+  displayInput?: string;
   input: string;
   clientContext?: {
     locale?: string;
     timezone?: string;
     now?: string;
   };
+};
+
+export type AttachmentIntakeRequest = {
+  attachmentId: string;
+  attachmentKind: string;
+  attachmentName: string;
+  attachmentSizeBytes?: number;
+  attachmentType?: string;
+  conversationId?: string;
+  source?: string;
+  text?: string;
+};
+
+export type AttachmentUploadRequest = {
+  attachmentId: string;
+  attachmentKind: string;
+  attachmentName: string;
+  attachmentType?: string;
+  base64Content: string;
+  conversationId?: string;
+  source?: string;
+  text?: string;
+};
+
+export type AttachmentIntake = {
+  id: string;
+  attachmentId: string;
+  conversationId?: string;
+  kind: string;
+  name: string;
+  sizeBytes?: number;
+  source?: string;
+  status: "received";
+  contentSha256?: string;
+  contentStatus?: "content_received";
+  text?: string;
+  type?: string;
+  createdAt: string;
 };
 
 export type DomainAction = {
@@ -99,13 +146,22 @@ export type ExecutionPlan = {
 export type ClarificationRequest = {
   kind: "clarification_request";
   conversationId: string;
+  clarificationId: string;
   question: string;
   missingFields: string[];
+  quickReplies: string[];
+  quickReplyOptions?: QuickReplyOption[];
+};
+
+export type QuickReplyOption = {
+  label: string;
+  value: string;
 };
 
 export type ConfirmationRequiredResponse = {
   kind: "confirmation_required";
   conversationId: string;
+  message?: string;
   plan: ExecutionPlan;
 };
 
@@ -128,6 +184,83 @@ export type AgentTurnResponse =
   | ConfirmationRequiredResponse
   | ExecutionResultResponse;
 
+export type AgentDebugEvent = {
+  id: string;
+  eventType: string;
+  turnId?: string | null;
+  planId?: string | null;
+  traceId?: string | null;
+  payload: Record<string, unknown>;
+};
+
+export type AgentDebugDecisionTrace = {
+  id: string;
+  plannerMode: string;
+  contextSectionsUsed: string[];
+  toolsConsidered: string[];
+  toolsSelected: string[];
+  missingInformation: string[];
+  policyDecisions: string[];
+  confirmationReason?: string | null;
+  fallbackReason?: string | null;
+  reasoningSummary: string[];
+  llmCall?: {
+    provider: string;
+    model: string;
+    mode: string;
+    status: string;
+    durationMs: number;
+    promptChars: number;
+    responseChars: number;
+    promptSha256: string;
+    errorType?: string;
+    promptPreview?: string;
+    responsePreview?: string;
+  } | null;
+};
+
+export type AgentDebugPendingClarification = {
+  id: string;
+  domain: string;
+  actionType: DomainActionType;
+  question: string;
+  missingFields: string[];
+  partialPayload: Record<string, unknown>;
+  quickReplies: string[];
+  quickReplyOptions?: QuickReplyOption[];
+  status: string;
+  createdAt: string;
+  expiresAt: string;
+  resolvedAt?: string | null;
+};
+
+export type AgentConversationDebug = {
+  conversationId: string;
+  events: AgentDebugEvent[];
+  decisionTraces: AgentDebugDecisionTrace[];
+  pendingClarifications: AgentDebugPendingClarification[];
+};
+
+export type AgentConversationTurn = {
+  id: string;
+  role: "assistant" | "system" | "user";
+  summary: string;
+  inputText?: string | null;
+  rawContent?: Record<string, unknown> | null;
+  structuredResponse?: AgentTurnResponse | null;
+  createdAt: string;
+};
+
+export type AgentConversationTurns = {
+  conversationId: string;
+  turns: AgentConversationTurn[];
+};
+
+export type AgentPendingConfirmations = {
+  conversationId: string;
+  plans: ExecutionPlan[];
+};
+
 export type ConfirmExecutionPlanRequest = {
   confirmToken: string;
   actionIds?: string[];
@@ -142,7 +275,8 @@ export type ExecutionLedgerItem = {
     | "confirmation_created"
     | "action_executed"
     | "action_failed"
-    | "plan_rejected";
+    | "plan_rejected"
+    | "direct_action_executed";
   status: "info" | "succeeded" | "failed";
   message: string;
   createdAt: string;
@@ -158,6 +292,13 @@ export type CalendarEvent = {
   sourceActionId: string;
 };
 
+export type CalendarEventUpdate = {
+  title?: string;
+  startAt?: string;
+  endAt?: string;
+  timezone?: string;
+};
+
 export type ExpenseRecord = {
   id: string;
   title: string;
@@ -168,10 +309,22 @@ export type ExpenseRecord = {
   sourceActionId: string;
 };
 
+export type ExpenseRecordUpdate = {
+  title?: string;
+  amount?: number;
+  currency?: string;
+  occurredOn?: string;
+};
+
 export type Reminder = {
   id: string;
   title: string;
   dueAt: string;
   status: "scheduled" | "done" | "canceled";
   sourceActionId: string;
+};
+
+export type ReminderUpdate = {
+  title?: string;
+  dueAt?: string;
 };

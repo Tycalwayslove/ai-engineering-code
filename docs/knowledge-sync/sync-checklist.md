@@ -20,12 +20,14 @@
 - 开始执行前必须查看 `git status --short --branch` 和最近提交，避免基于旧对话继续工作。
 - 如果阶段结束但没有更新 `current-project-state.md`，视为上下文同步未完成。
 - 如果没有实际写入 Obsidian 或飞书，只能说“仓库源稿已更新”，不能说“外部知识库已同步”。
+- 本地收尾时运行 `pnpm validate:context-sync`，检查当前状态、记忆索引、阶段决策和飞书源稿是否包含必要同步声明。
 
 ## 仓库检查
 
 - 是否更新了权威源稿。
 - 是否避免把飞书作为唯一权威。
 - 是否更新相关索引。
+- 是否运行 `pnpm validate:context-sync`。
 - 是否运行 `pnpm validate:factory`。
 
 ## Obsidian 检查

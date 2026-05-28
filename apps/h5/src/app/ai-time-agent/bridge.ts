@@ -6,6 +6,9 @@ export type H5ToNativeMessageType =
   | "ui.openCalendar"
   | "ui.openExecutionLedger"
   | "input.voice.start"
+  | "input.voice.stop"
+  | "calendar.events.sync"
+  | "notifications.reminders.sync"
   | "input.keyboard.open";
 
 export type NativeToH5MessageType =
@@ -20,6 +23,15 @@ export type NativeToH5MessageType =
 export type NativeBridgeMessageType =
   | H5ToNativeMessageType
   | NativeToH5MessageType;
+
+export type NativeSurfaceName =
+  | "conversation"
+  | "timeline"
+  | "calendar"
+  | "expenses"
+  | "reminders"
+  | "ledger"
+  | "settings";
 
 export type NativeBridgePayload = Record<string, unknown>;
 
