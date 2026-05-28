@@ -1,0 +1,370 @@
+# iOS v1 系统能力验收清单
+
+## 目的
+
+本文用于验收 AI 时间管理 Agent 第一版 iOS 原生壳在模拟器或真机上的系统能力。自动门禁已经覆盖 Swift 编译、Simulator 安装启动、H5 可点击主链路、后端产品 smoke 和 H5 到 Native payload；但系统权限弹窗、系统 App 写入结果、照片 / 文件选择器和语音识别质量仍需要人工确认。
+
+## 前置条件
+
+1. 本机已安装完整 Xcode，并能通过：
+
+   ```bash
+   pnpm validate:ios-build
+   pnpm validate:ios-simulator-smoke
+   ```
+
+2. 启动本地服务：
+
+   ```bash
+   pnpm dev:full
+   ```
+
+3. 模拟器使用默认 H5 地址：
+
+   ```text
+   http://127.0.0.1:3000/?native=ios
+   ```
+
+4. 真机使用 Mac 局域网地址覆盖 `H5_DEV_SERVER_URL`，例如：
+
+   ```bash
+   H5_DEV_SERVER_URL="http://你的-Mac-IP:3000/?native=ios&bridgeDebug=1" pnpm validate:ios-build
+   ```
+
+5. 验收前建议清理目标模拟器或真机里的旧 App 权限，避免旧授权掩盖权限弹窗问题。
+
+## 验收证据
+
+每次验收至少记录：
+
+- 验收日期、设备型号、iOS 版本、Git 分支和提交或工作区说明。
+- H5 地址覆盖后的 App 内实际地址，模拟器可检查构建产物 `Info.plist` 的 `H5DevServerURL`。
+- 每个系统能力的截图、屏幕录制或系统 App 截图。
+- 后端接口证据，例如 `/calendar/events`、`/reminders`、`/expenses`、`/execution-ledger` 或 `/agent/conversations/{conversationId}/debug` 响应摘要。
+- 如果权限被拒绝，需要记录 H5 状态栏文案和是否仍保留后端事实。
+
+可以先运行自动证据包采集器，生成本轮验收的辅助材料：
+
+```bash
+pnpm collect:ios-acceptance-evidence
+```
+
+证据包默认输出到 `.tmp/ios-acceptance-evidence/<timestamp>/`，包含 `manifest.json`、`acceptance-evidence.json`、`summary.md`、`manual-checklist.todo.md` 和 `simulator-launch.png`。常用参数：
+
+- `AI_CODE_IOS_ACCEPTANCE_RESET_APP=1` 或 `--reset-app`：重新安装并启动 App，减少旧权限或旧 UI 状态干扰。
+- `AI_CODE_IOS_ACCEPTANCE_SKIP_BUILD=1` 或 `--skip-build`：复用已有构建产物，加快重复采集。
+- `AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=8000` 或 `--screenshot-delay-ms 8000`：等待 WebView 加载后再截图。
+- `AI_CODE_IOS_ACCEPTANCE_SEED_FACTS=1` 或 `--seed-acceptance-facts`：显式通过真实 Agent 提交 / 确认流向当前 Native 会话写入一条日程、一条费用和一条提醒，用于生成三领域后端事实和 H5 页面截图证据。默认关闭，避免普通采集污染当前会话。
+- `AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP=1` 或 `--capture-calendar-system-app`：必须配合 `--seed-acceptance-facts` 使用。采集器会根据 seed 日程的 `startAt` 计算 `calshow:<seconds>`，打开 Simulator 中的系统 Calendar App 到对应日期并保存 `system-calendar-app.png`。该截图是系统 Calendar UI 辅助证据，仍需人工复核标题、日期和事件是否匹配。
+- `AI_CODE_IOS_ACCEPTANCE_SEED_CALENDAR_PERMISSION_DENIAL=1` 或 `--seed-calendar-permission-denial`：显式撤销目标 Simulator 的日历权限，创建一条 seed 日程，验证后端事实仍写入且 Native 日历同步按降级路径记录 `calendar.lastSyncStatus=failed`。采集器会在权限原本已授权时尝试恢复日历权限。
+- `AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_CLICK_BACKFLOW=1` 或 `--seed-notification-click-backflow`：显式创建一条“3 分钟后”的 seed 提醒，刷新 Native 诊断并轮询确认对应 `ai-code.reminder.{id}` 进入 pending local notification，再用同形态 `native.viewChanged` synthetic 事件验证 H5 能打开提醒页并高亮目标提醒。该证据只证明 Native pending notification 与 H5 回流处理两段链路，不替代真实系统通知点击。
+- `AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_DELIVERY=1` 或 `--seed-notification-delivery`：显式创建一条“2 分钟后”的 seed 提醒，确认目标先进入 pending local notification，再等待到期和缓冲时间，轮询 Native delivered diagnostics，验证对应 `ai-code.reminder.{id}` 出现在 `notifications.deliveredReminderIds`。该证据只证明系统通知中心 delivered 诊断链路，不替代真实 banner、锁屏展示、声音、badge 或用户点击。
+
+自动证据包覆盖构建、安装、启动、H5 地址、服务可达性、启动截图、Native 会话 ID、同会话后端事实摘要、H5 同会话页面截图和 Native 系统诊断摘要。显式开启 seed 时，`acceptanceFactSeed` 会记录 `seedRunId`、`seedNow`、三条输入、planId 和 actionType，证明这些事实来自真实 Agent 确认流，而不是直接写库或前端 demo。显式同时开启 `--capture-calendar-system-app` 时，`calendarSystemAppEvidence` 会打开系统 Calendar App 并保存对应日期截图；该能力使用 Simulator 的 `calshow:` URL scheme，作为可复查辅助材料，不作为机器强断言。显式同时开启 `--seed-calendar-cleanup` 时，`calendarCleanupSeed` 会取消刚创建的 seed 日程，并记录目标 event、取消前 / 取消后状态、取消前 / 取消后 EventKit identifier 是否存在，以及 Native `calendar.removedEventIds`。显式开启 `--seed-calendar-permission-denial` 时，`calendarPermissionDenialSeed` 会撤销目标 Simulator 日历权限，创建 seed 日程，并记录后端事实、`calendar.authorizationStatus=denied`、`calendar.lastSyncStatus=failed` 和 Native 错误原因。显式开启 `--seed-notification-click-backflow` 时，`notificationClickBackflow` 会记录 seed 提醒、pending notification identifier、H5 synthetic `native.viewChanged` 入站摘要、状态文案和高亮截图，并明确 `supportingOnly=true`。显式开启 `--seed-notification-delivery` 时，`notificationDelivery` 会记录 seed 提醒、pending / delivered notification identifier、等待窗口和 delivered diagnostics，并明确 `supportingOnly=true`。H5 页面截图会在 `h5-surfaces/` 下保存对话、Timeline、日程、费用、提醒、执行记录和设置 7 个页面，用于证明同一个 `conversationId` 的用户可见读模型能够渲染；它不替代 WKWebView 真实操作、系统权限弹窗或系统 App 截图。Native 系统诊断来自 Simulator data container 中 `Library/Preferences/com.aiengineeringcode.shell.plist` 的 `ai-code.native.systemDiagnostics`，用于归档通知权限、pending / delivered notification 数量、日历权限、本地 EventKit 标识符计数、后端 event id 列表、取消清理 id 列表和权限降级错误。包内 manifest 必须保留 `acceptanceVerdict=not_evaluated`、`manualAcceptanceRequired=true` 和 `automationCanReplaceManualAcceptance=false`；语音、照片 / 文件、PDF、本地通知真实展示、真实通知点击回流和系统 App UI 仍必须按下方清单人工操作并留证。
+
+## 必验项目
+
+### H5 地址覆盖
+
+验收步骤：
+
+1. 用默认地址构建并启动模拟器 App。
+2. 用 `H5_DEV_SERVER_URL` 覆盖为局域网地址重新构建。
+3. 分别检查构建产物中的 `H5DevServerURL`。
+
+预期结果：
+
+- 默认构建为 `http://127.0.0.1:3000/?native=ios`。
+- 覆盖构建为指定局域网地址。
+- App 启动后能加载对应 H5 页面。
+
+验收证据：
+
+- `plutil -p .tmp/xcodebuild/AIEngineeringCode/Build/Products/Debug-iphonesimulator/AIEngineeringCode.app/Info.plist | rg H5DevServerURL`
+- 模拟器或真机启动截图。
+
+### 会话持久 ID
+
+验收步骤：
+
+1. 启动 App，观察 H5 URL 或 debug 信息中的 `conversationId`。
+2. 输入一条可识别内容，例如“明天上午十点开会”，不要清理 App 数据。
+3. 杀掉 App 后重新打开。
+
+预期结果：
+
+- Native 生成并持久化 `conversation_ios_*`。
+- 重启后 H5 仍使用同一个 `conversationId`。
+- 同一会话下能恢复历史 turn、待确认卡或 debug 摘要。
+
+验收证据：
+
+- 重启前后的 `conversationId`。
+- `pnpm collect:ios-acceptance-evidence` 生成的 `acceptance-evidence.json` 中 `ios.conversationPersistence.beforeRelaunch`、`afterRelaunch` 和 `stableAcrossRelaunch`。
+- `/agent/conversations/{conversationId}/turns` 响应摘要。
+
+### 键盘输入
+
+验收步骤：
+
+1. 点击原生底部输入框。
+2. 输入“明天上午十点提醒我带电脑”并发送。
+3. 点击 H5 确认卡确认。
+
+预期结果：
+
+- H5 收到 `native.inputSubmitted`。
+- 后端返回提醒确认卡。
+- 确认后 `/reminders` 中出现 scheduled 提醒。
+- H5 Timeline 和提醒页刷新出该提醒。
+
+验收证据：
+
+- 输入和确认卡截图。
+- bridge/debug 日志或 H5 Bridge Debug 面板含 `source=native.composer.keyboard`。
+- `/reminders?conversationId=...` 响应摘要。
+- 半自动采证可以优先定位 Native composer 的稳定可访问性标识：`ai-code.composer.mode-toggle-button`、`ai-code.composer.keyboard-text-field` 和 `ai-code.composer.submit-button`。
+
+### 语音输入
+
+验收步骤：
+
+1. 点击语音按钮。
+2. 首次使用时允许麦克风和语音识别权限。
+3. 说“明天上午十点提醒我带电脑”。
+4. 停止录音并确认 H5 收到识别文本。
+
+预期结果：
+
+- iOS 弹出麦克风 / 语音识别权限请求。
+- 授权后语音识别文本通过 `native.inputSubmitted` 提交。
+- 后端生成提醒确认卡。
+- 识别失败时 H5 显示 Native 能力失败，不创建错误业务事实。
+
+验收证据：
+
+- 权限弹窗截图或录屏。
+- 识别文本截图。
+- bridge/debug 日志或 H5 Bridge Debug 面板含 `source=native.composer.voice`。
+- 失败场景的 H5 状态栏文案。
+- 半自动采证可以定位 `ai-code.composer.voice-button` 和 `ai-code.composer.mode-toggle-button`，但语音权限弹窗和识别质量仍必须人工判断。
+
+### 照片附件
+
+验收步骤：
+
+1. 点击纸夹入口，选择照片。
+2. 首次使用时允许照片访问权限。
+3. 选择一张包含票据文字或金额的图片。
+4. 点击“作为费用票据处理”快捷回复。
+
+预期结果：
+
+- Native 通过 PhotosPicker 返回附件名称、类型、大小。
+- 小于 5MB 时 payload 包含 `base64Content`，H5 调用 `/attachments/upload`。
+- Vision OCR 识别出的文本追加到附件 `text`。
+- 如果识别到金额，后端生成费用确认卡；没有金额时进入金额追问。
+
+验收证据：
+
+- 照片选择流程截图。
+- bridge/debug payload 含 `inputKind=attachment`、`attachmentKind=image`、`attachmentSizeBytes`，小文件样例含 `base64Content`。
+- H5 Bridge Debug 面板应显示附件来源、`input=attachment` 和附件名，但不展示 `base64Content`。
+- `/attachments?conversationId=...` 响应摘要，包含 `contentStatus` 和文本摘要。
+- 费用确认卡或金额追问截图。
+- 半自动采证可以从 `ai-code.composer.attachment-button` 打开附件入口，但 PhotosPicker 权限、选择器体验和真实 OCR 质量仍必须人工判断。
+
+### 文件附件
+
+验收步骤：
+
+1. 点击纸夹入口，选择文件。
+2. 选择一个小文本文件或图片文件。
+3. 观察 H5 附件摘要卡和后续快捷回复。
+
+预期结果：
+
+- Native 通过 fileImporter 返回附件元数据。
+- 小于 5MB 时 H5 调用 `/attachments/upload`。
+- 大于 5MB 或读取失败时 H5 调用 `/attachments/intake`，保留元数据流程。
+- 文件读取失败不阻断用户继续对话。
+
+验收证据：
+
+- 文件选择截图。
+- bridge/debug payload 含 `inputKind=attachment`、文件名、MIME type、大小；超过 5MB 样例应记录没有 `base64Content`。
+- H5 Bridge Debug 面板应显示 `input=attachment` 和文件名，但不展示文件内容。
+- `/attachments?conversationId=...` 响应摘要。
+- H5 附件摘要卡截图。
+
+### PDF 文本提取
+
+验收步骤：
+
+1. 选择一个包含文字的 PDF。
+2. 观察附件摘要和后续“作为日程材料处理 / 作为费用票据处理”快捷回复。
+
+预期结果：
+
+- Native 使用 PDFKit 抽取页面文本。
+- 抽取文本进入附件 `text`。
+- 后端可基于附件摘要追问时间、金额或生成候选确认卡。
+
+验收证据：
+
+- PDF 选择截图。
+- `/attachments?conversationId=...` 中附件文本摘要。
+- 后续追问或确认卡截图。
+
+### 本地通知
+
+验收步骤：
+
+1. 创建一个未来 2 到 5 分钟的提醒并确认。
+2. 首次使用时允许通知权限。
+3. 保持 App 后台或锁屏等待通知。
+
+预期结果：
+
+- iOS 弹出通知权限请求。
+- 已确认 scheduled 提醒同步为本地通知。
+- 到点出现系统通知。
+- 如果权限拒绝，H5 显示“后端事项已保存，系统同步未开启”，提醒事实仍保留。
+
+验收证据：
+
+- 权限弹窗截图。
+- 系统通知截图。
+- 调试日志或 Xcode 控制台记录本地通知标识 `ai-code.reminder.{id}`。
+- 自动证据包 `ios.systemDiagnostics.notifications.authorizationStatus`、`notifications.pendingReminderCount` 和 `notifications.pendingReminderIds` 摘要。
+- 自动证据包显式开启 `--seed-notification-delivery` 后，`notificationDelivery.available=true`、`pendingNotificationFound=true`、`deliveredNotificationFound=true` 和 `notifications.deliveredReminderIds` 包含目标标识，可作为系统通知 delivered 诊断辅助证据；它不替代真实系统通知展示截图。
+- `/reminders?conversationId=...` 响应摘要。
+
+### 通知点击回流
+
+验收步骤：
+
+1. 点击系统提醒通知。
+2. 观察 App 是否打开提醒视图。
+3. 观察对应提醒是否高亮并滚动到可见位置。
+
+预期结果：
+
+- Native 打开 reminders drawer。
+- 通过 `native.viewChanged` 向 H5 发送 `view=reminders` 和 `reminderId`。
+- H5 刷新提醒快照并高亮对应提醒行。
+- 通知点击刷新时不重复触发 Native 日历或提醒同步。
+
+验收证据：
+
+- 点击通知后的提醒页截图或录屏。
+- H5 debug / bridge debug 中的 viewChanged 摘要，包含 `source=native.notifications.reminders.opened`、`view=reminders` 和 `reminderId`。
+- 自动证据包 `notificationClickBackflow.available=true`、`pendingNotificationFound=true`、`h5StatusText=已从系统通知打开提醒` 和 `highlightedReminderFound=true` 的摘要；该证据使用 synthetic Native message，只能辅助证明 H5 回流处理，不能替代真实系统通知点击录屏。
+
+### 系统日历写入
+
+验收步骤：
+
+1. 创建一个未来日程并确认。
+2. 首次使用时允许日历权限。
+3. 打开 iOS 系统日历检查事件。
+
+预期结果：
+
+- iOS 弹出日历 full access 权限请求。
+- 系统日历出现对应标题、开始时间和结束时间。
+- 重复刷新不创建重复系统日历事件。
+- 事件 notes 中保留 `AI_CODE_EVENT_ID:{id}` marker 和 `AI_CODE_ACTION_ID:{sourceActionId}` marker。
+
+验收证据：
+
+- 日历权限弹窗截图。
+- 系统日历事件截图。
+- 系统日历 notes 中包含 `AI_CODE_EVENT_ID:{id}` 与 `AI_CODE_ACTION_ID:{sourceActionId}`。
+- 自动证据包显式开启 `--capture-calendar-system-app` 后生成的 `system-calendar-app.png` 可作为系统 Calendar UI 辅助截图，但仍需人工复核事件标题和日期。
+- `/calendar/events?conversationId=...` 响应摘要。
+
+### 系统日历取消清理
+
+验收步骤：
+
+1. 在 H5 或 Timeline 中取消刚创建的日程。
+2. 打开系统日历检查同一事件。
+
+预期结果：
+
+- 后端日程状态变为 `canceled`。
+- H5 仍向 Native 同步 canceled event。
+- iOS 根据 marker 删除旧系统日历事件。
+- H5 状态显示业务执行完成。
+
+验收证据：
+
+- H5 取消动作截图。
+- 系统日历中事件消失的截图。
+- `/calendar/events?conversationId=...` 响应摘要。
+- 自动证据包 `calendarCleanupSeed.available=true`、`preCancelStoredIdentifierPresent=true`、`postCancelStoredIdentifierPresent=false` 和 `calendar.removedEventIds` 包含目标 event id 的摘要。
+
+### 后端事实确认
+
+验收步骤：
+
+1. 分别创建并确认日程、提醒和费用。
+2. 切换到 Timeline、日程、提醒、费用和执行记录页。
+
+预期结果：
+
+- 三类事项均由后端事实驱动展示，不依赖前端 demo 数据。
+- Timeline 能合并展示日程、提醒和费用。
+- 执行记录包含 `action_executed` 或 `direct_action_executed`。
+
+验收证据：
+
+- 五个页面截图。
+- `pnpm collect:ios-acceptance-evidence` 生成的 `acceptance-evidence.json` 中 `backendFactSnapshot.counts` 和对应 `commands`。
+- `/execution-ledger?conversationId=...` 响应摘要。
+
+### 系统同步降级
+
+验收步骤：
+
+1. 拒绝通知或日历权限。
+2. 创建并确认对应提醒或日程。
+
+预期结果：
+
+- 后端事实仍写入成功。
+- H5 状态栏显示“后端事项已保存，系统同步未开启”。
+- 对输入能力失败，例如语音启动失败，仍显示 failed，不误报业务成功。
+
+验收证据：
+
+- 权限拒绝截图。
+- H5 状态栏截图。
+- 后端事实接口响应摘要。
+- 自动证据包 `calendarPermissionDenialSeed.available=true`、`calendar.authorizationStatus=denied`、`calendar.lastSyncStatus=failed`、`calendar.lastError` 和后端日程事实摘要。
+
+## 不能由自动 smoke 替代
+
+以下内容不能由当前自动 smoke 证明，必须保留人工验收：
+
+- 用户是否看到了正确的 iOS 权限弹窗。
+- 语音识别是否在真实环境中稳定识别中文。
+- PhotosPicker / fileImporter 是否符合预期交互。
+- Vision OCR 和 PDFKit 在真实样本上的文本质量。
+- 系统通知是否在后台、锁屏或前台按预期展示。
+- 通知点击是否在真实交互中回到正确提醒。
+- EventKit 是否写入用户可见日历，并正确清理取消事件。
+- 真机局域网、系统防火墙和 ATS 调试白名单组合是否可用。
+
+## 自动门禁覆盖范围
+
+- `pnpm validate:ios-build`：证明 Swift 工程可以构建。
+- `pnpm validate:ios-simulator-smoke`：证明 App 可以安装并启动到 iPhone Simulator。
+- `pnpm collect:ios-acceptance-evidence`：采集 iOS 辅助证据包，证明本地服务、H5 地址、构建、安装、启动和截图链路可复查。
+- `pnpm validate:h5-click-smoke`：证明 H5 主链路可点击，并验证发给 Native 的日历 / 提醒 sync payload。
+- `pnpm validate:product-smoke`：证明 in-memory 后端产品主路径。
+- `pnpm validate:product-smoke:postgres`：证明 Postgres migration、repository 和产品 API 主路径。
+- `pnpm validate:llm-smoke`：证明真实 LLM provider 的主要对话路由质量。
+
+人工验收和自动门禁应互补使用：自动门禁防代码回归，人工验收确认系统权限和真实设备体验。
