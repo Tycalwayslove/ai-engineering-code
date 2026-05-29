@@ -72,6 +72,18 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-navigation-ui-test"'
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-navigation-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:v1-readiness"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-v1-readiness.mjs");
+assertIncludes(packageJsonPath, packageJson, '"collect:v1-completion-audit"');
+assertIncludes(packageJsonPath, packageJson, "scripts/collect-v1-completion-audit.mjs");
+
+const v1CompletionAuditScriptPath = "scripts/collect-v1-completion-audit.mjs";
+const v1CompletionAuditScript = readRequired(v1CompletionAuditScriptPath);
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "requiredAutomatedCommands");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "validate:ios-acceptance-evidence");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "validate:native-shells");
+
+const v1CompletionAuditTestPath = "scripts/collect-v1-completion-audit.test.mjs";
+const v1CompletionAuditTest = readRequired(v1CompletionAuditTestPath);
+assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "collect:v1-completion-audit");
 
 const iosBuildScriptPath = "scripts/validate-ios-build.mjs";
 const iosBuildScript = readRequired(iosBuildScriptPath);

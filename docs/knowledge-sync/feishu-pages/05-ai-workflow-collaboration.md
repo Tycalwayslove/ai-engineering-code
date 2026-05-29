@@ -418,3 +418,15 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 这仍不代表 goal complete；它只让最终审计的自动化证据范围更完整。
 
 这让收尾流程更抗回归：最终不是只验证 App 功能本身，也验证用于证明 App 功能的证据工具链仍然可靠。
+
+## native-shells 守住 completion audit
+
+2026-05-29 的收尾治理把 `collect:v1-completion-audit` 纳入 `pnpm validate:native-shells`。这个总护栏现在不仅检查 iOS 原生壳、UI test 和采证脚本，也检查 v1 completion audit 根命令和测试入口。
+
+这项能力的协作边界是：
+
+- `validate-native-shells.test.mjs` 负责守住 validator 自身是否包含 completion audit 检查。
+- `validate-native-shells.mjs` 负责检查 package script 和脚本文件引用没有被误删。
+- 它不执行正式 completion audit，也不证明人工验收完成；它只保证最终审计入口仍然存在。
+
+这让原生壳收尾更像一个闭环：功能入口、证据入口和最终审计入口都被同一个结构护栏覆盖。

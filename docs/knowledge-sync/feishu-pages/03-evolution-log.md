@@ -4163,3 +4163,29 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段让 completion audit 更接近真实收尾需要：不仅验证产品主链路，也验证“证据生成工具”和“原生壳结构护栏”本身仍可信，降低最终验收时工具链悄悄退化的风险。
+
+## 阶段 152：native-shells 守住 v1 completion audit 入口
+
+问题背景：
+
+- v1 completion audit 已经成为最终收尾的统一归档入口，但 `validate:native-shells` 还没有直接检查这个根命令和脚本文件。
+- 如果后续整理 package scripts 或采证脚本时误删 `collect:v1-completion-audit`，只靠人工阅读 readiness 文档不够稳。
+- 原生壳收尾相关的总护栏应该同时守住 UI test、采证脚本和 completion audit 入口。
+
+完成内容：
+
+- 新增 `scripts/validate-native-shells.test.mjs`。
+- `pnpm validate:native-shells` 改为先运行该测试，再运行原有 `scripts/validate-native-shells.mjs`。
+- `validate-native-shells.mjs` 新增对以下内容的结构检查：
+  - `collect:v1-completion-audit`
+  - `scripts/collect-v1-completion-audit.mjs`
+  - `scripts/collect-v1-completion-audit.test.mjs`
+
+验证结果：
+
+- 红灯：新增测试先因 `validate:native-shells` 未包含测试命令而失败。
+- 绿灯：补齐 package script 和 validator 检查后，`node --test scripts/validate-native-shells.test.mjs` 通过。
+
+阶段价值：
+
+这一阶段把 completion audit 从“有命令”推进到“被原生壳总护栏守住”。后续如果有人删掉审计入口或测试入口，`pnpm validate:native-shells` 会直接失败，减少 v1 收尾工具链被误拆的风险。

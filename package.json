@@ -40,7 +40,7 @@
     "validate:product-smoke:live": "PATH=.venv/bin:$PATH python scripts/validate_product_smoke.py --live",
     "validate:product-smoke:postgres": "PATH=.venv/bin:$PATH python scripts/validate_product_smoke.py --postgres",
     "validate:sdk-runtime": "node scripts/validate-sdk-runtime.mjs",
-    "validate:native-shells": "node scripts/validate-native-shells.mjs",
+    "validate:native-shells": "node --test scripts/validate-native-shells.test.mjs && node scripts/validate-native-shells.mjs",
     "validate:v1-readiness": "node scripts/validate-v1-readiness.mjs",
     "format": "prettier --write ."
   },
