@@ -353,3 +353,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 最终 completion audit 仍需要人工验收记录，把真实语音权限、识别文本、失败文案、接口摘要和 bridge marker 补齐后再运行 `--require-complete` 校验。
 
 这让语音输入验收从“只能人工点击观察整条链路”推进到“语音入口到后端提醒事实闭环自动防回归，真实 Speech 质量由人工验收负责”。
+
+## iOS 原生附件菜单 UI test 门禁
+
+2026-05-29 的补证推进新增了 `pnpm validate:ios-attachment-ui-test`。它通过 Xcode UI test 真实点击 Native composer 的 `ai-code.composer.attachment-button`，并断言系统菜单展示“选择附件”“选择照片”“选择文件”和“取消”。
+
+这项能力的协作边界是：
+
+- UI test 负责把“Native 纸夹按钮 + 附件菜单 + 照片 / 文件入口可见”变成可重复运行的工程门禁。
+- `collect:ios-attachment-evidence` 继续负责把同形态 Native 附件 payload 的 H5 / 后端处理结果整理进证据包。
+- UI test 不进入真实 PhotosPicker 或 fileImporter，不证明照片权限弹窗、安全作用域文件读取、Vision OCR、PDFKit 抽取质量、5MB 边界或用户真实选择流程；这些仍必须按 iOS 人工验收清单保留截图、录屏和接口摘要。
+- 最终 completion audit 仍需要人工验收记录，把真实照片 / 文件 / PDF 样本、bridge marker、后端附件摘要和结论补齐后再运行 `--require-complete` 校验。
+
+这让附件入口验收从“菜单是否打开也靠人工观察”推进到“入口与菜单选项自动防回归，真实系统选择器和内容抽取质量由人工验收负责”。

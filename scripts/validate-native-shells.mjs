@@ -66,6 +66,8 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-keyboard-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-keyboard-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-voice-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-voice-ui-test.mjs");
+assertIncludes(packageJsonPath, packageJson, '"validate:ios-attachment-ui-test"');
+assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-attachment-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:v1-readiness"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-v1-readiness.mjs");
 
@@ -99,6 +101,15 @@ assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "NativeKeyboardIn
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "testNativeVoiceComposerConfirmsReminderThroughBackend");
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "CODE_SIGNING_ALLOWED=NO");
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "Executed");
+
+const iosAttachmentUiTestScriptPath = "scripts/validate-ios-attachment-ui-test.mjs";
+const iosAttachmentUiTestScript = readRequired(iosAttachmentUiTestScriptPath);
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "xcodebuild");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "AIEngineeringCodeUITests");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "NativeKeyboardInputUITests");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "testNativeAttachmentButtonPresentsAttachmentChoices");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "CODE_SIGNING_ALLOWED=NO");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "Executed");
 
 const iosAcceptanceEvidenceScriptPath = "scripts/collect-ios-acceptance-evidence.mjs";
 const iosAcceptanceEvidenceScript = readRequired(iosAcceptanceEvidenceScriptPath);
@@ -243,6 +254,11 @@ assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeVoiceCompose
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "AI_CODE_UI_TEST_VOICE_TRANSCRIPT");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.voice-button");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "source=native.composer.voice");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeAttachmentButtonPresentsAttachmentChoices");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.attachment-button");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "选择附件");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "选择照片");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "选择文件");
 
 const iosInfoPlistPath = "apps/ios/AIEngineeringCode/Info.plist";
 const iosInfoPlist = readRequired(iosInfoPlistPath);

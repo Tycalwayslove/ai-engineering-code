@@ -27,6 +27,19 @@ final class NativeKeyboardInputUITests: XCTestCase {
         confirmReminderFact(inputText, source: "source=native.composer.voice", in: app)
     }
 
+    func testNativeAttachmentButtonPresentsAttachmentChoices() throws {
+        let app = launchApp(conversationPrefix: "conversation_ui_attachment")
+
+        let attachmentButton = app.buttons["ai-code.composer.attachment-button"]
+        XCTAssertTrue(attachmentButton.waitForExistence(timeout: 20), app.debugDescription)
+        attachmentButton.tap()
+
+        XCTAssertTrue(button(containing: "选择照片", in: app, timeout: 10).exists, app.debugDescription)
+        XCTAssertTrue(button(containing: "选择文件", in: app, timeout: 10).exists, app.debugDescription)
+        XCTAssertTrue(button(containing: "取消", in: app, timeout: 10).exists, app.debugDescription)
+        XCTAssertTrue(waitForStaticText(containing: "选择附件", in: app, timeout: 10), app.debugDescription)
+    }
+
     private func confirmReminderFact(
         _ inputText: String,
         source: String,

@@ -4025,3 +4025,31 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把语音自动门禁从“真实 Speech 路径只能人工验收”推进到“Native 语音入口、H5 确认卡和后端提醒事实闭环可由 Xcode UI test 自动防回归”。它刻意不声称证明真实麦克风权限、真实录音或中文识别质量；这些仍保留在 iOS 人工验收记录中。
+
+## 阶段 147：iOS 原生附件菜单 UI test 门禁
+
+问题背景：
+
+- iOS 附件入口已经接入真实 `PhotosPicker` 和 `fileImporter`，并且 H5 / 后端已有 synthetic 附件 payload 证据。
+- 但“用户点击纸夹后是否真的看到选择照片 / 选择文件入口”此前仍主要依赖人工截图，缺少可重复的 Xcode UI test 门禁。
+- 真实照片选择、文件选择、安全作用域读取、Vision OCR 和 PDFKit 抽取质量仍必须人工验收；本阶段只自动证明入口和菜单选项可见。
+
+完成内容：
+
+- `NativeKeyboardInputUITests` 新增 `testNativeAttachmentButtonPresentsAttachmentChoices`：
+  - 启动独立 `AI_CODE_UI_TEST_CONVERSATION_ID`。
+  - 点击 `ai-code.composer.attachment-button`。
+  - 断言系统菜单展示“选择附件”“选择照片”“选择文件”和“取消”。
+- 新增根命令 `pnpm validate:ios-attachment-ui-test`，封装 `xcodebuild test` 并检查实际执行至少 1 个 XCTest，避免 0-test 假阳性。
+- `validate:native-shells` 新增结构护栏，要求 package script、attachment UI test 脚本、XCTest 名称、附件按钮标识和菜单文案断言都存在。
+- `apps/ios/README.md`、iOS 系统能力验收清单、v1 readiness 审计和当前项目状态已更新覆盖范围与边界。
+
+验证结果：
+
+- 红灯：`pnpm validate:native-shells` 先因缺少 `validate:ios-attachment-ui-test`、脚本文件、XCTest 名称、附件按钮标识和菜单文案断言失败。
+- 绿灯：补齐实现后，`pnpm validate:native-shells` 通过。
+- live UI test：`pnpm validate:ios-attachment-ui-test` 在本机 iPhone 16 Pro Max Simulator 上执行 1 个 XCTest、0 个失败，覆盖 Native 纸夹按钮点击和附件菜单选项可见。
+
+阶段价值：
+
+这一阶段把附件入口验收从“只靠人工确认纸夹能打开菜单”推进到“纸夹按钮与照片 / 文件菜单选项可由 Xcode UI test 自动防回归”。它不替代真实 PhotosPicker、fileImporter、权限弹窗、OCR 或 PDFKit 样本质量验收；这些仍保留在 iOS 人工验收记录中。

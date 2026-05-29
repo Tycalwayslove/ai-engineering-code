@@ -195,6 +195,14 @@ pnpm validate:ios-voice-ui-test
 
 该命令通过 Xcode UI test 真实点击 `ai-code.composer.voice-button`，并通过 UI test 专用的 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 注入识别文本，随后断言 H5 Bridge Debug 出现 `source=native.composer.voice`，点击 H5 确认卡，并看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该注入只在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时生效，不影响普通 App 的真实 Speech / Microphone 路径；它不能替代麦克风权限弹窗、真实录音和中文识别质量的人工验收。
 
+如果要验证 Native 纸夹入口能打开附件菜单，可以运行：
+
+```bash
+pnpm validate:ios-attachment-ui-test
+```
+
+该命令通过 Xcode UI test 真实点击 `ai-code.composer.attachment-button`，并断言系统菜单展示“选择附件”“选择照片”“选择文件”和“取消”。它只证明附件入口可点击和菜单选项可见，不替代 PhotosPicker、fileImporter、系统权限弹窗、安全作用域文件读取、Vision OCR 或 PDFKit 抽取质量验收。
+
 系统权限和真机体验不能只靠自动 smoke 判断。第一版发布前需要按仓库清单执行人工验收：
 
 ```bash
