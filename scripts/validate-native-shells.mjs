@@ -62,6 +62,8 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-manual-acceptance"')
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-manual-acceptance.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-simulator-smoke"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-simulator-smoke.mjs");
+assertIncludes(packageJsonPath, packageJson, '"validate:ios-keyboard-ui-test"');
+assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-keyboard-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:v1-readiness"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-v1-readiness.mjs");
 
@@ -78,6 +80,14 @@ assertIncludes(iosSimulatorSmokeScriptPath, iosSimulatorSmokeScript, "simctl");
 assertIncludes(iosSimulatorSmokeScriptPath, iosSimulatorSmokeScript, "com.aiengineeringcode.shell");
 assertIncludes(iosSimulatorSmokeScriptPath, iosSimulatorSmokeScript, "get_app_container");
 assertIncludes(iosSimulatorSmokeScriptPath, iosSimulatorSmokeScript, "launch");
+
+const iosKeyboardUiTestScriptPath = "scripts/validate-ios-keyboard-ui-test.mjs";
+const iosKeyboardUiTestScript = readRequired(iosKeyboardUiTestScriptPath);
+assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "xcodebuild");
+assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "AIEngineeringCodeUITests");
+assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "NativeKeyboardInputUITests");
+assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "testNativeKeyboardComposerSubmitsThroughH5Bridge");
+assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "CODE_SIGNING_ALLOWED=NO");
 
 const iosAcceptanceEvidenceScriptPath = "scripts/collect-ios-acceptance-evidence.mjs";
 const iosAcceptanceEvidenceScript = readRequired(iosAcceptanceEvidenceScriptPath);
@@ -186,6 +196,30 @@ assertNotIncludes(iosShellPath, iosShell, "startMockVoiceInput");
 assertNotIncludes(iosShellPath, iosShell, "明天上午九点提醒我带电脑");
 assertNotIncludes(iosShellPath, iosShell, "把昨天 58 元打车票报销");
 assertNotIncludes(iosShellPath, iosShell, "附件 mock");
+
+const iosProjectPath = "apps/ios/AIEngineeringCode.xcodeproj/project.pbxproj";
+const iosProject = readRequired(iosProjectPath);
+assertIncludes(iosProjectPath, iosProject, "AIEngineeringCodeUITests");
+assertIncludes(iosProjectPath, iosProject, "NativeKeyboardInputUITests.swift");
+assertIncludes(iosProjectPath, iosProject, "com.apple.product-type.bundle.ui-testing");
+assertIncludes(iosProjectPath, iosProject, "TEST_TARGET_NAME = AIEngineeringCode");
+
+const iosSharedSchemePath =
+  "apps/ios/AIEngineeringCode.xcodeproj/xcshareddata/xcschemes/AIEngineeringCode.xcscheme";
+const iosSharedScheme = readRequired(iosSharedSchemePath);
+assertIncludes(iosSharedSchemePath, iosSharedScheme, "AIEngineeringCodeUITests");
+assertIncludes(iosSharedSchemePath, iosSharedScheme, "BuildAction");
+assertIncludes(iosSharedSchemePath, iosSharedScheme, "TestAction");
+
+const iosKeyboardUiTestPath =
+  "apps/ios/AIEngineeringCodeUITests/NativeKeyboardInputUITests.swift";
+const iosKeyboardUiTest = readRequired(iosKeyboardUiTestPath);
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "XCUIApplication");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.mode-toggle-button");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.keyboard-text-field");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.submit-button");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "source=native.composer.keyboard");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeKeyboardComposerSubmitsThroughH5Bridge");
 
 const iosInfoPlistPath = "apps/ios/AIEngineeringCode/Info.plist";
 const iosInfoPlist = readRequired(iosInfoPlistPath);

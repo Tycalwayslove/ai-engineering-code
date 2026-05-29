@@ -11,7 +11,18 @@
 		A10000000000000000000002 /* HybridShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* HybridShellView.swift */; };
 		A10000000000000000000003 /* H5WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* H5WebView.swift */; };
 		A10000000000000000000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* Assets.xcassets */; };
+		A20000000000000000000001 /* NativeKeyboardInputUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* NativeKeyboardInputUITests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A20000000000000000000042 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000060 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A10000000000000000000040;
+			remoteInfo = AIEngineeringCode;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000010 /* AIEngineeringCode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AIEngineeringCode.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -20,10 +31,19 @@
 		A10000000000000000000013 /* H5WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H5WebView.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000010 /* AIEngineeringCodeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AIEngineeringCodeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000011 /* NativeKeyboardInputUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeKeyboardInputUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A10000000000000000000020 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A20000000000000000000020 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -37,6 +57,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000031 /* AIEngineeringCode */,
+				A20000000000000000000031 /* AIEngineeringCodeUITests */,
 				A10000000000000000000032 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -53,10 +74,19 @@
 			path = AIEngineeringCode;
 			sourceTree = "<group>";
 		};
+		A20000000000000000000031 /* AIEngineeringCodeUITests */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000011 /* NativeKeyboardInputUITests.swift */,
+			);
+			path = AIEngineeringCodeUITests;
+			sourceTree = "<group>";
+		};
 		A10000000000000000000032 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000010 /* AIEngineeringCode.app */,
+				A20000000000000000000010 /* AIEngineeringCodeUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -81,6 +111,24 @@
 			productReference = A10000000000000000000010 /* AIEngineeringCode.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A20000000000000000000040 /* AIEngineeringCodeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A20000000000000000000070 /* Build configuration list for PBXNativeTarget "AIEngineeringCodeUITests" */;
+			buildPhases = (
+				A20000000000000000000050 /* Sources */,
+				A20000000000000000000020 /* Frameworks */,
+				A20000000000000000000051 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A20000000000000000000041 /* PBXTargetDependency */,
+			);
+			name = AIEngineeringCodeUITests;
+			productName = AIEngineeringCodeUITests;
+			productReference = A20000000000000000000010 /* AIEngineeringCodeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -93,6 +141,10 @@
 				TargetAttributes = {
 					A10000000000000000000040 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					A20000000000000000000040 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A10000000000000000000040;
 					};
 				};
 			};
@@ -110,6 +162,7 @@
 			projectRoot = "";
 			targets = (
 				A10000000000000000000040 /* AIEngineeringCode */,
+				A20000000000000000000040 /* AIEngineeringCodeUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -120,6 +173,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000004 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A20000000000000000000051 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,7 +196,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A20000000000000000000050 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A20000000000000000000001 /* NativeKeyboardInputUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A20000000000000000000041 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A10000000000000000000040 /* AIEngineeringCode */;
+			targetProxy = A20000000000000000000042 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A10000000000000000000062 /* Debug */ = {
@@ -289,6 +365,38 @@
 			};
 			name = Release;
 		};
+		A20000000000000000000071 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aiengineeringcode.shellUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = AIEngineeringCode;
+			};
+			name = Debug;
+		};
+		A20000000000000000000072 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aiengineeringcode.shellUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = AIEngineeringCode;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -306,6 +414,15 @@
 			buildConfigurations = (
 				A10000000000000000000071 /* Debug */,
 				A10000000000000000000072 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A20000000000000000000070 /* Build configuration list for PBXNativeTarget "AIEngineeringCodeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A20000000000000000000071 /* Debug */,
+				A20000000000000000000072 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

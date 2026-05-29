@@ -3928,3 +3928,36 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把照片 / 文件 / PDF 附件从“人工复核前必须手工整理所有 H5 / 后端证据”推进到“自动整理附件 payload、后端读模型和 H5 摘要卡候选证据”。它减少补证整理成本，但不替代真实系统选择器和原生文本抽取质量验收。
+
+## 阶段 144：iOS 原生键盘 UI test 门禁
+
+问题背景：
+
+- `collect:ios-keyboard-evidence` 已经能证明 H5 / 后端处理 `source=native.composer.keyboard` 的辅助链路。
+- 但键盘输入的真实 Native TextField、系统键盘弹出、用户输入和发送按钮此前仍只能靠人工截图或录屏，缺少可重复的工程门禁。
+
+完成内容：
+
+- 新增 `AIEngineeringCodeUITests` UI test target，并在共享 scheme 中纳入 TestAction。
+- 新增 `NativeKeyboardInputUITests.testNativeKeyboardComposerSubmitsThroughH5Bridge`：
+  - 启动 App。
+  - 点击 `ai-code.composer.mode-toggle-button`。
+  - 聚焦 `ai-code.composer.keyboard-text-field`。
+  - 等待系统键盘出现。
+  - 输入“明天上午十点提醒我带电脑”。
+  - 点击 `ai-code.composer.submit-button`。
+  - 在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 和提交文本。
+- 新增根命令 `pnpm validate:ios-keyboard-ui-test`，统一封装 `xcodebuild test`。
+- 为 UI test 增加启动参数 `--ai-code-ui-test-disable-system-permission-requests`，让通知 / 日历同步在该测试里只回 ack、不请求系统权限，避免键盘路径被系统弹窗污染。
+- `docs/qa/ios-v1-system-acceptance.md`、`docs/qa/v1-readiness-audit.md` 和 `apps/ios/README.md` 已补充命令、覆盖范围和边界。
+
+验证结果：
+
+- 红灯：`pnpm validate:native-shells` 先因缺少 UI test target、脚本、共享 scheme 和测试文件失败。
+- 红灯：补入 readiness / manual acceptance 校验后，`pnpm validate:v1-readiness` 和 `pnpm validate:ios-manual-acceptance` 先因文档未包含新命令失败。
+- 首次 live UI test 失败在系统通知权限弹窗，证明测试会真实进入 Simulator 交互路径。
+- 绿灯：加入 UI test 专用系统权限请求旁路后，`pnpm validate:ios-keyboard-ui-test` 通过，XCTest 执行 1 个测试、0 个失败。
+
+阶段价值：
+
+这一阶段把键盘输入从“synthetic bridge 辅助证据 + 人工截图”推进到“真实 Native 输入框、系统键盘和发送动作可由 Xcode UI test 自动验证”。它仍不替代最终人工验收记录里的截图、接口摘要和验收结论，但显著降低了键盘路径回归风险。

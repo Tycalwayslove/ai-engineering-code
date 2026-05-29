@@ -174,6 +174,19 @@ pnpm validate:ios-simulator-smoke
 - `AI_CODE_IOS_SIMULATOR_KEEP_BOOTED=1`
 - `AI_CODE_IOS_SIMULATOR_KEEP_APP_RUNNING=1`
 
+如果要验证真实 Native 键盘输入路径，可以在本地 H5 页面可访问时运行：
+
+```bash
+pnpm validate:ios-keyboard-ui-test
+```
+
+该命令通过 Xcode UI test 启动 `AIEngineeringCodeUITests`，真实点击 mode toggle、Native TextField、系统键盘和发送按钮，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本。UI test 会通过启动参数跳过通知 / 日历权限请求，避免系统同步弹窗污染键盘路径。可用以下环境变量覆盖：
+
+- `AI_CODE_IOS_KEYBOARD_UI_TEST_DESTINATION`
+- `AI_CODE_IOS_KEYBOARD_UI_TEST_TIMEOUT_MS`
+- `AI_CODE_IOS_DERIVED_DATA_PATH`
+- `H5_DEV_SERVER_URL`
+
 系统权限和真机体验不能只靠自动 smoke 判断。第一版发布前需要按仓库清单执行人工验收：
 
 ```bash

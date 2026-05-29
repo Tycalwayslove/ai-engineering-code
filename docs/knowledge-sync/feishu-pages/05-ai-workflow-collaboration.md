@@ -326,3 +326,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - review 文件仍保持 `status=pending` 和 `acceptanceVerdict=not_evaluated`，不能把候选证据自动改成通过。
 
 这让 iOS 附件验收从“所有证据都靠手工复制”变成“系统选择器和抽取质量由人复核，H5 / 后端链路由自动证据包辅助整理”。
+
+## iOS 原生键盘 UI test 门禁
+
+2026-05-29 的补证推进新增了 `pnpm validate:ios-keyboard-ui-test`。它通过 Xcode UI test 真实点击 Native composer 的 mode toggle、TextField、系统键盘和发送按钮，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本。
+
+这项能力的协作边界是：
+
+- UI test 负责把“真实 Native 输入框 + 系统键盘 + 发送按钮”变成可重复运行的工程门禁。
+- `collect:ios-keyboard-evidence` 继续负责 H5 / 后端确认卡、确认执行和 `/reminders` 读模型的辅助证据整理。
+- UI test 使用专用启动参数跳过通知 / 日历权限请求，避免系统同步弹窗污染键盘路径；它不代表通知、日历、语音或附件系统能力已经通过。
+- 最终 completion audit 仍需要人工验收记录，把截图、接口摘要、bridge marker 和结论补齐后再运行 `--require-complete` 校验。
+
+这让键盘输入验收从“完全依赖人工操作”推进到“真实原生输入路径自动防回归，人工验收负责最终留证和结论”。

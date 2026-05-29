@@ -13,6 +13,13 @@ private let nativeAttachmentBase64LimitBytes = 5 * 1024 * 1024
 private let nativeConversationIdStorageKey = "ai-code.native.conversationId"
 private let nativeSystemDiagnosticsStorageKey = "ai-code.native.systemDiagnostics"
 
+private enum NativeRuntimeFlags {
+    static var disablesSystemPermissionRequests: Bool {
+        ProcessInfo.processInfo.arguments.contains("--ai-code-ui-test-disable-system-permission-requests") ||
+            ProcessInfo.processInfo.environment["AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS"] == "1"
+    }
+}
+
 private enum NativeConversationIdentity {
     static var stableConversationId: String {
         if let stored = UserDefaults.standard.string(forKey: nativeConversationIdStorageKey),
@@ -744,6 +751,23 @@ struct HybridShellView: View {
     private func syncReminderNotifications(_ payloads: [[String: String]]) {
         let reminders = payloads.compactMap(NativeReminderNotification.init(payload:))
 
+        if NativeRuntimeFlags.disablesSystemPermissionRequests {
+            let payload = [
+                "inputReminderCount": "\(reminders.count)",
+                "notifications.inputReminderCount": "\(reminders.count)",
+                "notifications.lastSyncStatus": "skipped_for_ui_test",
+                "reason": "ui_test_system_permission_requests_disabled",
+                "source": "native.notifications.reminders.sync",
+                "status": "skipped",
+            ]
+            recordNativeSystemDiagnostics(payload)
+            bridgeEvent = NativeBridgeOutboundEvent(
+                payload: payload,
+                type: "native.ack"
+            )
+            return
+        }
+
         reminderNotifications.sync(
             reminders: reminders,
             onSynced: { scheduledCount, skippedCount in
@@ -787,6 +811,23 @@ struct HybridShellView: View {
 
     private func syncCalendarEvents(_ payloads: [[String: String]]) {
         let events = payloads.compactMap(NativeCalendarEvent.init(payload:))
+
+        if NativeRuntimeFlags.disablesSystemPermissionRequests {
+            let payload = [
+                "calendar.inputEventCount": "\(events.count)",
+                "calendar.lastSyncStatus": "skipped_for_ui_test",
+                "inputEventCount": "\(events.count)",
+                "reason": "ui_test_system_permission_requests_disabled",
+                "source": "native.calendar.events.sync",
+                "status": "skipped",
+            ]
+            recordNativeSystemDiagnostics(payload)
+            bridgeEvent = NativeBridgeOutboundEvent(
+                payload: payload,
+                type: "native.ack"
+            )
+            return
+        }
 
         calendarEvents.sync(
             events: events,

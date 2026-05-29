@@ -39,6 +39,7 @@ for (const expected of [
   "pnpm validate:product-smoke:postgres",
   "pnpm validate:h5-click-smoke",
   "pnpm validate:ios-build",
+  "pnpm validate:ios-keyboard-ui-test",
   "pnpm validate:ios-simulator-smoke",
   "pnpm validate:ios-manual-acceptance",
   "pnpm validate:ios-manual-evidence-record",
