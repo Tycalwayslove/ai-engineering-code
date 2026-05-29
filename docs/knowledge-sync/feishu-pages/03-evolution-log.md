@@ -4256,3 +4256,30 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“外部知识库是否同步”从最终回复里的人工提醒，推进到 completion audit 的结构化证据字段。后续收尾时，即使没有实际同步飞书或 Obsidian，审计包也会明确记录未同步状态和必须披露的文案，避免把仓库源稿更新误说成外部知识库已同步。
+
+## 阶段 155：completion audit 自动选择人工证据记录
+
+问题背景：
+
+- iOS 自动证据包会生成多轮 `manual-evidence-record.review.json`、`manual-evidence-record.draft.json`，最终人工补证还可能生成 `manual-evidence-record.filled.json`。
+- 旧的 completion audit 必须手动传入精确 `<path>`，在 `.tmp/ios-acceptance-evidence` 多个 run 并存时容易选错记录或误用旧缺口报告。
+- 需要让正式收尾命令能自动选择当前最合适的人工记录，同时仍保持“review / draft 不能替代人工验收”的完成门槛。
+
+完成内容：
+
+- `collect-v1-completion-audit` 新增 `--manual-record best|latest` 和 `--manual-record-root <dir>`。
+- `best` 会递归扫描 root 下的 `manual-evidence-record.filled.json`、`manual-evidence-record.review.json` 和 `manual-evidence-record.draft.json`，优先选择 `--require-complete` 校验通过的记录；未通过时按缺口更少、类型优先级更高、更新时间更近选择候选。
+- 审计 JSON 的 `manualEvidence.selection` 记录策略、root、候选数量、选中路径、选中记录缺口数和 completion 校验状态。
+- `validate:native-shells` 增加 `manual-record-root`、`manualRecordStrategies` 和 `manual-record best` 结构护栏，防止自动选择入口被误删。
+- `docs/qa/v1-readiness-audit.md` 和 `docs/qa/ios-v1-system-acceptance.md` 已把正式收尾示例更新为可使用 `--manual-record best --manual-record-root .tmp/ios-acceptance-evidence`。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-v1-completion-audit.test.mjs` 先因 CLI 不支持 `--manual-record-root` / 无法生成 audit 失败。
+- 绿灯：补齐递归扫描、排序选择和 `manualEvidence.selection` 后，同一测试通过。
+- 红灯：`node --test scripts/validate-native-shells.test.mjs` 先因 validator 未守住 `manual-record-root` 失败。
+- 绿灯：补齐 validator 检查后，同一测试通过。
+
+阶段价值：
+
+这一阶段把 completion audit 从“必须手动找记录路径”推进到“可以自动选出当前证据最完整的人工记录”。它减少了最终收尾的人为操作成本，但不降低完成门槛：只有自动化命令全部通过且选中的人工记录通过 completion 校验时，audit 才能给出 `passed`。

@@ -49,6 +49,8 @@ for (const expected of [
   "pnpm validate:native-shells",
   "pnpm validate:context-sync",
   "pnpm collect:v1-completion-audit",
+  "--manual-record best",
+  "--manual-record-root",
   "externalKnowledgeSync",
   "--external-knowledge-status",
   "git diff --check",

@@ -14,6 +14,16 @@ const defaultExternalKnowledgeSourceDraftPaths = [
   "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
   "docs/knowledge-sync/feishu-pages/05-ai-workflow-collaboration.md",
 ];
+const defaultManualRecordRoot = path.join(".tmp", "ios-acceptance-evidence");
+const manualRecordStrategies = new Set(["best", "latest"]);
+const manualEvidenceRecordFileNames = [
+  "manual-evidence-record.filled.json",
+  "manual-evidence-record.review.json",
+  "manual-evidence-record.draft.json",
+];
+const manualEvidenceRecordPriority = new Map(
+  manualEvidenceRecordFileNames.map((fileName, index) => [fileName, index])
+);
 
 export const requiredAutomatedCommands = [
   {
@@ -141,8 +151,117 @@ function readManualRecord(manualRecordPath) {
   return JSON.parse(fs.readFileSync(absolutePath, "utf8"));
 }
 
+function relativeToRoot(absolutePath) {
+  return path.relative(rootDir, absolutePath) || ".";
+}
+
+function collectManualRecordCandidates(manualRecordRoot = defaultManualRecordRoot) {
+  const absoluteRoot = path.resolve(rootDir, manualRecordRoot);
+  if (!fs.existsSync(absoluteRoot)) {
+    return [];
+  }
+
+  const candidates = [];
+  const visit = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        visit(entryPath);
+        continue;
+      }
+      if (!entry.isFile() || !manualEvidenceRecordPriority.has(entry.name)) {
+        continue;
+      }
+
+      try {
+        const record = JSON.parse(fs.readFileSync(entryPath, "utf8"));
+        const validation = validateManualEvidenceRecord(record, {
+          recordPath: relativeToRoot(entryPath),
+          requireComplete: true,
+        });
+        const report = buildManualEvidenceRecordReport(record, {
+          recordPath: relativeToRoot(entryPath),
+        });
+        const stat = fs.statSync(entryPath);
+        candidates.push({
+          absolutePath: entryPath,
+          fileName: entry.name,
+          missingEvidenceCount: report.missingEvidenceCount,
+          parseError: null,
+          requireCompletePassed: validation.failures.length === 0,
+          mtimeMs: stat.mtimeMs,
+          priority: manualEvidenceRecordPriority.get(entry.name),
+        });
+      } catch (error) {
+        candidates.push({
+          absolutePath: entryPath,
+          fileName: entry.name,
+          missingEvidenceCount: Number.POSITIVE_INFINITY,
+          parseError: error.message,
+          requireCompletePassed: false,
+          mtimeMs: 0,
+          priority: manualEvidenceRecordPriority.get(entry.name),
+        });
+      }
+    }
+  };
+  visit(absoluteRoot);
+  return candidates;
+}
+
+function compareManualRecordCandidatesForBest(left, right) {
+  if (left.requireCompletePassed !== right.requireCompletePassed) {
+    return left.requireCompletePassed ? -1 : 1;
+  }
+  if (left.missingEvidenceCount !== right.missingEvidenceCount) {
+    return left.missingEvidenceCount - right.missingEvidenceCount;
+  }
+  if (left.priority !== right.priority) {
+    return left.priority - right.priority;
+  }
+  return right.mtimeMs - left.mtimeMs;
+}
+
+function compareManualRecordCandidatesForLatest(left, right) {
+  if (left.mtimeMs !== right.mtimeMs) {
+    return right.mtimeMs - left.mtimeMs;
+  }
+  return left.priority - right.priority;
+}
+
+function resolveManualRecordPath(manualRecordPath, manualRecordRoot) {
+  if (!manualRecordStrategies.has(manualRecordPath)) {
+    return {
+      manualRecordPath,
+      manualRecordSelection: null,
+    };
+  }
+
+  const candidates = collectManualRecordCandidates(manualRecordRoot);
+  const validCandidates = candidates.filter((candidate) => !candidate.parseError);
+  const sortedCandidates = [...validCandidates].sort(
+    manualRecordPath === "latest"
+      ? compareManualRecordCandidatesForLatest
+      : compareManualRecordCandidatesForBest
+  );
+  const selected = sortedCandidates[0] ?? null;
+  return {
+    manualRecordPath: selected ? relativeToRoot(selected.absolutePath) : null,
+    manualRecordSelection: {
+      strategy: manualRecordPath,
+      root: manualRecordRoot ?? defaultManualRecordRoot,
+      candidateCount: candidates.length,
+      validCandidateCount: validCandidates.length,
+      selectedRecordPath: selected ? relativeToRoot(selected.absolutePath) : null,
+      selectedMissingEvidenceCount: selected?.missingEvidenceCount ?? null,
+      selectedRequireCompletePassed: selected?.requireCompletePassed ?? false,
+    },
+  };
+}
+
 function buildManualEvidenceAudit({
   manualEvidenceReportPath,
+  manualRecordSelection,
   manualRecord,
   manualRecordPath,
 }) {
@@ -155,6 +274,7 @@ function buildManualEvidenceAudit({
       requireCompletePassed: false,
       failures: ["人工证据记录缺失"],
       missingEvidenceCount: null,
+      selection: manualRecordSelection ?? null,
       reportMarkdown: "",
     };
   }
@@ -175,6 +295,7 @@ function buildManualEvidenceAudit({
     statusCounts: report.statusCounts,
     globalGaps: report.globalGaps,
     incompleteItemCount: report.incompleteItems.length,
+    selection: manualRecordSelection ?? null,
     reportMarkdown: report.markdown,
   };
 }
@@ -328,6 +449,10 @@ function markdownForAudit(audit) {
 
 export function buildV1CompletionAudit(options = {}) {
   const commandResults = options.commandResults ?? new Map();
+  const resolvedManualRecord = resolveManualRecordPath(
+    options.manualRecordPath,
+    options.manualRecordRoot
+  );
   const automatedCommands = requiredAutomatedCommands.map((commandSpec) => ({
     ...commandSpec,
     ...normalizeCommandResult(
@@ -337,8 +462,9 @@ export function buildV1CompletionAudit(options = {}) {
   }));
   const manualEvidence = buildManualEvidenceAudit({
     manualEvidenceReportPath: options.manualEvidenceReportPath,
+    manualRecordSelection: resolvedManualRecord.manualRecordSelection,
     manualRecord: options.manualRecord,
-    manualRecordPath: options.manualRecordPath,
+    manualRecordPath: resolvedManualRecord.manualRecordPath,
   });
   const externalKnowledgeSync = buildExternalKnowledgeSyncAudit({
     externalKnowledgeNote: options.externalKnowledgeNote,
@@ -412,6 +538,7 @@ export function writeV1CompletionAudit(options = {}) {
     manualEvidenceReportPath,
     manualRecord: options.manualRecord,
     manualRecordPath: options.manualRecordPath,
+    manualRecordRoot: options.manualRecordRoot,
     externalKnowledgeNote: options.externalKnowledgeNote,
     externalKnowledgeSourceDraftPaths: options.externalKnowledgeSourceDraftPaths,
     externalKnowledgeStatus: options.externalKnowledgeStatus,
@@ -447,6 +574,9 @@ function parseArgs(argv) {
   const args = {
     outputDir: process.env.AI_CODE_V1_COMPLETION_AUDIT_DIR,
     manualRecordPath: process.env.AI_CODE_V1_COMPLETION_MANUAL_RECORD,
+    manualRecordRoot:
+      process.env.AI_CODE_V1_COMPLETION_MANUAL_RECORD_ROOT ??
+      defaultManualRecordRoot,
     runAutomatedCommands:
       process.env.AI_CODE_V1_COMPLETION_RUN_AUTOMATED_COMMANDS === "1",
     externalKnowledgeSynced:
@@ -468,6 +598,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--manual-record") {
       args.manualRecordPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--manual-record-root") {
+      args.manualRecordRoot = argv[index + 1];
       index += 1;
     } else if (arg === "--run-automated-commands") {
       args.runAutomatedCommands = true;
@@ -500,7 +633,7 @@ function parseArgs(argv) {
 function printUsage() {
   console.log(`Usage:
   node scripts/collect-v1-completion-audit.mjs [--output-dir <dir>] [--manual-record <path>]
-  node scripts/collect-v1-completion-audit.mjs --run-automated-commands --manual-record <path>
+  node scripts/collect-v1-completion-audit.mjs --run-automated-commands --manual-record <path|best|latest> [--manual-record-root <dir>]
   node scripts/collect-v1-completion-audit.mjs --external-knowledge-status not_synced|synced|partial|unknown
   node scripts/collect-v1-completion-audit.mjs --external-knowledge-synced --external-knowledge-note <text>
 

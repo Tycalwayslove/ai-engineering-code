@@ -129,9 +129,10 @@ node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptanc
 
 ```bash
 pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.filled.json
+pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record best --manual-record-root .tmp/ios-acceptance-evidence
 ```
 
-只要传入 `--manual-record`，completion audit 会在同一个输出目录额外归档 `manual-evidence-gaps.md`，并在 `v1-completion-audit.json` / `.md` 的 `manualEvidence.reportPath` 中记录该文件。即使人工记录已经通过，保留这份报告也便于后续复查当时的人工验收状态。
+只要传入 `--manual-record`，completion audit 会在同一个输出目录额外归档 `manual-evidence-gaps.md`，并在 `v1-completion-audit.json` / `.md` 的 `manualEvidence.reportPath` 中记录该文件。`--manual-record best` 会在 `--manual-record-root` 下递归选择当前最适合审计的 `manual-evidence-record.filled.json`、`manual-evidence-record.review.json` 或 `manual-evidence-record.draft.json`，并把 `manualEvidence.selection` 写入审计 JSON；它只减少找文件路径的成本，不会把 review / draft 自动视为人工验收通过。即使人工记录已经通过，保留这份报告也便于后续复查当时的人工验收状态。
 
 completion audit 还会结构化记录外部知识库同步状态。默认 `externalKnowledgeSync.status=not_synced`，并记录飞书源稿路径和最终回复必须披露的“仓库已更新，外部知识库未同步”。如果收尾时已经真实执行飞书或 Obsidian 同步，可以追加 `--external-knowledge-status synced|partial`、`--feishu-sync-evidence <path>` 或 `--obsidian-sync-evidence <path>`，把同步证据写进同一份审计 JSON。
 

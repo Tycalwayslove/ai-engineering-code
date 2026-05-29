@@ -25,4 +25,6 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /manualEvidenceReportPath/);
   assert.match(validator, /externalKnowledgeSync/);
   assert.match(validator, /external-knowledge-status/);
+  assert.match(validator, /manual-record-root/);
+  assert.match(validator, /manual-record best/);
 });

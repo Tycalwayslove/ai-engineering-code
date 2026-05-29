@@ -293,6 +293,84 @@ test("v1 completion audit CLI records partial external knowledge sync status", (
   assert.equal(json.externalKnowledgeSync.finalDisclosureRequired, true);
 });
 
+test("v1 completion audit CLI can select --manual-record best from a root", () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
+  const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
+  const weakerDir = path.join(recordRoot, "older-run");
+  const betterDir = path.join(recordRoot, "newer-run");
+  fs.mkdirSync(weakerDir, { recursive: true });
+  fs.mkdirSync(betterDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(weakerDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(incompleteManualRecord(), null, 2)}\n`
+  );
+  fs.writeFileSync(
+    path.join(betterDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(passedManualRecord(), null, 2)}\n`
+  );
+
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/collect-v1-completion-audit.mjs",
+      "--output-dir",
+      outputDir,
+      "--manual-record",
+      "best",
+      "--manual-record-root",
+      recordRoot,
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  const json = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "v1-completion-audit.json"), "utf8")
+  );
+  assert.equal(json.manualEvidence.status, "passed");
+  assert.equal(
+    json.manualEvidence.recordPath,
+    path.relative(rootDir, path.join(betterDir, "manual-evidence-record.review.json"))
+  );
+  assert.equal(json.manualEvidence.selection.strategy, "best");
+  assert.equal(json.manualEvidence.selection.candidateCount, 2);
+});
+
+test("v1 completion audit CLI ignores invalid manual evidence record candidates", () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
+  const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
+  const brokenDir = path.join(recordRoot, "broken-run");
+  fs.mkdirSync(brokenDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(brokenDir, "manual-evidence-record.review.json"),
+    "{not-json"
+  );
+
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/collect-v1-completion-audit.mjs",
+      "--output-dir",
+      outputDir,
+      "--manual-record",
+      "best",
+      "--manual-record-root",
+      recordRoot,
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  const json = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "v1-completion-audit.json"), "utf8")
+  );
+  assert.equal(json.manualEvidence.status, "missing");
+  assert.equal(json.manualEvidence.recordPath, null);
+  assert.equal(json.manualEvidence.selection.candidateCount, 1);
+  assert.equal(json.manualEvidence.selection.validCandidateCount, 0);
+});
+
 test("package exposes v1 completion audit command", () => {
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(rootDir, "package.json"), "utf8")

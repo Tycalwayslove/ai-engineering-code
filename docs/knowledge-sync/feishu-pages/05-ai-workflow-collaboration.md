@@ -456,3 +456,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 如果未同步，审计包会保留 `finalDisclosureRequired=true`，最终回复仍必须明确“仓库已更新，外部知识库未同步”。
 
 这让收尾判断更稳：产品完成证据、人工验收证据和知识库同步状态都在同一份 audit JSON 中可查，而不是散落在对话记忆里。
+
+## completion audit 自动选择人工证据记录
+
+2026-05-29 的收尾治理继续减少人工路径摩擦：`pnpm collect:v1-completion-audit` 支持 `--manual-record best --manual-record-root .tmp/ios-acceptance-evidence`。脚本会递归扫描证据包下的 `manual-evidence-record.filled.json`、`manual-evidence-record.review.json` 和 `manual-evidence-record.draft.json`，自动选择当前最适合绑定到 audit 的人工记录，并把选择依据写入 `manualEvidence.selection`。
+
+这项能力的协作边界是：
+
+- `best` 会优先选择 `--require-complete` 校验通过的记录；如果都没通过，则选择补证缺口更少、文件类型优先级更高、更新时间更近的候选。
+- `latest` 可用于选择最新候选，但正式收尾默认建议使用 `best`。
+- 自动选择只解决“从多个 `.tmp/ios-acceptance-evidence` run 里找哪份记录”的问题，不会把 `review` 或 `draft` 自动视为人工验收通过。
+- 选中记录后，completion audit 仍会在自己的输出目录重新生成 `manual-evidence-gaps.md`，避免复用源证据包里可能指向旧 draft 的缺口报告。
+
+这让 goal 模式的最终收尾更顺手：自动化可以帮忙挑出当前证据最完整的人工记录，但 completion 的判定仍只认自动化命令全通过和人工记录 completion 校验通过。
