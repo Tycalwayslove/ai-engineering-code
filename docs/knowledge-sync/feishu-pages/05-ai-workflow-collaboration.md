@@ -329,13 +329,14 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 
 ## iOS 原生键盘 UI test 门禁
 
-2026-05-29 的补证推进新增了 `pnpm validate:ios-keyboard-ui-test`。它通过 Xcode UI test 真实点击 Native composer 的 mode toggle、TextField、系统键盘和发送按钮，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本。
+2026-05-29 的补证推进新增并升级了 `pnpm validate:ios-keyboard-ui-test`。它通过 Xcode UI test 真实点击 Native composer 的 mode toggle、TextField、系统键盘和发送按钮，在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本；随后继续点击 H5 确认卡，并断言确认完成后能看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。
 
 这项能力的协作边界是：
 
-- UI test 负责把“真实 Native 输入框 + 系统键盘 + 发送按钮”变成可重复运行的工程门禁。
-- `collect:ios-keyboard-evidence` 继续负责 H5 / 后端确认卡、确认执行和 `/reminders` 读模型的辅助证据整理。
-- UI test 使用专用启动参数跳过通知 / 日历权限请求，避免系统同步弹窗污染键盘路径；它不代表通知、日历、语音或附件系统能力已经通过。
+- UI test 负责把“真实 Native 输入框 + 系统键盘 + 发送按钮 + H5 确认卡 + 提醒事实可见”变成可重复运行的工程门禁。
+- `collect:ios-keyboard-evidence` 继续负责把同类 H5 / 后端链路整理进证据包，方便人工复核时补截图和 API 摘要。
+- UI test 使用专用启动参数跳过通知 / 日历权限请求，并通过 `AI_CODE_UI_TEST_CONVERSATION_ID` 注入独立会话，避免系统同步弹窗或旧会话数据污染键盘路径；它不代表通知、日历、语音或附件系统能力已经通过。
+- UI test 脚本会检查 `xcodebuild` 输出中至少实际执行 1 个 XCTest，避免 `-only-testing` 未命中时出现 0 tests 假阳性。
 - 最终 completion audit 仍需要人工验收记录，把截图、接口摘要、bridge marker 和结论补齐后再运行 `--require-complete` 校验。
 
-这让键盘输入验收从“完全依赖人工操作”推进到“真实原生输入路径自动防回归，人工验收负责最终留证和结论”。
+这让键盘输入验收从“完全依赖人工操作”推进到“真实原生输入和后端提醒事实闭环自动防回归，人工验收负责最终留证和结论”。

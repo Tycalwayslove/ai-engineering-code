@@ -3961,3 +3961,34 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把键盘输入从“synthetic bridge 辅助证据 + 人工截图”推进到“真实 Native 输入框、系统键盘和发送动作可由 Xcode UI test 自动验证”。它仍不替代最终人工验收记录里的截图、接口摘要和验收结论，但显著降低了键盘路径回归风险。
+
+## 阶段 145：iOS 原生键盘到后端提醒事实门禁
+
+问题背景：
+
+- 阶段 144 的 UI test 已能证明真实 Native 输入框、系统键盘和发送按钮把文本送到 H5 Bridge。
+- 但第一版 App 的用户价值不止是“Bridge 收到消息”，而是输入后能得到 H5 确认卡、点击确认，并看到后端写入的提醒事实。
+- 复用持久 `conversationId` 会让旧待确认卡或旧提醒干扰 UI test；同时 `xcodebuild -only-testing` 在未命中测试时可能返回成功但执行 0 个测试，需要脚本防假阳性。
+
+完成内容：
+
+- `NativeConversationIdentity` 支持 UI test 通过 `AI_CODE_UI_TEST_CONVERSATION_ID` 注入独立会话 ID；普通运行仍使用原来的 `ai-code.native.conversationId` 持久会话。
+- `NativeKeyboardInputUITests` 升级为 `testNativeKeyboardComposerConfirmsReminderThroughBackend`：
+  - 真实点击 Native composer mode toggle、TextField、系统键盘和发送按钮。
+  - 等待 H5 Bridge Debug 出现 `source=native.composer.keyboard` 和提交文本。
+  - 等待 H5 确认卡 `请确认执行计划`，点击 `确认`。
+  - 断言确认后出现 `已确认执行`、`已创建提醒`、`scheduled` 和“带电脑”提醒事实。
+- `pnpm validate:ios-keyboard-ui-test` 默认运行新测试名，并捕获 `xcodebuild` 输出；如果输出里没有实际执行至少 1 个 XCTest，即使命令退出码为 0 也会失败。
+- `validate:native-shells` 新增结构护栏，防止测试退回 Bridge-only 断言或移除独立会话注入。
+- `apps/ios/README.md`、`docs/qa/ios-v1-system-acceptance.md` 和 `docs/qa/v1-readiness-audit.md` 已更新覆盖范围与边界。
+
+验证结果：
+
+- 红灯：`pnpm validate:native-shells` 先因缺少 `AI_CODE_UI_TEST_CONVERSATION_ID`、新 XCTest 名称和确认后事实断言失败。
+- 绿灯：补齐代码后 `pnpm validate:native-shells` 通过。
+- live UI test：`pnpm validate:ios-keyboard-ui-test` 在本机 iPhone 16 Pro Max Simulator 上执行 1 个 XCTest、0 个失败，覆盖真实 Native 输入、H5 确认卡点击和后端提醒事实可见。
+- 过程中发现一次 `xcodebuild` “成功但 Executed 0 tests”的假阳性；脚本已改为检测实际执行测试数。
+
+阶段价值：
+
+这一阶段把键盘自动门禁从“原生输入进入 H5”推进到“原生输入驱动后端提醒事实闭环”。它仍不替代人工验收中对截图、接口摘要和最终结论的记录，但已经能在工程上防住键盘路径、确认卡路径和提醒事实刷新路径的关键回归。

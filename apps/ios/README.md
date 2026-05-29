@@ -180,7 +180,7 @@ pnpm validate:ios-simulator-smoke
 pnpm validate:ios-keyboard-ui-test
 ```
 
-该命令通过 Xcode UI test 启动 `AIEngineeringCodeUITests`，真实点击 mode toggle、Native TextField、系统键盘和发送按钮，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本。UI test 会通过启动参数跳过通知 / 日历权限请求，避免系统同步弹窗污染键盘路径。可用以下环境变量覆盖：
+该命令通过 Xcode UI test 启动 `AIEngineeringCodeUITests`，真实点击 mode toggle、Native TextField、系统键盘和发送按钮，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本；随后点击 H5 确认卡，断言确认完成后出现 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。UI test 会通过启动参数跳过通知 / 日历权限请求，避免系统同步弹窗污染键盘路径，并为每次运行注入独立 `AI_CODE_UI_TEST_CONVERSATION_ID`，避免旧会话数据干扰。可用以下环境变量覆盖：
 
 - `AI_CODE_IOS_KEYBOARD_UI_TEST_DESTINATION`
 - `AI_CODE_IOS_KEYBOARD_UI_TEST_TIMEOUT_MS`

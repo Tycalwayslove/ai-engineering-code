@@ -18,7 +18,7 @@ Goal 不能标记 complete。
 | H5 到 Native payload | `pnpm validate:h5-click-smoke` 和 `pnpm validate:contracts` | `calendar.events.sync` 与 `notifications.reminders.sync` payload 必填字段、取消日程清理 payload、完成提醒排除 payload | 已有命令，需在最终 completion audit 前重新运行 |
 | iOS 编译 | `pnpm validate:ios-build` | Swift 工程 Debug simulator build、`H5_DEV_SERVER_URL` build setting、签名关闭下产出 `.app` | 已有命令，需在最终 completion audit 前重新运行 |
 | iOS Simulator 安装启动 | `pnpm validate:ios-simulator-smoke` | 选择 / 启动 iPhone Simulator、安装 `.app`、launch `com.aiengineeringcode.shell`、`get_app_container` | 已有命令，需在最终 completion audit 前重新运行 |
-| iOS 原生键盘 UI test | `pnpm validate:ios-keyboard-ui-test` | XCTest 真实点击 Native composer mode toggle、TextField、系统键盘输入中文、发送按钮，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 和提交文本 | 已有命令，依赖本地 H5 页面可访问；需在最终 completion audit 前重新运行 |
+| iOS 原生键盘 UI test | `pnpm validate:ios-keyboard-ui-test` | XCTest 真实点击 Native composer mode toggle、TextField、系统键盘输入中文、发送按钮，在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 和提交文本，再点击 H5 确认卡并断言 `已创建提醒`、`scheduled` 和“带电脑”提醒事实可见 | 已有命令，依赖本地 H5 和 API 可访问；需在最终 completion audit 前重新运行 |
 | iOS 系统能力人工验收清单完整性 | `pnpm validate:ios-manual-acceptance` | 检查人工验收清单包含权限、系统能力、证据 marker 和 `manual-evidence-record.template.json` 记录模板说明 | 已通过文档级门禁，但不等于人工验收已经执行 |
 | iOS 系统能力人工证据记录 | `pnpm validate:ios-manual-evidence-record`；最终验收使用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete --report <report-path>` | 校验人工证据记录结构；completion 模式要求每项 `passed` 且证据字段齐全；`--report` 生成补证缺口报告 | 已有命令，当前只能证明模板结构可校验；真实 completion 仍需人工补证文件 |
 | 真实 LLM provider | `pnpm validate:llm-smoke` | DeepSeek / OpenAI provider 的 `chat`、`clarification`、`mixed`、只读查询和安全追问 | 已有命令，依赖 `.env.local` 中 provider key；最终 completion audit 前需重新运行或明确跳过原因 |
@@ -47,7 +47,7 @@ Goal 不能标记 complete。
 | --- | --- | --- |
 | H5 地址覆盖 | 默认地址和局域网 `H5_DEV_SERVER_URL` 构建后 App 实际加载截图、构建产物 `H5DevServerURL` 记录 | 自动 build 只能检查构建产物，不能证明真机网络和防火墙组合可用 |
 | 会话持久 ID | 重启前后同一 `conversation_ios_*`、后端历史仍可读取 | Simulator smoke 只 launch App，不检查 H5 URL 和后端历史 |
-| 键盘输入 | 键盘弹出、`source=native.composer.keyboard`、后端确认卡和提醒事实 | `pnpm validate:ios-keyboard-ui-test` 已能自动验证真实 Native 输入框、系统键盘、用户输入和发送按钮到 H5 Bridge Debug；`pnpm collect:ios-keyboard-evidence` 继续补 H5 / 后端确认执行和 `/reminders` 辅助证据。两者组合仍不替代最终人工验收记录里的截图、接口摘要和结论 |
+| 键盘输入 | 键盘弹出、`source=native.composer.keyboard`、后端确认卡和提醒事实 | `pnpm validate:ios-keyboard-ui-test` 已能自动验证真实 Native 输入框、系统键盘、用户输入、发送按钮、H5 确认卡点击和提醒事实可见；`pnpm collect:ios-keyboard-evidence` 继续补证据包辅助截图。两者组合仍不替代最终人工验收记录里的截图、接口摘要和结论 |
 | 语音输入 | 麦克风 / 语音识别权限弹窗、`source=native.composer.voice`、识别文本和确认卡 | 自动脚本不能采集麦克风，也不能证明中文识别质量 |
 | 照片附件 | PhotosPicker 截图、`inputKind=attachment`、`attachmentKind=image`、OCR 文本、`base64Content` 小文件样例、附件接口摘要 | `pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理照片附件 payload 的辅助证据，但不打开真实 PhotosPicker 或验证 Vision OCR 样本质量 |
 | 文件附件 | fileImporter 截图、文件名 / MIME / size、超过 5MB 不传 `base64Content` 的边界样例 | `pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理文件附件 payload 的辅助证据，但不打开真实文件选择器，也不覆盖安全作用域文件读取 |

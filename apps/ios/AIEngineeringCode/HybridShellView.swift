@@ -22,6 +22,11 @@ private enum NativeRuntimeFlags {
 
 private enum NativeConversationIdentity {
     static var stableConversationId: String {
+        if let uiTestConversationId = ProcessInfo.processInfo.environment["AI_CODE_UI_TEST_CONVERSATION_ID"],
+           !uiTestConversationId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return uiTestConversationId
+        }
+
         if let stored = UserDefaults.standard.string(forKey: nativeConversationIdStorageKey),
            !stored.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return stored

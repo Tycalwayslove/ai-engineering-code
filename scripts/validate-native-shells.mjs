@@ -86,7 +86,7 @@ const iosKeyboardUiTestScript = readRequired(iosKeyboardUiTestScriptPath);
 assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "xcodebuild");
 assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "AIEngineeringCodeUITests");
 assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "NativeKeyboardInputUITests");
-assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "testNativeKeyboardComposerSubmitsThroughH5Bridge");
+assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "testNativeKeyboardComposerConfirmsReminderThroughBackend");
 assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "CODE_SIGNING_ALLOWED=NO");
 
 const iosAcceptanceEvidenceScriptPath = "scripts/collect-ios-acceptance-evidence.mjs";
@@ -143,6 +143,7 @@ assertIncludes(iosShellPath, iosShell, "import PDFKit");
 assertIncludes(iosShellPath, iosShell, "import Vision");
 assertIncludes(iosShellPath, iosShell, "NativeConversationIdentity");
 assertIncludes(iosShellPath, iosShell, "ai-code.native.conversationId");
+assertIncludes(iosShellPath, iosShell, "AI_CODE_UI_TEST_CONVERSATION_ID");
 assertIncludes(iosShellPath, iosShell, "ai-code.native.systemDiagnostics");
 assertIncludes(iosShellPath, iosShell, "recordNativeSystemDiagnostics");
 assertIncludes(iosShellPath, iosShell, "calendar.removedEventIds");
@@ -219,7 +220,13 @@ assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.mode-
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.keyboard-text-field");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.submit-button");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "source=native.composer.keyboard");
-assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeKeyboardComposerSubmitsThroughH5Bridge");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeKeyboardComposerConfirmsReminderThroughBackend");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "AI_CODE_UI_TEST_CONVERSATION_ID");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "请确认执行计划");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "已确认执行");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "已创建提醒");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "带电脑");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "scheduled");
 
 const iosInfoPlistPath = "apps/ios/AIEngineeringCode/Info.plist";
 const iosInfoPlist = readRequired(iosInfoPlistPath);
