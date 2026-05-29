@@ -101,6 +101,23 @@ function evidenceSuggestionsForItem(item, evidence) {
       }
       break;
     }
+    case "keyboard_input": {
+      if (evidence?.nativeKeyboardInput?.available) {
+        addUnique(
+          suggestions.screenshots,
+          `H5 确认卡和提醒页 scheduled 结果: ${evidence.nativeKeyboardInput.screenshotPath}`
+        );
+        addUnique(
+          suggestions.apiSummaries,
+          `/reminders?conversationId=...: reminderId=${evidence.nativeKeyboardInput.reminderId}`
+        );
+        addUnique(
+          suggestions.bridgeMarkers,
+          `source=native.composer.keyboard: ${evidence.nativeKeyboardInput.bridgeInboundLabel}`
+        );
+      }
+      break;
+    }
     case "system_calendar_write": {
       if (evidence?.calendarSystemAppEvidence?.available) {
         addUnique(

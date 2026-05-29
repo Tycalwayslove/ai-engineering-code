@@ -3875,3 +3875,28 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“自动辅助证据已经齐”推进到“人工验收人员可以直接复核结构化 evidence 字段”。它减少复制整理成本，但仍不越过人工验收边界：review 是复核草稿，不是通过结论。
+
+## 阶段 142：iOS 键盘输入辅助证据采集
+
+问题背景：
+
+- `manual-evidence-record.review.json` 已经能整理多类自动辅助材料，但键盘输入项仍基本停留在纯人工补证。
+- 真实 Native 输入框、系统键盘弹出和用户实际点击发送仍必须人工截图或录屏；但 H5 / 后端处理 `source=native.composer.keyboard` 的链路可以被自动整理为候选证据。
+
+完成内容：
+
+- `collect-ios-acceptance-evidence` 新增 `--seed-keyboard-input` 和 `AI_CODE_IOS_ACCEPTANCE_SEED_KEYBOARD_INPUT=1`。
+- 新增根命令 `pnpm collect:ios-keyboard-evidence`。
+- 采集器会向当前 Native 会话注入同形态 `native.inputSubmitted`，payload 使用 `source=native.composer.keyboard`，随后走 H5 `/agent/turns`、确认卡、确认执行和 `/reminders` 读模型闭环。
+- 证据包新增 `nativeKeyboardInput`，记录 seed 输入、bridge 入站摘要、确认卡状态、reminder id、截图路径和 `supportingOnly=true`。
+- `manual-evidence-record.review.json` 会把 `native-keyboard-input.png`、`reminderId` 和 `source=native.composer.keyboard` 候选 marker 预填到 `keyboard_input` 项，但 item 仍保持 `pending`。
+- `docs/qa/ios-v1-system-acceptance.md` 和 `docs/qa/v1-readiness-audit.md` 已补充命令、边界和人工证据要求。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-ios-acceptance-evidence.test.mjs` 先因 `--seed-keyboard-input` 不支持失败。
+- 绿灯：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过，14 个测试全部通过。
+
+阶段价值：
+
+这一阶段把键盘输入从“只能手工整理所有证据”推进到“自动整理 H5 / 后端处理原生键盘来源输入的候选证据”。它减少人工复核成本，但不替代真实 Native 输入框、系统键盘和用户实际发送动作的人工留证。

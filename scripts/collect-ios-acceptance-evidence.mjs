@@ -265,6 +265,8 @@ function parseArgs(argv) {
     seedNotificationDelivery:
       process.env.AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_DELIVERY === "1" ||
       seedSupportedSystemEvidence,
+    seedKeyboardInput:
+      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_KEYBOARD_INPUT === "1",
     captureCalendarSystemApp:
       process.env.AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP === "1" ||
       seedSupportedSystemEvidence,
@@ -298,6 +300,8 @@ function parseArgs(argv) {
       args.seedNotificationClickBackflow = true;
     } else if (value === "--seed-notification-delivery") {
       args.seedNotificationDelivery = true;
+    } else if (value === "--seed-keyboard-input") {
+      args.seedKeyboardInput = true;
     } else if (value === "--capture-calendar-system-app") {
       args.captureCalendarSystemApp = true;
     } else if (value === "--skip-build") {
@@ -725,6 +729,33 @@ function emptyNotificationDeliverySeed({
         "15000"
     ),
     waitUntilDueMs: null,
+  };
+}
+
+function emptyNativeKeyboardInputSeed({
+  conversationId,
+  enabled,
+  outputDir,
+  seedRunId,
+}) {
+  return {
+    available: false,
+    apiBaseUrl,
+    bridgeInboundLabel: null,
+    commands: {},
+    confirmationCardFound: false,
+    conversationId: conversationId ?? null,
+    enabled,
+    errors: [],
+    mode: "h5_synthetic_native_input",
+    reminderId: null,
+    reminderTitle: null,
+    screenshotPath: path.join(outputDir, "native-keyboard-input.png"),
+    seedInput: `明天上午九点提醒我${seedRunId}键盘验收带电脑`,
+    seedRunId,
+    source: "native.composer.keyboard",
+    supportingOnly: true,
+    syntheticNativeMessage: null,
   };
 }
 
@@ -2181,6 +2212,149 @@ async function collectNotificationClickBackflowScreenshot({
   }
 }
 
+async function seedNativeKeyboardInput({
+  conversationId,
+  dryRun,
+  enabled,
+  outputDir,
+}) {
+  const seedRunId =
+    process.env.AI_CODE_IOS_ACCEPTANCE_KEYBOARD_INPUT_RUN_ID ??
+    defaultSeedRunId();
+  const keyboard = emptyNativeKeyboardInputSeed({
+    conversationId,
+    enabled,
+    outputDir,
+    seedRunId,
+  });
+  if (!enabled) {
+    return keyboard;
+  }
+  if (dryRun) {
+    keyboard.errors.push("dry-run does not submit H5 synthetic native keyboard input");
+    return keyboard;
+  }
+  if (!conversationId) {
+    keyboard.errors.push("Native conversationId was not found; keyboard input seed skipped.");
+    return keyboard;
+  }
+
+  let browser;
+  try {
+    const { chromium, expect } = await import("@playwright/test");
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { height: 844, width: 390 } });
+    await page.addInitScript(() => {
+      window.__AI_NATIVE_MESSAGES__ = [];
+      window.__AI_NATIVE_HOST__ = {
+        bridgeVersion: "ios-acceptance-keyboard-input",
+        platform: "ios",
+      };
+      window.webkit = {
+        messageHandlers: {
+          NativeBridge: {
+            postMessage(message) {
+              window.__AI_NATIVE_MESSAGES__.push(message);
+            },
+          },
+        },
+      };
+    });
+
+    const url = `${h5NativeBaseUrl}/?native=ios&bridgeDebug=1&conversationId=${encodeURIComponent(
+      conversationId
+    )}`;
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    const surfaceRegion = page.getByLabel("后端元素渲染区");
+    await expect(surfaceRegion).toContainText("AI 时间管理 Agent", {
+      timeout: 15000,
+    });
+    await sendH5NativeMessage(page, "native.hostContext", {
+      bridgeVersion: "ios-acceptance-keyboard-input",
+      h5URL: page.url(),
+      platform: "ios",
+    });
+    await page.waitForTimeout(1000);
+
+    keyboard.syntheticNativeMessage = {
+      source: keyboard.source,
+      text: keyboard.seedInput,
+      view: "conversation",
+    };
+    await sendH5NativeMessage(
+      page,
+      "native.inputSubmitted",
+      keyboard.syntheticNativeMessage
+    );
+    keyboard.bridgeInboundLabel =
+      `native.inputSubmitted · source=${keyboard.source} · view=conversation`;
+    await expect(surfaceRegion).toContainText(keyboard.seedInput, {
+      timeout: 10000,
+    });
+    await expect(surfaceRegion).toContainText("确认", { timeout: 20000 });
+    keyboard.confirmationCardFound = true;
+
+    await page.getByRole("button", { name: "确认" }).last().click();
+    await expect(page.locator("body")).toContainText(
+      "已确认执行，数据库视图和执行记录已刷新",
+      { timeout: 20000 }
+    );
+
+    const remindersUrl = `${apiBaseUrl}/reminders?conversationId=${encodeURIComponent(
+      conversationId
+    )}`;
+    const reminders = await getJson(remindersUrl);
+    keyboard.commands.queryReminders = {
+      command: `GET ${remindersUrl}`,
+      ok: reminders.ok,
+      status: reminders.status,
+    };
+    const reminderList = Array.isArray(reminders.payload)
+      ? reminders.payload
+      : Array.isArray(reminders.payload?.reminders)
+        ? reminders.payload.reminders
+        : [];
+    const targetReminder = reminderList.find(
+      (reminder) =>
+        typeof reminder.title === "string" &&
+        reminder.title.includes(seedRunId) &&
+        reminder.status === "scheduled"
+    );
+    keyboard.reminderId = targetReminder?.id ?? null;
+    keyboard.reminderTitle = targetReminder?.title ?? null;
+
+    await sendH5NativeMessage(page, "native.viewChanged", {
+      source: "ios-acceptance-keyboard-input",
+      view: "reminders",
+    });
+    await expect(surfaceRegion).toContainText("提醒", { timeout: 10000 });
+    await expect(page.locator("body")).toContainText(seedRunId, {
+      timeout: 10000,
+    });
+    await page.screenshot({ fullPage: true, path: keyboard.screenshotPath });
+    keyboard.commands.h5SyntheticKeyboardInput = {
+      command: `Playwright ${url} + native.inputSubmitted source=${keyboard.source}`,
+      ok: true,
+      status: 0,
+    };
+    keyboard.available =
+      keyboard.errors.length === 0 &&
+      keyboard.confirmationCardFound === true &&
+      Boolean(keyboard.reminderId);
+    if (!keyboard.reminderId) {
+      keyboard.errors.push("keyboard input seed reminder was not found after confirmation");
+    }
+    return keyboard;
+  } catch (error) {
+    keyboard.errors.push(error instanceof Error ? error.message : String(error));
+    return keyboard;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
 function readConversationIdFromPreferences(preferencesPlist, { dryRun }) {
   if (dryRun) {
     return {
@@ -2669,6 +2843,14 @@ function supportingSignalsForManualItem(item, evidence) {
     ];
   }
 
+  if (item === "键盘输入" && evidence.nativeKeyboardInput?.available) {
+    return [
+      `H5 已接收 native.inputSubmitted：source=${evidence.nativeKeyboardInput.source}`,
+      `键盘输入 seed 已经确认写入提醒：reminderId=${evidence.nativeKeyboardInput.reminderId}`,
+      `mode=${evidence.nativeKeyboardInput.mode}, supportingOnly=${String(evidence.nativeKeyboardInput.supportingOnly)}`,
+    ];
+  }
+
   if (
     item === "系统日历写入" &&
     evidence.ios.systemDiagnostics["calendar.authorizationStatus"]
@@ -2883,6 +3065,25 @@ function writeSummary(evidence, outputDir) {
     `- deliveredNotificationFound：${String(evidence.notificationDelivery.deliveredNotificationFound)}`,
     ...(evidence.notificationDelivery.errors.length > 0
       ? evidence.notificationDelivery.errors.map((error) => `- error：${error}`)
+      : []),
+    "",
+    "## 原生键盘输入辅助证据",
+    "",
+    `- 仅在显式开启时写入并采集：${evidence.nativeKeyboardInput.enabled ? "已开启" : "未开启"}`,
+    `- 可用：${evidence.nativeKeyboardInput.available ? "是" : "否"}`,
+    `- 不替代真实 Native 输入框截图：${evidence.nativeKeyboardInput.supportingOnly ? "是" : "否"}`,
+    `- mode：${evidence.nativeKeyboardInput.mode}`,
+    `- source：${evidence.nativeKeyboardInput.source}`,
+    `- conversationId：${evidence.nativeKeyboardInput.conversationId || "未采集"}`,
+    `- seedRunId：${evidence.nativeKeyboardInput.seedRunId || "未采集"}`,
+    `- seedInput：${evidence.nativeKeyboardInput.seedInput}`,
+    `- confirmationCardFound：${String(evidence.nativeKeyboardInput.confirmationCardFound)}`,
+    `- reminderId：${evidence.nativeKeyboardInput.reminderId || "未采集"}`,
+    `- reminderTitle：${evidence.nativeKeyboardInput.reminderTitle || "未采集"}`,
+    `- bridgeInboundLabel：${evidence.nativeKeyboardInput.bridgeInboundLabel || "未采集"}`,
+    `- 截图：${evidence.nativeKeyboardInput.screenshotPath}`,
+    ...(evidence.nativeKeyboardInput.errors.length > 0
+      ? evidence.nativeKeyboardInput.errors.map((error) => `- error：${error}`)
       : []),
     "",
     "## H5 同会话页面截图",
@@ -3230,6 +3431,12 @@ async function main() {
   if (Object.keys(notificationDeliveryRefresh.systemDiagnostics).length > 0) {
     ios.systemDiagnostics = notificationDeliveryRefresh.systemDiagnostics;
   }
+  const nativeKeyboardInput = await seedNativeKeyboardInput({
+    conversationId: currentNativeConversationId,
+    dryRun: args.dryRun,
+    enabled: args.seedKeyboardInput,
+    outputDir,
+  });
   const backendFactSnapshot = collectBackendFactSnapshot({
     conversationId: currentNativeConversationId,
     dryRun: args.dryRun,
@@ -3262,6 +3469,7 @@ async function main() {
       ...(args.seedNotificationDelivery
         ? ["notification_delivery_diagnostics"]
         : []),
+      ...(args.seedKeyboardInput ? ["native_keyboard_input"] : []),
     ],
     manualEvidenceStillRequired,
     manualEvidenceGuides,
@@ -3304,6 +3512,10 @@ async function main() {
     notificationDelivery: {
       ...notificationDelivery,
       commands: compactCommands(notificationDelivery.commands),
+    },
+    nativeKeyboardInput: {
+      ...nativeKeyboardInput,
+      commands: compactCommands(nativeKeyboardInput.commands),
     },
     h5SurfaceScreenshots,
     ios: {

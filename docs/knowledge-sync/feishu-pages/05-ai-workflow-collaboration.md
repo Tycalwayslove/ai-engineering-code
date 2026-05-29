@@ -302,3 +302,15 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 项目新增 `pnpm validate:context-sync` 作为本地检查命令。它不负责写入 Obsidian 或飞书，只检查仓库内的当前状态、记忆索引、阶段决策和飞书页面源稿是否保留必要同步声明。
 
 外部知识库不是自动同步。阶段结束后，如果只更新了仓库源稿而没有实际执行 Obsidian 或飞书写入，最终说明必须明确“仓库已更新，外部知识库未同步”。
+
+## iOS 键盘输入辅助证据采集
+
+2026-05-29 的补证推进新增了 `pnpm collect:ios-keyboard-evidence`。它通过 `--seed-keyboard-input` 向当前 Native 会话注入同形态 `native.inputSubmitted`，使用 `source=native.composer.keyboard` 走 H5、后端确认卡、确认执行和 `/reminders` 读模型闭环，并把截图、reminder id 和 bridge marker 预填进 `manual-evidence-record.review.json` 的 `keyboard_input` 项。
+
+这项能力的协作边界是：
+
+- 自动脚本负责整理 H5 / 后端处理原生键盘来源输入的候选证据。
+- 人工验收仍负责真实 Native 输入框获得焦点、系统键盘弹出、用户实际输入和点击发送的截图或录屏。
+- review 文件仍保持 `status=pending` 和 `acceptanceVerdict=not_evaluated`，不能把候选证据自动改成通过。
+
+这延续了当前 iOS 验收策略：尽量把可客观采集的材料自动整理到结构化记录里，但不让自动化越过真实系统能力验收边界。

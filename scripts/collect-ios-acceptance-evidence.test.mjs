@@ -303,6 +303,57 @@ test("collect iOS acceptance evidence can opt into notification click backflow s
   assert.match(summary, /不替代真实系统通知点击/);
 });
 
+test("collect iOS acceptance evidence can opt into native keyboard input support", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-keyboard-input-")
+  );
+
+  const result = spawnSync(
+    "node",
+    [
+      scriptPath,
+      "--dry-run",
+      "--seed-keyboard-input",
+      "--output-dir",
+      outputDir,
+    ],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const review = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manual-evidence-record.review.json"), "utf8")
+  );
+  const summary = fs.readFileSync(path.join(outputDir, "summary.md"), "utf8");
+
+  assert.equal(evidence.nativeKeyboardInput.enabled, true);
+  assert.equal(evidence.nativeKeyboardInput.available, false);
+  assert.equal(evidence.nativeKeyboardInput.supportingOnly, true);
+  assert.equal(evidence.nativeKeyboardInput.mode, "h5_synthetic_native_input");
+  assert.equal(evidence.nativeKeyboardInput.source, "native.composer.keyboard");
+  assert.equal(evidence.nativeKeyboardInput.reminderId, null);
+  assert.match(evidence.nativeKeyboardInput.seedInput, /提醒我/);
+  assert.match(
+    evidence.nativeKeyboardInput.screenshotPath,
+    /native-keyboard-input\.png$/
+  );
+  assert.ok(evidence.automatedEvidence.includes("native_keyboard_input"));
+  assert.match(summary, /原生键盘输入辅助证据/);
+  assert.match(summary, /不替代真实 Native 输入框截图/);
+
+  const keyboardItem = review.items.find((item) => item.id === "keyboard_input");
+  assert.equal(keyboardItem.status, "pending");
+  assert.deepEqual(keyboardItem.evidence.bridgeMarkers, []);
+  assert.match(keyboardItem.evidence.operatorNotes, /待人工补充/);
+});
+
 test("collect iOS acceptance evidence can opt into notification delivery diagnostics", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-notification-delivery-")
@@ -707,6 +758,10 @@ test("package exposes iOS acceptance evidence collection command", () => {
   assert.equal(
     packageJson.scripts["collect:ios-acceptance-evidence"],
     "node scripts/collect-ios-acceptance-evidence.mjs"
+  );
+  assert.equal(
+    packageJson.scripts["collect:ios-keyboard-evidence"],
+    "node scripts/collect-ios-acceptance-evidence.mjs --seed-keyboard-input"
   );
   assert.equal(
     packageJson.scripts["collect:ios-system-evidence"],
