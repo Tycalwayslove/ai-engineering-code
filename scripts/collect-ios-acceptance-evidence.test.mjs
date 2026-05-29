@@ -571,6 +571,12 @@ test("collect iOS acceptance evidence can opt into seeded acceptance facts", () 
       input.input.includes(evidence.acceptanceFactSeed.seedRunId)
     )
   );
+  assert.equal(
+    evidence.acceptanceFactSeed.inputs.some((input) =>
+      /58\s*元seed_/.test(input.input)
+    ),
+    false
+  );
   assert.deepEqual(
     evidence.acceptanceFactSeed.inputs.map((input) => input.domain),
     ["calendar", "expense", "reminder"]

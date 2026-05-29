@@ -4405,3 +4405,26 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 `best` 从“全局缺口最少”修正为“当前代码下最适合收尾”。旧证据包仍可作为历史参考，但不会再因为缺口更少而遮住当前版本的真实验收状态。
+
+## 阶段 160：iOS 验收事实费用 seed 稳定化
+
+问题背景：
+
+- 当前 HEAD 完整采证时，`acceptanceFactSeed.available=false`。
+- 进一步检查发现 calendar / reminder seed 都成功，expense seed 返回了 `clarification_request`。
+- 根因是费用输入被拼成 `把昨天 58 元seed_...验收打车票报销`，金额单位和 seed 标记粘在一起，规划器可能无法稳定识别金额。
+- acceptance fact seed 不可用会连带阻断系统 Calendar App 截图和日历取消清理辅助证据，因为它们依赖 seed 日程。
+
+完成内容：
+
+- 将费用 seed 输入改为 `把昨天 {seedRunId} 验收打车票 58 元报销`。
+- 新增测试，守住 `acceptanceFactSeed.inputs` 中不再出现 `58 元seed_` 这类粘连格式。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-ios-acceptance-evidence.test.mjs` 先因费用 seed 仍包含 `58 元seed_` 失败。
+- 绿灯：调整文案后，同一测试通过。
+
+阶段价值：
+
+这一阶段修复了自动采证链路的一个隐性不稳定点。后续完整当前 HEAD 采证时，三领域验收事实 seed 更可能全部成功，系统日历相关辅助证据也能继续生成，而不是被费用 seed 的追问路径误伤。

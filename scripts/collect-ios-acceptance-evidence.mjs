@@ -97,7 +97,7 @@ function buildAcceptanceSeedInputs(seedRunId) {
     },
     {
       domain: "expense",
-      input: `把昨天 58 元${seedRunId}验收打车票报销`,
+      input: `把昨天 ${seedRunId} 验收打车票 58 元报销`,
     },
     {
       domain: "reminder",

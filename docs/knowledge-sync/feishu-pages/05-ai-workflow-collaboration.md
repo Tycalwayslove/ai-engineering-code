@@ -533,3 +533,11 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 审计 JSON 的 `manualEvidence.selection` 也会记录 `selectedRecordFreshnessStatus` 和 `selectedRecordHeadSha`。这样最终收尾时，`best` 会优先绑定当前代码的证据包，而不是被历史缺口更少的旧包吸走。
 
 同一阶段还补强了 review 候选证据映射：H5 七页面截图会补到“`H5 七页面切换截图或录屏`”，附件样本 `kind` 会补到 `attachmentKind=image|text|pdf`。这些仍只是候选证据，不会改变 item 的 `pending` 状态，也不会替代真实系统选择器和人工验收。
+
+## iOS 验收事实 seed 稳定性
+
+自动证据包里的验收事实 seed 是系统 Calendar App 截图、系统日历取消清理等辅助证据的前置条件。它必须稳定写入日程、费用和提醒三类事实；任一领域失败，`acceptanceFactSeed.available` 都会保持 false，后续依赖 seed 日程的系统辅助证据也会被跳过。
+
+2026-05-29 修复了费用 seed 的文案粘连问题：旧输入把金额写成 `58 元{seedRunId}`，可能让规划器进入费用金额追问；新输入把 seed 标记移到票据描述前，把金额保留为独立 `58 元`。测试已守住不再出现 `58 元seed_`。
+
+这个规则也适用于后续新增 seed 文案：可读标记应该放在标题或描述里，不要插入金额、日期、时间这类解析器依赖的结构中间。
