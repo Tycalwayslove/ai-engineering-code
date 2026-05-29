@@ -379,3 +379,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 最终 completion audit 仍需要人工验收记录，把页面截图、bridge marker、后端事实摘要和结论补齐后再运行 `--require-complete` 校验。
 
 这让“第一版原生 App 每个功能都能直接点击使用”的验收更接近真实用户路径：自动化负责防住原生导航链路回归，人工验收负责最终体验和系统能力留证。
+
+## iOS 原生导航结构化人工证据记录
+
+2026-05-29 的补证推进把原生导航 / 页面切换纳入 `manual-evidence-record.template.json`，稳定记录项为 `navigation_surfaces`。该记录项要求人工补 Header / Drawer 页面截图、真实 Bridge marker、H5 七页面切换截图或录屏，以及 `pnpm validate:ios-navigation-ui-test` 输出或 xcresult。
+
+这项能力的协作边界是：
+
+- 自动采证器负责生成 `navigation_surfaces` 模板项，确保人工验收不会漏掉原生导航链路。
+- `manual-evidence-record.review.json` 可以把 H5 七页面截图预填为候选证据，帮助人工复核页面切换结果。
+- 候选截图和 UI test 输出仍不自动改变 `status=pending`；页面内容完整性、长列表滚动、真实业务数据和最终结论必须由人工验收补齐。
+- completion audit 前必须用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete --report <report-path>` 校验补证后的记录，而不是只看自动证据包生成成功。
+
+这让 iOS v1 收尾链路更连贯：工程门禁证明真实原生入口能驱动 H5 surface，结构化人工记录负责把该证据沉淀到最终验收材料中。

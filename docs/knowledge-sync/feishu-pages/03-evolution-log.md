@@ -4082,3 +4082,33 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“原生 App 每个功能入口可点击”的验收从 H5 synthetic 截图推进到真实 iOS UI test 门禁。它不替代人工页面截图、长列表滚动、真实业务数据和最终验收结论，但能防住原生导航按钮、WKWebView Bridge 和 H5 surface 切换之间的关键回归。
+
+## 阶段 149：iOS 原生导航结构化人工证据记录
+
+问题背景：
+
+- 阶段 148 已经把真实 Header / Drawer 点击纳入 Xcode UI test 门禁，但自动证据包里的结构化人工补证记录还没有独立的导航条目。
+- 如果 `manual-evidence-record.template.json` 不要求补原生导航截图、Bridge marker 和 UI test 输出，最终验收时容易只看到 H5 七页面截图，却漏掉“真实原生入口是否可点击”的证据。
+- 这类证据必须保持人工复核边界：自动脚本可以整理候选截图和 marker，但不能自动把页面体验判定为通过。
+
+完成内容：
+
+- `collect:ios-acceptance-evidence` 的 `manualEvidenceStillRequired` 新增“原生导航 / 页面切换”。
+- `manual-evidence-record.template.json` 和 `manual-checklist.todo.md` 新增稳定 `record_id: navigation_surfaces`。
+- `navigation_surfaces` 要求补充：
+  - Header Timeline 切换截图。
+  - Drawer 设置切换截图。
+  - H5 七页面切换截图或录屏。
+  - `source=native.header.timeline`、`source=native.drawer.quick-switch`、`view=timeline`、`view=settings`。
+  - `pnpm validate:ios-navigation-ui-test` 输出或 xcresult。
+- `manual-evidence-record.review.json` 会把已采集的 H5 七页面截图预填为候选证据，并保留 `status=pending` 与“候选证据不等于人工验收通过”的结论提醒。
+- iOS 系统能力验收清单已补充 `navigation_surfaces` 的结构化记录说明。
+
+验证结果：
+
+- 红灯：新增测试先因找不到 `navigation_surfaces` 失败。
+- 绿灯：补齐采证模板和 review 预填后，`node --test scripts/collect-ios-acceptance-evidence.test.mjs` 通过。
+
+阶段价值：
+
+这一阶段把“原生导航 UI test 已存在”推进到“最终人工验收记录也会强制收集对应证据”。它让自动门禁、证据包和 completion audit 的字段对齐，降低 iOS v1 收尾时漏补原生导航证据的风险。

@@ -122,6 +122,7 @@ const automatedEvidence = [
 
 const manualEvidenceStillRequired = [
   "会话持久 ID",
+  "原生导航 / 页面切换",
   "键盘输入",
   "语音输入",
   "照片附件",
@@ -141,6 +142,21 @@ const manualEvidenceGuides = {
     bridgeMarkers: ["conversationId=conversation_ios_*"],
     screenshots: ["重启前 conversationId", "重启后 conversationId"],
     systemArtifacts: [],
+  },
+  "原生导航 / 页面切换": {
+    apiSummaries: [],
+    bridgeMarkers: [
+      "source=native.header.timeline",
+      "source=native.drawer.quick-switch",
+      "view=timeline",
+      "view=settings",
+    ],
+    screenshots: [
+      "Header Timeline 切换截图",
+      "Drawer 设置切换截图",
+      "H5 七页面切换截图或录屏",
+    ],
+    systemArtifacts: ["pnpm validate:ios-navigation-ui-test 输出或 xcresult"],
   },
   键盘输入: {
     apiSummaries: ["/reminders?conversationId=..."],
@@ -230,6 +246,7 @@ const manualEvidenceRecordStatuses = ["pending", "passed", "failed", "blocked"];
 const manualEvidenceRecordIds = {
   "H5 地址覆盖": "h5_address_override",
   "会话持久 ID": "conversation_persistence",
+  "原生导航 / 页面切换": "navigation_surfaces",
   键盘输入: "keyboard_input",
   语音输入: "voice_input",
   照片附件: "photo_attachment",
@@ -3021,6 +3038,17 @@ function supportingSignalsForManualItem(item, evidence) {
       signals.push("验收事实种子已通过真实 Agent 确认流写入日程、费用和提醒");
     }
     return signals;
+  }
+
+  if (item === "原生导航 / 页面切换" && evidence.h5SurfaceScreenshots?.available) {
+    const captured = Object.entries(evidence.h5SurfaceScreenshots.surfaces)
+      .filter(([, surface]) => surface.captured)
+      .map(([surface]) => surface)
+      .join(", ");
+    return [
+      `H5 同会话页面截图已采集：${captured}`,
+      "真实 Header / Drawer 点击由 pnpm validate:ios-navigation-ui-test 单独验证",
+    ];
   }
 
   if (item === "系统日历取消清理" && evidence.calendarCleanupSeed?.available) {

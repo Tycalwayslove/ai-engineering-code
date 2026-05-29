@@ -195,6 +195,30 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(draftVoiceItem.status, "pending");
   assert.equal(draftVoiceItem.evidence.operatorNotes, "待人工补充。");
   assert.deepEqual(draftVoiceItem.evidence.apiSummaries, []);
+  const navigationManualItem = manualEvidenceRecord.items.find(
+    (item) => item.id === "navigation_surfaces"
+  );
+  assert.equal(navigationManualItem.item, "原生导航 / 页面切换");
+  assert.ok(
+    navigationManualItem.requiredEvidence.bridgeMarkers.includes(
+      "source=native.header.timeline"
+    )
+  );
+  assert.ok(
+    navigationManualItem.requiredEvidence.bridgeMarkers.includes(
+      "source=native.drawer.quick-switch"
+    )
+  );
+  assert.ok(
+    navigationManualItem.requiredEvidence.systemArtifacts.includes(
+      "pnpm validate:ios-navigation-ui-test 输出或 xcresult"
+    )
+  );
+  const navigationReviewItem = manualEvidenceReview.items.find(
+    (item) => item.id === "navigation_surfaces"
+  );
+  assert.equal(navigationReviewItem.status, "pending");
+  assert.match(navigationReviewItem.acceptanceNote, /候选证据不等于人工验收通过/);
   assert.equal(
     manifest.items.find((item) => item.item === "会话持久 ID")
       .supportingEvidenceSignals.length,
@@ -232,6 +256,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.ok(Array.isArray(evidence.manualEvidenceStillRequired));
   assert.ok(evidence.manualEvidenceStillRequired.includes("语音输入"));
   assert.ok(evidence.manualEvidenceStillRequired.includes("会话持久 ID"));
+  assert.ok(evidence.manualEvidenceStillRequired.includes("原生导航 / 页面切换"));
   assert.ok(evidence.manualEvidenceStillRequired.includes("后端事实确认"));
   assert.ok(evidence.manualEvidenceStillRequired.includes("系统日历写入"));
 
@@ -240,6 +265,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(summary, /不能替代真实人工验收/);
   assert.match(manualChecklist, /manual_required/);
   assert.match(summary, /语音输入/);
+  assert.match(summary, /原生导航 \/ 页面切换/);
   assert.match(summary, /系统日历写入/);
   assert.match(summary, /后端事实摘要/);
   assert.match(summary, /H5 同会话页面截图/);
@@ -249,6 +275,9 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(summary, /H5DevServerURL 目标页面识别/);
   assert.match(manualChecklist, /record_id: voice_input/);
   assert.match(manualChecklist, /bridge_marker: source=native\.composer\.voice/);
+  assert.match(manualChecklist, /record_id: navigation_surfaces/);
+  assert.match(manualChecklist, /bridge_marker: source=native\.header\.timeline/);
+  assert.match(manualChecklist, /bridge_marker: source=native\.drawer\.quick-switch/);
   assert.match(manualChecklist, /## 会话持久 ID/);
   assert.match(manualChecklist, /api_summary: \/agent\/conversations\/\{conversationId\}\/turns/);
   assert.match(manualChecklist, /## 后端事实确认/);

@@ -20,6 +20,11 @@ function pathForSurface(evidence, surface) {
   return evidence?.h5SurfaceScreenshots?.surfaces?.[surface]?.path ?? null;
 }
 
+function capturedPathForSurface(evidence, surface) {
+  const surfaceEvidence = evidence?.h5SurfaceScreenshots?.surfaces?.[surface];
+  return surfaceEvidence?.captured ? surfaceEvidence.path : null;
+}
+
 function apiSummary(evidence, label) {
   const conversationId = evidence?.backendFactSnapshot?.conversationId ?? "unknown";
   const counts = evidence?.backendFactSnapshot?.counts ?? {};
@@ -71,6 +76,28 @@ function evidenceSuggestionsForItem(item, evidence) {
           suggestions.apiSummaries,
           `/agent/conversations/{conversationId}/turns: ${apiSummary(evidence, "turns")}`
         );
+      }
+      break;
+    }
+    case "navigation_surfaces": {
+      const surfaces = [
+        ["对话页", "conversation"],
+        ["Timeline 页面", "timeline"],
+        ["日程页", "calendar"],
+        ["费用页", "expenses"],
+        ["提醒页", "reminders"],
+        ["执行记录页", "ledger"],
+        ["设置页", "settings"],
+      ];
+      for (const [label, surface] of surfaces) {
+        const surfacePath = capturedPathForSurface(evidence, surface);
+        if (surfacePath) {
+          addUnique(suggestions.screenshots, `${label}: ${surfacePath}`);
+        }
+      }
+      if (evidence?.h5SurfaceScreenshots?.available) {
+        addUnique(suggestions.bridgeMarkers, "view=timeline: H5 同会话页面截图已采集");
+        addUnique(suggestions.bridgeMarkers, "view=settings: H5 同会话页面截图已采集");
       }
       break;
     }
