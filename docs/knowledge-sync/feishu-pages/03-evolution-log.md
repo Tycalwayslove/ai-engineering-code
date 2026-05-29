@@ -4189,3 +4189,30 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 completion audit 从“有命令”推进到“被原生壳总护栏守住”。后续如果有人删掉审计入口或测试入口，`pnpm validate:native-shells` 会直接失败，减少 v1 收尾工具链被误拆的风险。
+
+## 阶段 153：completion audit 归档人工补证缺口报告
+
+问题背景：
+
+- v1 completion audit 已经能绑定人工证据记录，但初版只把缺口摘要写进 `v1-completion-audit.md`，没有把完整 `buildManualEvidenceRecordReport()` 输出作为同包 artifact 保存。
+- 最终补证时，人工验收记录、completion audit 和 `manual-evidence-gaps.md` 如果分散在不同命令输出里，后续复查容易漏掉当时仍缺哪些截图、录屏、API 摘要、bridge marker 或系统证据。
+- 收尾工具链需要做到“一个审计目录能解释为什么还不能 complete，或为什么可以 complete”。
+
+完成内容：
+
+- `writeV1CompletionAudit()` 在提供 `manualRecord` 或 `--manual-record <path>` 时，会在审计输出目录额外写入 `manual-evidence-gaps.md`。
+- `v1-completion-audit.json` / `.md` 的 `manualEvidence.reportPath` 记录该报告路径。
+- `collect-v1-completion-audit.test.mjs` 新增断言，覆盖人工记录输入时自动归档缺口报告。
+- `validate:native-shells` 的结构护栏新增 `manual-evidence-gaps.md` 和 `manualEvidenceReportPath` 检查，避免后续误删该归档能力。
+- `docs/qa/ios-v1-system-acceptance.md` 和 `docs/qa/v1-readiness-audit.md` 已补充 completion audit 同目录归档说明。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-v1-completion-audit.test.mjs` 先因缺少 `manualEvidenceReportPath` 失败。
+- 绿灯：补齐报告写入和路径记录后，同一测试通过。
+- 红灯：`node --test scripts/validate-native-shells.test.mjs` 先因 validator 未守住 `manual-evidence-gaps.md` 失败。
+- 绿灯：补齐 validator 检查后，同一测试通过。
+
+阶段价值：
+
+这一阶段把 completion audit 从“能指出缺口”推进到“能把完整补证缺口报告随审计包归档”。后续正式收尾时，自动化命令结果、人工证据记录、缺口报告和 goal complete 判定会更容易一起复查。

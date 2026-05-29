@@ -80,10 +80,13 @@ const v1CompletionAuditScript = readRequired(v1CompletionAuditScriptPath);
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "requiredAutomatedCommands");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "validate:ios-acceptance-evidence");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "validate:native-shells");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manual-evidence-gaps.md");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manualEvidenceReportPath");
 
 const v1CompletionAuditTestPath = "scripts/collect-v1-completion-audit.test.mjs";
 const v1CompletionAuditTest = readRequired(v1CompletionAuditTestPath);
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "collect:v1-completion-audit");
+assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "archives manual evidence gap report");
 
 const iosBuildScriptPath = "scripts/validate-ios-build.mjs";
 const iosBuildScript = readRequired(iosBuildScriptPath);

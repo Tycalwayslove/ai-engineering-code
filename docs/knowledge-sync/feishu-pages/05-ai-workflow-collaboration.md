@@ -430,3 +430,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 它不执行正式 completion audit，也不证明人工验收完成；它只保证最终审计入口仍然存在。
 
 这让原生壳收尾更像一个闭环：功能入口、证据入口和最终审计入口都被同一个结构护栏覆盖。
+
+## completion audit 归档人工补证缺口报告
+
+2026-05-29 的收尾治理继续增强了 `pnpm collect:v1-completion-audit`。当命令传入 `--manual-record <path>` 时，除了 `v1-completion-audit.json` 和 `v1-completion-audit.md`，还会在同一个输出目录写入 `manual-evidence-gaps.md`，并把路径记录到 `manualEvidence.reportPath`。
+
+这项能力的协作边界是：
+
+- completion audit 负责把自动化命令状态、人工证据记录状态和完整补证缺口报告放进同一个审计目录。
+- `manual-evidence-gaps.md` 来自 `buildManualEvidenceRecordReport()`，会列出未完成项目、当前状态和缺少的截图 / 录屏 / API 摘要 / bridge marker / 系统证据。
+- 即使缺口报告生成成功，也不代表人工验收完成；只有自动化命令全部通过且人工记录 completion 校验通过，audit 才能给出 `passed`。
+- `validate:native-shells` 现在守住 `manual-evidence-gaps.md` 和 `manualEvidenceReportPath`，防止最终收尾报告归档能力被误删。
+
+这让 goal 模式的收尾更少依赖聊天记忆：一个 completion audit 输出目录就能说明还差哪些人工证据，或者证明补证报告在最终审计时已经随包保存。

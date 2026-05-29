@@ -137,12 +137,17 @@ function readManualRecord(manualRecordPath) {
   return JSON.parse(fs.readFileSync(absolutePath, "utf8"));
 }
 
-function buildManualEvidenceAudit({ manualRecord, manualRecordPath }) {
+function buildManualEvidenceAudit({
+  manualEvidenceReportPath,
+  manualRecord,
+  manualRecordPath,
+}) {
   const record = manualRecord ?? readManualRecord(manualRecordPath);
   if (!record) {
     return {
       status: "missing",
       recordPath: manualRecordPath ?? null,
+      reportPath: null,
       requireCompletePassed: false,
       failures: ["人工证据记录缺失"],
       missingEvidenceCount: null,
@@ -159,6 +164,7 @@ function buildManualEvidenceAudit({ manualRecord, manualRecordPath }) {
   return {
     status: validation.failures.length === 0 ? "passed" : "failed",
     recordPath,
+    reportPath: manualEvidenceReportPath ?? null,
     requireCompletePassed: validation.failures.length === 0,
     failures: validation.failures,
     missingEvidenceCount: report.missingEvidenceCount,
@@ -195,6 +201,7 @@ function markdownForAudit(audit) {
     "",
     `- status: ${audit.manualEvidence.status}`,
     `- recordPath: ${audit.manualEvidence.recordPath ?? "未提供"}`,
+    `- reportPath: ${audit.manualEvidence.reportPath ?? "未生成"}`,
     `- requireCompletePassed: ${String(
       audit.manualEvidence.requireCompletePassed
     )}`,
@@ -218,7 +225,7 @@ function markdownForAudit(audit) {
     "",
     "1. 如需正式收尾，使用 `--run-automated-commands` 重新运行自动化命令。",
     "2. 提供补证后的 `--manual-record <path>`，并确保 `--require-complete` 校验通过。",
-    "3. 将本 audit 产物和人工证据记录一起归档。"
+    "3. 将本 audit 产物、人工证据记录和 `manual-evidence-gaps.md` 一起归档。"
   ];
   return `${lines.join("\n")}\n`;
 }
@@ -233,6 +240,7 @@ export function buildV1CompletionAudit(options = {}) {
     ),
   }));
   const manualEvidence = buildManualEvidenceAudit({
+    manualEvidenceReportPath: options.manualEvidenceReportPath,
     manualRecord: options.manualRecord,
     manualRecordPath: options.manualRecordPath,
   });
@@ -291,17 +299,37 @@ export function writeV1CompletionAudit(options = {}) {
     );
   }
 
+  const manualEvidenceReportPath =
+    options.manualRecord || options.manualRecordPath ? "manual-evidence-gaps.md" : null;
   const audit = buildV1CompletionAudit({
     commandResults,
     generatedAt: options.generatedAt,
+    manualEvidenceReportPath,
     manualRecord: options.manualRecord,
     manualRecordPath: options.manualRecordPath,
   });
   const jsonPath = path.join(outputDir, "v1-completion-audit.json");
   const markdownPath = path.join(outputDir, "v1-completion-audit.md");
+  const absoluteManualEvidenceReportPath = manualEvidenceReportPath
+    ? path.join(outputDir, manualEvidenceReportPath)
+    : null;
+  if (absoluteManualEvidenceReportPath && audit.manualEvidence.reportMarkdown) {
+    fs.writeFileSync(
+      absoluteManualEvidenceReportPath,
+      audit.manualEvidence.reportMarkdown
+    );
+  }
   fs.writeFileSync(jsonPath, `${JSON.stringify(audit, null, 2)}\n`);
   fs.writeFileSync(markdownPath, audit.markdown);
-  return { audit, jsonPath, markdownPath };
+  return {
+    audit,
+    jsonPath,
+    manualEvidenceReportPath:
+      absoluteManualEvidenceReportPath && audit.manualEvidence.reportMarkdown
+        ? absoluteManualEvidenceReportPath
+        : null,
+    markdownPath,
+  };
 }
 
 function parseArgs(argv) {

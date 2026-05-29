@@ -53,6 +53,14 @@ function passedManualRecord() {
   };
 }
 
+function incompleteManualRecord() {
+  const record = passedManualRecord();
+  record.acceptanceVerdict = "not_evaluated";
+  record.items[0].status = "pending";
+  record.items[0].evidence.screenshots = [];
+  return record;
+}
+
 test("v1 completion audit reports missing manual evidence and required commands", () => {
   const audit = buildV1CompletionAudit({
     commandResults: new Map(),
@@ -131,6 +139,44 @@ test("v1 completion audit writes json and markdown artifacts", () => {
   const markdown = fs.readFileSync(result.markdownPath, "utf8");
   assert.equal(json.verdict, "not_complete");
   assert.match(markdown, /# AI 时间管理 Agent v1 completion audit/);
+});
+
+test("v1 completion audit archives manual evidence gap report with record input", () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
+  const result = writeV1CompletionAudit({
+    commandResults: new Map(),
+    generatedAt: "2026-05-29T10:00:00.000Z",
+    manualRecord: incompleteManualRecord(),
+    manualRecordPath: "manual-evidence-record.review.json",
+    outputDir,
+  });
+
+  const reportPath = path.join(outputDir, "manual-evidence-gaps.md");
+  assert.equal(result.manualEvidenceReportPath, reportPath);
+  assert.equal(fs.existsSync(reportPath), true);
+
+  const json = JSON.parse(fs.readFileSync(result.jsonPath, "utf8"));
+  const markdown = fs.readFileSync(result.markdownPath, "utf8");
+  const report = fs.readFileSync(reportPath, "utf8");
+  assert.equal(json.manualEvidence.reportPath, "manual-evidence-gaps.md");
+  assert.match(markdown, /reportPath: manual-evidence-gaps\.md/);
+  assert.match(report, /# iOS 人工验收补证缺口报告/);
+  assert.match(report, /原生导航 \/ 页面切换/);
+});
+
+test("v1 completion audit does not return a gap report path when record is missing", () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
+  const result = writeV1CompletionAudit({
+    commandResults: new Map(),
+    generatedAt: "2026-05-29T10:00:00.000Z",
+    manualRecordPath: "missing-manual-evidence-record.json",
+    outputDir,
+  });
+
+  assert.equal(result.audit.manualEvidence.status, "missing");
+  assert.equal(result.audit.manualEvidence.reportPath, null);
+  assert.equal(result.manualEvidenceReportPath, null);
+  assert.equal(fs.existsSync(path.join(outputDir, "manual-evidence-gaps.md")), false);
 });
 
 test("v1 completion audit CLI ignores pnpm argument separator", () => {

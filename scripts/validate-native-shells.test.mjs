@@ -21,4 +21,6 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /scripts\/collect-v1-completion-audit\.mjs/);
   assert.match(validator, /const v1CompletionAuditTestPath/);
   assert.match(validator, /readRequired\(v1CompletionAuditTestPath\)/);
+  assert.match(validator, /manual-evidence-gaps\.md/);
+  assert.match(validator, /manualEvidenceReportPath/);
 });

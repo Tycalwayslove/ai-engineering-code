@@ -125,6 +125,14 @@ node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptanc
 
 不传 `--record` 时，`pnpm validate:ios-manual-evidence-record` 会生成一份 dry-run 证据包并校验模板结构；传入 `--require-complete` 时，所有 `items[]` 必须为 `passed`，且每个必填证据类别都要补齐对应证据，适合最终验收前使用。传入 `--report <path>` 时，校验器会额外生成 Markdown 缺口报告，列出每个未完成项目、当前状态和缺少的截图 / 录屏 / API / bridge marker / 系统证据。
 
+正式 v1 收尾时，也可以直接把补证后的记录交给 completion audit：
+
+```bash
+pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.filled.json
+```
+
+只要传入 `--manual-record`，completion audit 会在同一个输出目录额外归档 `manual-evidence-gaps.md`，并在 `v1-completion-audit.json` / `.md` 的 `manualEvidence.reportPath` 中记录该文件。即使人工记录已经通过，保留这份报告也便于后续复查当时的人工验收状态。
+
 ## 必验项目
 
 ### H5 地址覆盖
