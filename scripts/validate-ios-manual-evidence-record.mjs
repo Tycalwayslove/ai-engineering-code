@@ -28,6 +28,133 @@ function pushFailure(failures, recordPath, message) {
   failures.push(`${recordPath}: ${message}`);
 }
 
+function missingEvidenceForItem(item) {
+  const requiredEvidence = item?.requiredEvidence ?? {};
+  const evidence = item?.evidence ?? {};
+  const missingEvidence = [];
+  for (const category of evidenceCategories) {
+    for (const expected of asArray(requiredEvidence[category])) {
+      if (!includesEvidence(evidence[category], expected)) {
+        missingEvidence.push({ category, expected });
+      }
+    }
+  }
+  return missingEvidence;
+}
+
+function formatStatusCounts(statusCounts) {
+  return [
+    `passed=${statusCounts.passed}`,
+    `pending=${statusCounts.pending}`,
+    `failed=${statusCounts.failed}`,
+    `blocked=${statusCounts.blocked}`,
+    `other=${statusCounts.other}`,
+  ].join(", ");
+}
+
+export function buildManualEvidenceRecordReport(record, options = {}) {
+  const recordPath = options.recordPath ?? "manual-evidence-record";
+  const items = Array.isArray(record?.items) ? record.items : [];
+  const statusCounts = {
+    passed: 0,
+    pending: 0,
+    failed: 0,
+    blocked: 0,
+    other: 0,
+  };
+  const incompleteItems = [];
+  const globalGaps = [];
+  let missingEvidenceCount = 0;
+
+  if (record?.acceptanceVerdict !== "passed") {
+    globalGaps.push("acceptanceVerdict must be passed for completion");
+  }
+
+  for (const item of items) {
+    const status = item?.status;
+    if (Object.hasOwn(statusCounts, status)) {
+      statusCounts[status] += 1;
+    } else {
+      statusCounts.other += 1;
+    }
+
+    const missingEvidence = missingEvidenceForItem(item);
+    missingEvidenceCount += missingEvidence.length;
+    if (
+      status !== "passed" ||
+      missingEvidence.length > 0 ||
+      item?.evidence?.blocker
+    ) {
+      incompleteItems.push({
+        id: item?.id ?? "",
+        title: item?.title ?? item?.item ?? "未命名项目",
+        status: status ?? "missing",
+        blocker: item?.evidence?.blocker ?? "",
+        missingEvidence,
+      });
+    }
+  }
+
+  const lines = [
+    "# iOS 人工验收补证缺口报告",
+    "",
+    `- record: ${recordPath}`,
+    `- acceptanceVerdict: ${record?.acceptanceVerdict ?? "missing"}`,
+    `- totalItems: ${items.length}`,
+    `- statusCounts: ${formatStatusCounts(statusCounts)}`,
+    `- missingEvidenceCount: ${missingEvidenceCount}`,
+    "",
+  ];
+
+  if (globalGaps.length > 0) {
+    lines.push("## 全局缺口", "");
+    for (const gap of globalGaps) {
+      lines.push(`- ${gap}`);
+    }
+    lines.push("");
+  }
+
+  if (incompleteItems.length === 0) {
+    lines.push("## 未完成项目", "", "无。");
+  } else {
+    lines.push("## 未完成项目", "");
+    for (const item of incompleteItems) {
+      lines.push(`### ${item.title}`, "");
+      lines.push(`- id: ${item.id}`);
+      lines.push(`- status: ${item.status}`);
+      if (item.blocker) {
+        lines.push(`- blocker: ${item.blocker}`);
+      }
+      if (item.missingEvidence.length > 0) {
+        lines.push("- missingEvidence:");
+        for (const missing of item.missingEvidence) {
+          lines.push(`  - ${missing.category}: ${missing.expected}`);
+        }
+      } else {
+        lines.push("- missingEvidence: 无");
+      }
+      lines.push("");
+    }
+  }
+
+  lines.push(
+    "## 下一步",
+    "",
+    "1. 按未完成项目补齐截图、录屏、API 摘要、bridge marker 和系统证据。",
+    "2. 把对应项目 `status` 改为 `passed`、`failed` 或 `blocked`。",
+    "3. 所有必验项通过后，将 `acceptanceVerdict` 改为 `passed`，再运行 completion 校验。"
+  );
+
+  return {
+    totalItems: items.length,
+    statusCounts,
+    globalGaps,
+    missingEvidenceCount,
+    incompleteItems,
+    markdown: `${lines.join("\n")}\n`,
+  };
+}
+
 export function validateManualEvidenceRecord(record, options = {}) {
   const recordPath = options.recordPath ?? "manual-evidence-record";
   const requireComplete = options.requireComplete === true;
@@ -157,6 +284,7 @@ export function validateManualEvidenceRecord(record, options = {}) {
 function parseArgs(argv) {
   const args = {
     recordPath: process.env.AI_CODE_IOS_MANUAL_EVIDENCE_RECORD,
+    reportPath: process.env.AI_CODE_IOS_MANUAL_EVIDENCE_REPORT,
     requireComplete:
       process.env.AI_CODE_IOS_MANUAL_EVIDENCE_REQUIRE_COMPLETE === "1",
   };
@@ -165,6 +293,9 @@ function parseArgs(argv) {
     const arg = argv[index];
     if (arg === "--record") {
       args.recordPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--report") {
+      args.reportPath = argv[index + 1];
       index += 1;
     } else if (arg === "--require-complete") {
       args.requireComplete = true;
@@ -183,9 +314,11 @@ function parseArgs(argv) {
 function printUsage() {
   console.log(`Usage:
   node scripts/validate-ios-manual-evidence-record.mjs --record <path> [--require-complete]
+  node scripts/validate-ios-manual-evidence-record.mjs --record <path> --report <path>
 
 Environment:
   AI_CODE_IOS_MANUAL_EVIDENCE_RECORD=<path>
+  AI_CODE_IOS_MANUAL_EVIDENCE_REPORT=<path>
   AI_CODE_IOS_MANUAL_EVIDENCE_REQUIRE_COMPLETE=1
 
 Without --record, the script generates a dry-run evidence package in a temp directory
@@ -254,6 +387,15 @@ function runCli() {
     recordPath: path.relative(rootDir, recordPath),
     requireComplete: args.requireComplete,
   });
+  if (args.reportPath) {
+    const reportPath = path.resolve(rootDir, args.reportPath);
+    const report = buildManualEvidenceRecordReport(record, {
+      recordPath: path.relative(rootDir, recordPath),
+    });
+    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+    fs.writeFileSync(reportPath, report.markdown);
+    console.log(`iOS manual evidence gap report written to ${reportPath}`);
+  }
 
   if (result.failures.length > 0) {
     console.error("iOS manual evidence record validation failed:");
@@ -269,4 +411,3 @@ function runCli() {
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   runCli();
 }
-

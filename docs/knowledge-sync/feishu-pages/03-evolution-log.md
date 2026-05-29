@@ -3756,3 +3756,33 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把系统辅助证据集中采集入口从“长参数组合”收束成一个明确命令，方便后续在真实模拟器或真机验收前快速生成同一形态的辅助证据包。
+
+## 阶段 138：iOS 人工补证缺口报告
+
+问题背景：
+
+- `validate-ios-manual-evidence-record` 已经可以阻止空模板或未补齐证据的记录通过 completion 校验。
+- 但失败输出主要是逐条错误，人工补证时还需要自己归纳“哪些项目没完成、每项缺什么证据”。
+- v1 completion audit 前需要更直接的补证清单，减少在 JSON、summary 和终端错误之间来回查找。
+
+完成内容：
+
+- `validate-ios-manual-evidence-record.mjs` 新增 `buildManualEvidenceRecordReport()`。
+- CLI 新增 `--report <path>` 和 `AI_CODE_IOS_MANUAL_EVIDENCE_REPORT=<path>`。
+- 报告会生成 Markdown，包含：
+  - `acceptanceVerdict`、总项目数、各状态数量、缺失证据总数。
+  - 顶层结论缺口，例如 `acceptanceVerdict` 尚未改为 `passed`。
+  - 每个未完成项目的 `id`、标题、状态、blocker。
+  - 按 `screenshots`、`recordings`、`apiSummaries`、`bridgeMarkers`、`systemArtifacts` 列出的缺失证据。
+- `docs/qa/ios-v1-system-acceptance.md`、`docs/qa/v1-readiness-audit.md`、当前项目状态和工作流边界源稿已同步说明 `--report`。
+
+验证结果：
+
+- 红灯：`pnpm validate:ios-manual-evidence-record` 先因缺少 `buildManualEvidenceRecordReport` 导出失败。
+- 红灯：旁路审查发现当所有 item 已通过但顶层 `acceptanceVerdict` 未改时，报告会显示“未完成项目：无”，容易误读。
+- 绿灯：报告新增“全局缺口”区块后，`node --test scripts/validate-ios-manual-evidence-record.test.mjs` 通过，6 个测试全部通过。
+- CLI 实测：`node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/manual-report-dry-run/manual-evidence-record.draft.json --require-complete --report .tmp/ios-acceptance-evidence/manual-report-dry-run/manual-evidence-gaps.md` 会按预期拒绝 pending 草稿，同时写出缺口报告。
+
+阶段价值：
+
+这一阶段把人工补证从“校验失败后看错误列表”推进到“可生成稳定 Markdown 缺口报告”。它不替代人工验收，但能让验收人员按项目补齐证据，并让后续 Agent 从报告中快速判断剩余缺口。

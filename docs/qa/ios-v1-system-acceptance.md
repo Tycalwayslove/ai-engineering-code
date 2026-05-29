@@ -77,9 +77,11 @@ pnpm collect:ios-system-evidence
 ```bash
 pnpm validate:ios-manual-evidence-record
 node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.draft.json --require-complete
+node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.draft.json --report .tmp/ios-acceptance-evidence/<run>/manual-evidence-gaps.md
+node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.draft.json --require-complete --report .tmp/ios-acceptance-evidence/<run>/manual-evidence-gaps.md
 ```
 
-不传 `--record` 时，`pnpm validate:ios-manual-evidence-record` 会生成一份 dry-run 证据包并校验模板结构；传入 `--require-complete` 时，所有 `items[]` 必须为 `passed`，且每个必填证据类别都要补齐对应证据，适合最终验收前使用。
+不传 `--record` 时，`pnpm validate:ios-manual-evidence-record` 会生成一份 dry-run 证据包并校验模板结构；传入 `--require-complete` 时，所有 `items[]` 必须为 `passed`，且每个必填证据类别都要补齐对应证据，适合最终验收前使用。传入 `--report <path>` 时，校验器会额外生成 Markdown 缺口报告，列出每个未完成项目、当前状态和缺少的截图 / 录屏 / API / bridge marker / 系统证据。
 
 ## 必验项目
 

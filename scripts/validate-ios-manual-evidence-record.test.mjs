@@ -3,7 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-import { validateManualEvidenceRecord } from "./validate-ios-manual-evidence-record.mjs";
+import {
+  buildManualEvidenceRecordReport,
+  validateManualEvidenceRecord,
+} from "./validate-ios-manual-evidence-record.mjs";
 
 const rootDir = process.cwd();
 
@@ -80,6 +83,55 @@ test("completion validation rejects pending records without evidence", () => {
     result.failures.includes(
       "manual-evidence-record.template.json: items[0] 语音输入 missing bridgeMarkers evidence for source=native.composer.voice"
     )
+  );
+});
+
+test("manual evidence report summarizes completion gaps", () => {
+  const report = buildManualEvidenceRecordReport(baseRecord(), {
+    recordPath: "manual-evidence-record.template.json",
+  });
+
+  assert.equal(report.totalItems, 1);
+  assert.equal(report.statusCounts.pending, 1);
+  assert.equal(report.missingEvidenceCount, 4);
+  assert.deepEqual(report.incompleteItems.map((item) => item.id), [
+    "voice_input",
+  ]);
+  assert.match(report.markdown, /# iOS 人工验收补证缺口报告/);
+  assert.match(report.markdown, /manual-evidence-record\.template\.json/);
+  assert.match(report.markdown, /## 未完成项目/);
+  assert.match(report.markdown, /### 语音输入/);
+  assert.match(report.markdown, /status: pending/);
+  assert.match(report.markdown, /screenshots: 识别文本/);
+  assert.match(report.markdown, /apiSummaries: \/reminders\?conversationId=\.\.\./);
+  assert.match(report.markdown, /bridgeMarkers: source=native\.composer\.voice/);
+});
+
+test("manual evidence report includes global verdict gaps", () => {
+  const record = baseRecord();
+  record.items[0].status = "passed";
+  record.items[0].evidence = {
+    screenshots: ["识别文本"],
+    recordings: [],
+    apiSummaries: ["/reminders?conversationId=..."],
+    bridgeMarkers: ["source=native.composer.voice"],
+    systemArtifacts: ["iOS 权限弹窗截图或录屏"],
+    operatorNotes: "",
+    blocker: "",
+  };
+
+  const report = buildManualEvidenceRecordReport(record, {
+    recordPath: "manual-evidence-record.filled.json",
+  });
+
+  assert.deepEqual(report.incompleteItems, []);
+  assert.deepEqual(report.globalGaps, [
+    "acceptanceVerdict must be passed for completion",
+  ]);
+  assert.match(report.markdown, /## 全局缺口/);
+  assert.match(
+    report.markdown,
+    /acceptanceVerdict must be passed for completion/
   );
 });
 
