@@ -46,11 +46,21 @@ test("manual evidence review fills objective evidence without passing items", ()
         bridgeMarkers: ["source=native.composer.keyboard"],
         systemArtifacts: [],
       }),
+      item("navigation_surfaces", "原生导航 / 页面切换", {
+        screenshots: ["H5 七页面切换截图或录屏"],
+        recordings: [],
+        apiSummaries: [],
+        bridgeMarkers: [],
+        systemArtifacts: [],
+      }),
       item("photo_attachment", "照片附件", {
         screenshots: ["H5 附件摘要卡"],
         recordings: [],
         apiSummaries: ["/attachments?conversationId=..."],
-        bridgeMarkers: ["source=native.composer.attachment.photo"],
+        bridgeMarkers: [
+          "source=native.composer.attachment.photo",
+          "attachmentKind=image",
+        ],
         systemArtifacts: ["PhotosPicker 权限与选择器截图"],
       }),
       item("file_attachment", "文件附件", {
@@ -85,8 +95,15 @@ test("manual evidence review fills objective evidence without passing items", ()
       targetEventId: "calendar_event_1",
     },
     h5SurfaceScreenshots: {
+      available: true,
       surfaces: {
+        conversation: { captured: true, path: "/tmp/conversation.png" },
+        timeline: { captured: true, path: "/tmp/timeline.png" },
         calendar: { path: "/tmp/calendar.png" },
+        expenses: { captured: true, path: "/tmp/expenses.png" },
+        reminders: { captured: true, path: "/tmp/reminders.png" },
+        ledger: { captured: true, path: "/tmp/ledger.png" },
+        settings: { captured: true, path: "/tmp/settings.png" },
       },
     },
     nativeKeyboardInput: {
@@ -103,6 +120,7 @@ test("manual evidence review fills objective evidence without passing items", ()
         {
           attachmentId: "attachment_photo",
           itemId: "photo_attachment",
+          kind: "image",
           name: "receipt.jpg",
           source: "native.composer.attachment.photo",
         },
@@ -126,6 +144,7 @@ test("manual evidence review fills objective evidence without passing items", ()
   const calendarItem = review.items.find((candidate) => candidate.id === "system_calendar_write");
   const degradationItem = review.items.find((candidate) => candidate.id === "system_sync_degradation");
   const keyboardItem = review.items.find((candidate) => candidate.id === "keyboard_input");
+  const navigationItem = review.items.find((candidate) => candidate.id === "navigation_surfaces");
   const photoItem = review.items.find((candidate) => candidate.id === "photo_attachment");
   const fileItem = review.items.find((candidate) => candidate.id === "file_attachment");
   const pdfItem = review.items.find((candidate) => candidate.id === "pdf_text_extraction");
@@ -143,9 +162,13 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(keyboardItem.evidence.apiSummaries.join("\n"), /reminder_1/);
   assert.match(keyboardItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.keyboard/);
   assert.match(keyboardItem.evidence.operatorNotes, /候选证据/);
+  assert.match(navigationItem.evidence.screenshots.join("\n"), /H5 七页面切换截图或录屏/);
+  assert.match(navigationItem.evidence.screenshots.join("\n"), /conversation/);
+  assert.match(navigationItem.evidence.screenshots.join("\n"), /settings/);
   assert.match(photoItem.evidence.screenshots.join("\n"), /native-attachment-inputs/);
   assert.match(photoItem.evidence.apiSummaries.join("\n"), /attachment_photo/);
   assert.match(photoItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.attachment\.photo/);
+  assert.match(photoItem.evidence.bridgeMarkers.join("\n"), /attachmentKind=image/);
   assert.match(fileItem.evidence.apiSummaries.join("\n"), /attachment_file/);
   assert.match(fileItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.attachment\.file/);
   assert.match(pdfItem.evidence.apiSummaries.join("\n"), /attachment_pdf/);

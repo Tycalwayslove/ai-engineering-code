@@ -96,6 +96,15 @@ function evidenceSuggestionsForItem(item, evidence) {
         }
       }
       if (evidence?.h5SurfaceScreenshots?.available) {
+        const capturedSurfacePaths = surfaces
+          .map(([, surface]) => capturedPathForSurface(evidence, surface))
+          .filter(Boolean);
+        if (capturedSurfacePaths.length > 0) {
+          addUnique(
+            suggestions.screenshots,
+            `H5 七页面切换截图或录屏: ${capturedSurfacePaths.join(", ")}`
+          );
+        }
         addUnique(suggestions.bridgeMarkers, "view=timeline: H5 同会话页面截图已采集");
         addUnique(suggestions.bridgeMarkers, "view=settings: H5 同会话页面截图已采集");
       }
@@ -168,6 +177,9 @@ function evidenceSuggestionsForItem(item, evidence) {
           suggestions.bridgeMarkers,
           `inputKind=attachment: source=${sample.source}, attachment=${sample.name}`
         );
+        if (sample.kind) {
+          addUnique(suggestions.bridgeMarkers, `attachmentKind=${sample.kind}`);
+        }
       }
       break;
     }
