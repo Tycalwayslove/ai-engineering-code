@@ -65,6 +65,15 @@ pnpm collect:ios-acceptance-evidence
 
 `manual-evidence-record.template.json` 是机器可读的人工补证记录模板。每个 `items[]` 都有稳定 `id`，并与 `manual-checklist.todo.md` 中的 `record_id` 对齐；人工执行验收后，把 `status` 从 `pending` 改为 `passed`、`failed` 或 `blocked`，并把截图、录屏、接口摘要、bridge marker、系统证据路径和操作者备注写入 `evidence`。该文件默认仍是模板，不能把空模板当作验收通过；只有人工证据齐全且无 P0 / P1 阻塞时，才允许在最终 completion audit 中改变结论。
 
+可以用结构化记录校验器检查模板或已补证记录：
+
+```bash
+pnpm validate:ios-manual-evidence-record
+node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.template.json --require-complete
+```
+
+不传 `--record` 时，`pnpm validate:ios-manual-evidence-record` 会生成一份 dry-run 证据包并校验模板结构；传入 `--require-complete` 时，所有 `items[]` 必须为 `passed`，且每个必填证据类别都要补齐对应证据，适合最终验收前使用。
+
 ## 必验项目
 
 ### H5 地址覆盖

@@ -3638,3 +3638,34 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 iOS v1 手工补证从“清单提示”推进到“可结构化记录”。它仍不替代语音、附件、通知、系统日历等真实系统能力人工验收，但能让后续 completion audit 明确读取每个必验项的状态和证据路径，减少人工补证遗漏。
+
+## 阶段 134：iOS 人工验收记录校验器
+
+问题背景：
+
+- 上一阶段已经生成 `manual-evidence-record.template.json`，但还缺少一个可以在补证完成后读取该 JSON 并判断是否完整的命令。
+- 如果只有模板没有校验器，completion audit 仍可能靠人眼检查，容易把 `pending` 空模板或缺截图 / API 摘要的记录误判为完成。
+- 校验器需要区分“模板结构有效”和“最终人工验收完成”两个模式，避免普通模板生成阶段被强制要求真实证据。
+
+完成内容：
+
+- 新增 `scripts/validate-ios-manual-evidence-record.mjs`，导出 `validateManualEvidenceRecord()` 并提供 CLI。
+- 新增 `scripts/validate-ios-manual-evidence-record.test.mjs`，覆盖三类场景：
+  - `pending` 模板在普通结构模式下通过。
+  - `--require-complete` 模式会拒绝 `acceptanceVerdict=not_evaluated`、`status=pending` 和缺失证据。
+  - 所有必填证据齐全且状态为 `passed` 时通过。
+- 新增根命令 `pnpm validate:ios-manual-evidence-record`，它会先跑单元测试，再生成 dry-run 证据包并校验模板结构。
+- CLI 支持 `--record <path>` 和 `--require-complete`；最终验收可使用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete` 检查补证后的真实记录。
+- `docs/qa/ios-v1-system-acceptance.md`、`docs/qa/v1-readiness-audit.md` 和文档门禁都已补充新命令；readiness 完成门槛要求补证记录通过 completion 模式校验。
+
+验证结果：
+
+- 红灯 1：新增测试后，`node --test scripts/validate-ios-manual-evidence-record.test.mjs` 因缺少 validator 文件失败。
+- 绿灯 1：实现 validator 后，单元测试通过。
+- 红灯 2：更新 `validate-ios-manual-acceptance` 和 `validate-v1-readiness` 要求文档包含新命令后，两条门禁先失败。
+- 绿灯 2：补充验收清单和 readiness 文档后，`pnpm validate:ios-manual-acceptance` 与 `pnpm validate:v1-readiness` 通过。
+- `pnpm validate:ios-manual-evidence-record` 通过，证明测试和 dry-run 模板结构校验都可运行。
+
+阶段价值：
+
+这一阶段把“人工验收记录模板”推进为“可校验的人工验收记录”。后续真正手动执行语音、附件、通知、系统日历等验收后，可以把证据填回 JSON，并用 completion 模式阻止空模板、pending 项或缺证据项进入完成结论。

@@ -48,6 +48,7 @@ for (const expected of [
   "pnpm validate:ios-build",
   "pnpm validate:ios-simulator-smoke",
   "pnpm validate:h5-click-smoke",
+  "pnpm validate:ios-manual-evidence-record",
   "manual-evidence-record.template.json",
   "passed",
   "failed",

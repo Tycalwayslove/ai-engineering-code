@@ -41,6 +41,7 @@ for (const expected of [
   "pnpm validate:ios-build",
   "pnpm validate:ios-simulator-smoke",
   "pnpm validate:ios-manual-acceptance",
+  "pnpm validate:ios-manual-evidence-record",
   "pnpm validate:llm-smoke",
   "pnpm validate:contracts",
   "pnpm validate:context-sync",

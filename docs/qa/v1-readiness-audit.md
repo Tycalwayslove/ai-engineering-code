@@ -19,6 +19,7 @@ Goal 不能标记 complete。
 | iOS 编译 | `pnpm validate:ios-build` | Swift 工程 Debug simulator build、`H5_DEV_SERVER_URL` build setting、签名关闭下产出 `.app` | 已有命令，需在最终 completion audit 前重新运行 |
 | iOS Simulator 安装启动 | `pnpm validate:ios-simulator-smoke` | 选择 / 启动 iPhone Simulator、安装 `.app`、launch `com.aiengineeringcode.shell`、`get_app_container` | 已有命令，需在最终 completion audit 前重新运行 |
 | iOS 系统能力人工验收清单完整性 | `pnpm validate:ios-manual-acceptance` | 检查人工验收清单包含权限、系统能力、证据 marker 和 `manual-evidence-record.template.json` 记录模板说明 | 已通过文档级门禁，但不等于人工验收已经执行 |
+| iOS 系统能力人工证据记录 | `pnpm validate:ios-manual-evidence-record`；最终验收使用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete` | 校验人工证据记录结构；completion 模式要求每项 `passed` 且证据字段齐全 | 已有命令，当前只能证明模板结构可校验；真实 completion 仍需人工补证文件 |
 | 真实 LLM provider | `pnpm validate:llm-smoke` | DeepSeek / OpenAI provider 的 `chat`、`clarification`、`mixed`、只读查询和安全追问 | 已有命令，依赖 `.env.local` 中 provider key；最终 completion audit 前需重新运行或明确跳过原因 |
 | Postman / OpenAPI / SDK 契约 | `pnpm validate:contracts` 和 `pnpm validate:sdk-runtime` | OpenAPI、Postman、SDK 方法、直接动作必传 `conversationId`、Hybrid Bridge payload schema | 已有命令，需在最终 completion audit 前重新运行 |
 | 上下文与知识同步 | `pnpm validate:context-sync` | 当前项目状态、记忆索引、飞书源稿和同步声明 | 已有命令，需在阶段结束前重新运行 |
@@ -70,11 +71,12 @@ Goal 不能标记 complete。
 1. 自动化证据表中的命令在同一 completion audit 中重新运行，并且全部通过；如果某个命令因为环境原因无法运行，需要有明确风险说明，不能把缺证据当作已完成。
 2. `docs/qa/ios-v1-system-acceptance.md` 中的必验项目已经在模拟器或真机上逐项执行，并在 `manual-evidence-record.template.json` 派生的人工记录中沉淀截图、录屏、bridge/debug 或后端接口摘要。
 3. iOS 系统能力人工验收没有 P0 / P1 阻塞项；若有问题，需要在代码、文档或已知问题记录中闭环。
-4. `pnpm validate:context-sync` 通过，且 `current-project-state.md` 记录最终 completion audit 的日期、命令和结论。
-5. 外部知识库如未实际同步，最终回复必须明确“仓库已更新，外部知识库未同步”。
+4. 已对补证后的人工记录运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`，且命令通过。
+5. `pnpm validate:context-sync` 通过，且 `current-project-state.md` 记录最终 completion audit 的日期、命令和结论。
+6. 外部知识库如未实际同步，最终回复必须明确“仓库已更新，外部知识库未同步”。
 
 ## 下一步建议
 
-1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:context-sync` 和 `git diff --check`。
+1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:ios-manual-evidence-record`、`pnpm validate:context-sync` 和 `git diff --check`。
 2. 如果 `.env.local` 有可用 key，再运行 `pnpm validate:llm-smoke`。
 3. 按 `docs/qa/ios-v1-system-acceptance.md` 做一次真实模拟器或真机验收，把证据沉淀到仓库或外部知识库。
