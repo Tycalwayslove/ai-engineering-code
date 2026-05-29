@@ -86,6 +86,7 @@ assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "externalKn
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "external-knowledge-status");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manual-record-root");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manualRecordStrategies");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "人工证据记录选择");
 
 const v1CompletionAuditTestPath = "scripts/collect-v1-completion-audit.test.mjs";
 const v1CompletionAuditTest = readRequired(v1CompletionAuditTestPath);

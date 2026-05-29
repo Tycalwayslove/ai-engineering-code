@@ -469,3 +469,15 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 选中记录后，completion audit 仍会在自己的输出目录重新生成 `manual-evidence-gaps.md`，避免复用源证据包里可能指向旧 draft 的缺口报告。
 
 这让 goal 模式的最终收尾更顺手：自动化可以帮忙挑出当前证据最完整的人工记录，但 completion 的判定仍只认自动化命令全通过和人工记录 completion 校验通过。
+
+## completion audit Markdown 选择依据
+
+2026-05-29 的收尾治理继续补齐了审计包的人读入口。此前 `manualEvidence.selection` 已经写入 JSON，但 `v1-completion-audit.md` 只展示人工证据记录状态，没有展示为什么选中这份记录。现在当使用 `--manual-record best|latest` 时，Markdown 会新增“人工证据记录选择”小节。
+
+这项能力的协作边界是：
+
+- Markdown 会展示 strategy、root、候选数量、有效候选数量、选中路径、选中记录缺口数和 `selectedRequireCompletePassed`。
+- 该小节只解释自动选择依据，不改变 completion 判定。
+- `validate:native-shells` 已守住“人工证据记录选择”小节，防止后续只保留 JSON 字段、删掉人工复查入口。
+
+这让最终审计更容易复盘：不打开 JSON，也能在 Markdown 里看到 completion audit 绑定了哪份人工记录，以及这份记录是否真正通过了 completion 校验。

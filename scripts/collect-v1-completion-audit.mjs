@@ -367,6 +367,28 @@ function markdownForAudit(audit) {
   const allCommandsPassed = audit.automatedCommands.every(
     (command) => command.status === "passed"
   );
+  const manualRecordSelectionLines = audit.manualEvidence.selection
+    ? [
+        "",
+        "### 人工证据记录选择",
+        "",
+        `- strategy: ${audit.manualEvidence.selection.strategy}`,
+        `- root: ${audit.manualEvidence.selection.root}`,
+        `- candidateCount: ${audit.manualEvidence.selection.candidateCount}`,
+        `- validCandidateCount: ${
+          audit.manualEvidence.selection.validCandidateCount ?? "unknown"
+        }`,
+        `- selectedRecordPath: ${
+          audit.manualEvidence.selection.selectedRecordPath ?? "未选中"
+        }`,
+        `- selectedMissingEvidenceCount: ${
+          audit.manualEvidence.selection.selectedMissingEvidenceCount ?? "unknown"
+        }`,
+        `- selectedRequireCompletePassed: ${
+          audit.manualEvidence.selection.selectedRequireCompletePassed
+        }`,
+      ]
+    : [];
   const lines = [
     "# AI 时间管理 Agent v1 completion audit",
     "",
@@ -396,6 +418,7 @@ function markdownForAudit(audit) {
     `- missingEvidenceCount: ${
       audit.manualEvidence.missingEvidenceCount ?? "unknown"
     }`,
+    ...manualRecordSelectionLines,
     ...(audit.manualEvidence.failures.length > 0
       ? ["", "### 人工证据缺口", "", ...audit.manualEvidence.failures.map((failure) => `- ${failure}`)]
       : []),
@@ -441,7 +464,7 @@ function markdownForAudit(audit) {
     "## 下一步",
     "",
     "1. 如需正式收尾，使用 `--run-automated-commands` 重新运行自动化命令。",
-    "2. 提供补证后的 `--manual-record <path>`，并确保 `--require-complete` 校验通过。",
+    "2. 提供补证后的 `--manual-record <path>`，或用 `--manual-record best --manual-record-root .tmp/ios-acceptance-evidence` 自动选择候选，并确保 `--require-complete` 校验通过。",
     "3. 将本 audit 产物、人工证据记录和 `manual-evidence-gaps.md` 一起归档。"
   ];
   return `${lines.join("\n")}\n`;

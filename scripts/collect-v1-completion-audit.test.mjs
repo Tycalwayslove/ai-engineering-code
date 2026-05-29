@@ -328,6 +328,10 @@ test("v1 completion audit CLI can select --manual-record best from a root", () =
   const json = JSON.parse(
     fs.readFileSync(path.join(outputDir, "v1-completion-audit.json"), "utf8")
   );
+  const markdown = fs.readFileSync(
+    path.join(outputDir, "v1-completion-audit.md"),
+    "utf8"
+  );
   assert.equal(json.manualEvidence.status, "passed");
   assert.equal(
     json.manualEvidence.recordPath,
@@ -335,6 +339,10 @@ test("v1 completion audit CLI can select --manual-record best from a root", () =
   );
   assert.equal(json.manualEvidence.selection.strategy, "best");
   assert.equal(json.manualEvidence.selection.candidateCount, 2);
+  assert.match(markdown, /### 人工证据记录选择/);
+  assert.match(markdown, /strategy: best/);
+  assert.match(markdown, /candidateCount: 2/);
+  assert.match(markdown, /selectedRequireCompletePassed: true/);
 });
 
 test("v1 completion audit CLI ignores invalid manual evidence record candidates", () => {

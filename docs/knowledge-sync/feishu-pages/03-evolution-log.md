@@ -4283,3 +4283,29 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 completion audit 从“必须手动找记录路径”推进到“可以自动选出当前证据最完整的人工记录”。它减少了最终收尾的人为操作成本，但不降低完成门槛：只有自动化命令全部通过且选中的人工记录通过 completion 校验时，audit 才能给出 `passed`。
+
+## 阶段 156：completion audit Markdown 展示选择依据
+
+问题背景：
+
+- `manualEvidence.selection` 已经写入 `v1-completion-audit.json`，但 Markdown 报告只展示人工证据记录状态，没有展示 `best` / `latest` 为什么选中某个记录。
+- 最终收尾时，人通常先读 `v1-completion-audit.md`，如果选择依据只在 JSON 里，复查成本仍然偏高。
+- 需要让审计包的人读入口也明确记录候选数量、选中路径和选中记录是否通过 completion 校验。
+
+完成内容：
+
+- `markdownForAudit()` 在存在 `manualEvidence.selection` 时新增“人工证据记录选择”小节。
+- 小节展示 `strategy`、`root`、`candidateCount`、`validCandidateCount`、`selectedRecordPath`、`selectedMissingEvidenceCount` 和 `selectedRequireCompletePassed`。
+- 下一步提示补充 `--manual-record best --manual-record-root .tmp/ios-acceptance-evidence`。
+- `validate:native-shells` 守住“人工证据记录选择”字符串，防止 Markdown 可读入口被误删。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-v1-completion-audit.test.mjs` 先因 Markdown 缺少“人工证据记录选择”失败。
+- 绿灯：补齐 Markdown 小节后，同一测试通过。
+- 红灯：`node --test scripts/validate-native-shells.test.mjs` 先因 validator 未守住“人工证据记录选择”失败。
+- 绿灯：补齐 validator 检查后，同一测试通过。
+
+阶段价值：
+
+这一阶段把自动选择记录的证据从“机器可读”推进到“人可复查”。最终 completion audit 不仅能在 JSON 里说明选了哪份记录，也能在 Markdown 报告里直接展示选择依据，减少收尾沟通和人工复查成本。
