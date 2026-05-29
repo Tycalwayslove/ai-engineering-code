@@ -27,6 +27,7 @@ Goal 不能标记 complete。
 | 真实 LLM provider | `pnpm validate:llm-smoke` | DeepSeek / OpenAI provider 的 `chat`、`clarification`、`mixed`、只读查询和安全追问 | 已有命令，依赖 `.env.local` 中 provider key；最终 completion audit 前需重新运行或明确跳过原因 |
 | Postman / OpenAPI / SDK 契约 | `pnpm validate:contracts` 和 `pnpm validate:sdk-runtime` | OpenAPI、Postman、SDK 方法、直接动作必传 `conversationId`、Hybrid Bridge payload schema | 已有命令，需在最终 completion audit 前重新运行 |
 | 上下文与知识同步 | `pnpm validate:context-sync` | 当前项目状态、记忆索引、飞书源稿和同步声明 | 已有命令，需在阶段结束前重新运行 |
+| v1 completion audit 汇总 | `pnpm collect:v1-completion-audit`；正式收尾使用 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` | 生成单一 `v1-completion-audit.json` / `.md`，汇总自动化命令状态、人工证据记录 completion 校验和 goal 是否可 complete | 已有命令；默认不跑重型命令，只生成缺口审计；正式 completion audit 必须显式运行自动化命令并提供补证后的人工记录 |
 | 全局格式残留 | `git diff --check` | 空白错误和 patch 格式问题 | 已有命令，需在最终 completion audit 前重新运行 |
 
 ## 本轮自动化证据
@@ -66,7 +67,7 @@ Goal 不能标记 complete。
 ## 未完成证据
 
 - 尚未在仓库中保存完整的 iOS 系统能力人工验收记录；当前自动证据包会生成 `manual-evidence-record.template.json` 和 `manual-evidence-record.draft.json`，但它们默认都是 `pending` / `not_evaluated`，需要人工把每项改为 `passed`、`failed` 或 `blocked` 并补齐证据路径。
-- 尚未在单一 completion audit 记录中留存全套自动化命令输出；本轮已补跑 LLM、SDK、readiness 和 factory 关键门禁。
+- 尚未在单一 completion audit 记录中留存全套自动化命令输出；`pnpm collect:v1-completion-audit` 已提供固定产物入口，但正式收尾仍需使用 `--run-automated-commands --manual-record <path>` 重新生成完整记录。
 - 尚未执行外部知识库真实同步；当前只有仓库内 `docs/knowledge-sync/feishu-pages/` 源稿更新。
 
 ## 完成判定门槛
@@ -77,12 +78,13 @@ Goal 不能标记 complete。
 2. `docs/qa/ios-v1-system-acceptance.md` 中的必验项目已经在模拟器或真机上逐项执行，并在 `manual-evidence-record.draft.json` 派生的人工记录中沉淀截图、录屏、bridge/debug 或后端接口摘要。
 3. iOS 系统能力人工验收没有 P0 / P1 阻塞项；若有问题，需要在代码、文档或已知问题记录中闭环。
 4. 已对补证后的人工记录运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete --report <report-path>`，且命令通过；如果未通过，必须保留生成的缺口报告并继续补证。
-5. `pnpm validate:context-sync` 通过，且 `current-project-state.md` 记录最终 completion audit 的日期、命令和结论。
-6. 外部知识库如未实际同步，最终回复必须明确“仓库已更新，外部知识库未同步”。
+5. `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` 生成的 `v1-completion-audit.json` / `.md` 结论为 `passed`，并归档自动化命令与人工证据记录路径。
+6. `pnpm validate:context-sync` 通过，且 `current-project-state.md` 记录最终 completion audit 的日期、命令和结论。
+7. 外部知识库如未实际同步，最终回复必须明确“仓库已更新，外部知识库未同步”。
 
 ## 下一步建议
 
-1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-navigation-ui-test`、`pnpm validate:ios-keyboard-ui-test`、`pnpm validate:ios-voice-ui-test`、`pnpm validate:ios-attachment-ui-test`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:ios-manual-evidence-record`、`pnpm validate:context-sync` 和 `git diff --check`。
+1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-navigation-ui-test`、`pnpm validate:ios-keyboard-ui-test`、`pnpm validate:ios-voice-ui-test`、`pnpm validate:ios-attachment-ui-test`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:ios-manual-evidence-record`、`pnpm validate:context-sync` 和 `git diff --check`；正式归档时用 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` 统一沉淀结果。
 2. 如果 `.env.local` 有可用 key，再运行 `pnpm validate:llm-smoke`。
 3. 需要集中补自动辅助材料时，运行 `pnpm collect:ios-system-evidence`，一次性启用当前支持的系统辅助证据；该命令会在 Calendar 写入类辅助证据前预授权 Simulator 日历权限，并在权限拒绝场景里单独撤销权限验证降级路径。键盘输入的 H5 / 后端辅助证据可单独运行 `pnpm collect:ios-keyboard-evidence`，照片 / 文件 / PDF 附件的 H5 / 后端辅助证据可单独运行 `pnpm collect:ios-attachment-evidence`。这些命令可能等待通知投递或写入 seed 事项，且仍不能替代人工证据。
 4. 按 `docs/qa/ios-v1-system-acceptance.md` 做一次真实模拟器或真机验收，把证据沉淀到仓库或外部知识库。

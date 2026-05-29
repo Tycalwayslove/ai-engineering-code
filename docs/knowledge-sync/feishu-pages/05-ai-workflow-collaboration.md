@@ -392,3 +392,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - completion audit 前必须用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete --report <report-path>` 校验补证后的记录，而不是只看自动证据包生成成功。
 
 这让 iOS v1 收尾链路更连贯：工程门禁证明真实原生入口能驱动 H5 surface，结构化人工记录负责把该证据沉淀到最终验收材料中。
+
+## v1 completion audit 统一归档入口
+
+2026-05-29 的收尾治理新增了 `pnpm collect:v1-completion-audit`。默认运行时，它只生成 `v1-completion-audit.json` 和 `v1-completion-audit.md`，把必跑自动化命令、人工证据记录状态、缺口和 goal 是否可 complete 汇总到一个地方。
+
+这项能力的协作边界是：
+
+- 默认模式只生成缺口审计，不运行耗时自动化命令，适合随时查看当前离完成还差什么。
+- 正式收尾时必须显式运行 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>`，并提供已经补证的人工记录。
+- 审计脚本只有在自动化命令全部通过、人工证据记录 `--require-complete` 校验通过时，才会给出 `passed` 结论。
+- 它不会同步飞书或 Obsidian；外部知识库是否同步仍以实际同步命令为准。
+
+这让 goal 模式的最终判断更稳：不是靠“我记得这些命令跑过”，而是用单一审计产物把命令、人工证据和完成结论绑定在一起。

@@ -4112,3 +4112,28 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“原生导航 UI test 已存在”推进到“最终人工验收记录也会强制收集对应证据”。它让自动门禁、证据包和 completion audit 的字段对齐，降低 iOS v1 收尾时漏补原生导航证据的风险。
+
+## 阶段 150：v1 completion audit 统一归档入口
+
+问题背景：
+
+- v1 readiness audit 已经列出自动化门禁、人工证据缺口和完成判定门槛，但此前缺少一个固定命令把这些结果沉淀成单一收尾产物。
+- 如果最终验收只靠聊天记录或零散命令输出，很容易出现“部分命令跑过、人工记录未绑定、goal 是否 complete 缺少证据”的问题。
+- completion audit 必须严格区分自动化命令、人工证据记录和外部知识库同步状态，不能因为生成了报告就把目标标记为完成。
+
+完成内容：
+
+- 新增 `scripts/collect-v1-completion-audit.mjs`。
+- 新增根命令 `pnpm collect:v1-completion-audit`。
+- 默认模式生成 `v1-completion-audit.json` 和 `v1-completion-audit.md`，列出必跑自动化命令、人工证据记录状态、缺口和 goal 是否可 complete；默认不跑重型命令。
+- 正式收尾模式支持 `--run-automated-commands --manual-record <path>`，会重新运行自动化命令，并用 `validateManualEvidenceRecord(..., requireComplete=true)` 校验补证后的人工记录。
+- v1 readiness audit 已把该命令纳入完成判定门槛，要求正式收尾时归档同一份 completion audit 产物。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-v1-completion-audit.test.mjs` 先因缺少模块失败。
+- 绿灯：实现脚本和 package 命令后，`node --test scripts/collect-v1-completion-audit.test.mjs` 通过。
+
+阶段价值：
+
+这一阶段把“完成标准写在文档里”推进到“完成审计有固定机器产物”。它不会替代人工证据，也不会默认执行耗时门禁；它的价值是让最终收尾时的证据路径、命令状态和 complete 判定可复查、可归档。

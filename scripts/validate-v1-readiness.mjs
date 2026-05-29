@@ -46,6 +46,7 @@ for (const expected of [
   "pnpm validate:llm-smoke",
   "pnpm validate:contracts",
   "pnpm validate:context-sync",
+  "pnpm collect:v1-completion-audit",
   "git diff --check",
   "未完成证据",
   "完成判定门槛",
