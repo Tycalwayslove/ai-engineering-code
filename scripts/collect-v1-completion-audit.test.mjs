@@ -69,6 +69,22 @@ test("v1 completion audit reports missing manual evidence and required commands"
   });
 
   assert.equal(audit.verdict, "not_complete");
+  assert.equal(audit.externalKnowledgeSync.status, "not_synced");
+  assert.equal(audit.externalKnowledgeSync.sourceDraftsUpdated, true);
+  assert.deepEqual(audit.externalKnowledgeSync.sourceDraftPaths, [
+    "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+    "docs/knowledge-sync/feishu-pages/05-ai-workflow-collaboration.md",
+  ]);
+  assert.deepEqual(audit.externalKnowledgeSync.targets, {
+    feishu: "not_synced",
+    obsidian: "not_synced",
+  });
+  assert.deepEqual(audit.externalKnowledgeSync.syncEvidence, []);
+  assert.equal(audit.externalKnowledgeSync.finalDisclosureRequired, true);
+  assert.match(
+    audit.externalKnowledgeSync.finalDisclosure,
+    /仓库已更新，外部知识库未同步/
+  );
   assert.equal(audit.manualEvidence.status, "missing");
   assert.equal(audit.manualEvidence.requireCompletePassed, false);
   assert.ok(
@@ -122,7 +138,11 @@ test("v1 completion audit can pass when all command and manual evidence inputs p
   assert.equal(audit.verdict, "passed");
   assert.equal(audit.manualEvidence.status, "passed");
   assert.equal(audit.manualEvidence.missingEvidenceCount, 0);
+  assert.equal(audit.externalKnowledgeSync.status, "not_synced");
+  assert.equal(audit.externalKnowledgeSync.blocksProductCompletion, false);
   assert.match(audit.markdown, /Goal 可以标记 complete/);
+  assert.match(audit.markdown, /外部知识库同步/);
+  assert.match(audit.markdown, /仓库已更新，外部知识库未同步/);
 });
 
 test("v1 completion audit writes json and markdown artifacts", () => {
@@ -195,6 +215,82 @@ test("v1 completion audit CLI ignores pnpm argument separator", () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /v1 completion audit written/);
   assert.ok(fs.existsSync(path.join(outputDir, "v1-completion-audit.json")));
+});
+
+test("v1 completion audit CLI records explicit external knowledge sync", () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/collect-v1-completion-audit.mjs",
+      "--",
+      "--output-dir",
+      outputDir,
+      "--external-knowledge-synced",
+      "--source-draft",
+      "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+      "--feishu-sync-evidence",
+      "logs/lark-sync.log",
+      "--obsidian-sync-evidence",
+      "obsidian://vault/AI/阶段记录",
+      "--external-knowledge-note",
+      "已执行 lark-cli docs +update --api-version v2",
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  const json = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "v1-completion-audit.json"), "utf8")
+  );
+  assert.equal(json.externalKnowledgeSync.status, "synced");
+  assert.deepEqual(json.externalKnowledgeSync.targets, {
+    feishu: "synced",
+    obsidian: "synced",
+  });
+  assert.equal(json.externalKnowledgeSync.finalDisclosureRequired, false);
+  assert.deepEqual(json.externalKnowledgeSync.sourceDraftPaths, [
+    "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+  ]);
+  assert.deepEqual(json.externalKnowledgeSync.syncEvidence, [
+    {
+      target: "feishu",
+      evidence: "logs/lark-sync.log",
+    },
+    {
+      target: "obsidian",
+      evidence: "obsidian://vault/AI/阶段记录",
+    },
+  ]);
+  assert.match(json.externalKnowledgeSync.note, /lark-cli docs \+update/);
+});
+
+test("v1 completion audit CLI records partial external knowledge sync status", () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/collect-v1-completion-audit.mjs",
+      "--output-dir",
+      outputDir,
+      "--external-knowledge-status",
+      "partial",
+      "--feishu-sync-evidence",
+      "logs/lark-sync.log",
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1);
+  const json = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "v1-completion-audit.json"), "utf8")
+  );
+  assert.equal(json.externalKnowledgeSync.status, "partial");
+  assert.deepEqual(json.externalKnowledgeSync.targets, {
+    feishu: "synced",
+    obsidian: "not_synced",
+  });
+  assert.equal(json.externalKnowledgeSync.finalDisclosureRequired, true);
 });
 
 test("package exposes v1 completion audit command", () => {

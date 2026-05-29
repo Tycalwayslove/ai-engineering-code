@@ -10,6 +10,10 @@ import {
 } from "./validate-ios-manual-evidence-record.mjs";
 
 const rootDir = process.cwd();
+const defaultExternalKnowledgeSourceDraftPaths = [
+  "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+  "docs/knowledge-sync/feishu-pages/05-ai-workflow-collaboration.md",
+];
 
 export const requiredAutomatedCommands = [
   {
@@ -175,6 +179,69 @@ function buildManualEvidenceAudit({
   };
 }
 
+function normalizeExternalKnowledgeStatus(status) {
+  const value = status ?? "not_synced";
+  if (!["not_synced", "synced", "partial", "unknown"].includes(value)) {
+    throw new Error(
+      `external knowledge status must be one of not_synced, synced, partial, unknown; got ${value}`
+    );
+  }
+  return value;
+}
+
+function buildExternalKnowledgeSyncAudit(options = {}) {
+  const syncEvidence = [
+    ...(options.feishuSyncEvidence
+      ? [{ target: "feishu", evidence: options.feishuSyncEvidence }]
+      : []),
+    ...(options.obsidianSyncEvidence
+      ? [{ target: "obsidian", evidence: options.obsidianSyncEvidence }]
+      : []),
+  ];
+  const status = normalizeExternalKnowledgeStatus(
+    options.externalKnowledgeSynced ? "synced" : options.externalKnowledgeStatus
+  );
+  const sourceDraftPaths =
+    options.externalKnowledgeSourceDraftPaths?.length > 0
+      ? options.externalKnowledgeSourceDraftPaths
+      : defaultExternalKnowledgeSourceDraftPaths;
+  const targets =
+    status === "synced"
+      ? { feishu: "synced", obsidian: "synced" }
+      : {
+          feishu:
+            options.feishuSyncEvidence || status === "synced"
+              ? "synced"
+              : status === "unknown"
+                ? "unknown"
+                : "not_synced",
+          obsidian:
+            options.obsidianSyncEvidence || status === "synced"
+              ? "synced"
+              : status === "unknown"
+                ? "unknown"
+                : "not_synced",
+        };
+  const finalDisclosureRequired = status !== "synced";
+  return {
+    status,
+    sourceDraftsUpdated: sourceDraftPaths.length > 0,
+    sourceDraftPaths,
+    targets,
+    syncEvidence,
+    blocksProductCompletion: false,
+    finalDisclosureRequired,
+    finalDisclosure: finalDisclosureRequired
+      ? "仓库已更新，外部知识库未同步"
+      : "",
+    note:
+      options.externalKnowledgeNote ??
+      (status === "synced"
+        ? "已显式声明外部知识库完成同步。"
+        : "未检测到本轮实际执行飞书或 Obsidian 同步命令；如未同步，最终回复必须明确说明。"),
+  };
+}
+
 function markdownForAudit(audit) {
   const allCommandsPassed = audit.automatedCommands.every(
     (command) => command.status === "passed"
@@ -212,6 +279,32 @@ function markdownForAudit(audit) {
       ? ["", "### 人工证据缺口", "", ...audit.manualEvidence.failures.map((failure) => `- ${failure}`)]
       : []),
     "",
+    "## 外部知识库同步",
+    "",
+    `- status: ${audit.externalKnowledgeSync.status}`,
+    `- sourceDraftsUpdated: ${String(
+      audit.externalKnowledgeSync.sourceDraftsUpdated
+    )}`,
+    `- sourceDraftPaths: ${audit.externalKnowledgeSync.sourceDraftPaths.join(", ")}`,
+    `- targets: feishu=${audit.externalKnowledgeSync.targets.feishu}, obsidian=${audit.externalKnowledgeSync.targets.obsidian}`,
+    `- syncEvidence: ${
+      audit.externalKnowledgeSync.syncEvidence.length > 0
+        ? audit.externalKnowledgeSync.syncEvidence
+            .map((item) => `${item.target}:${item.evidence}`)
+            .join(", ")
+        : "无"
+    }`,
+    `- blocksProductCompletion: ${String(
+      audit.externalKnowledgeSync.blocksProductCompletion
+    )}`,
+    `- finalDisclosureRequired: ${String(
+      audit.externalKnowledgeSync.finalDisclosureRequired
+    )}`,
+    `- finalDisclosure: ${
+      audit.externalKnowledgeSync.finalDisclosure || "不需要"
+    }`,
+    `- note: ${audit.externalKnowledgeSync.note}`,
+    "",
     "## 完成判定",
     "",
     allCommandsPassed
@@ -220,6 +313,9 @@ function markdownForAudit(audit) {
     audit.manualEvidence.requireCompletePassed
       ? "- 人工证据记录 completion 校验通过。"
       : "- 人工证据记录尚未通过 completion 校验。",
+    audit.externalKnowledgeSync.finalDisclosureRequired
+      ? "- 外部知识库未记录为已同步；最终回复必须明确说明“仓库已更新，外部知识库未同步”。"
+      : "- 外部知识库已显式记录为已同步。",
     "",
     "## 下一步",
     "",
@@ -244,6 +340,14 @@ export function buildV1CompletionAudit(options = {}) {
     manualRecord: options.manualRecord,
     manualRecordPath: options.manualRecordPath,
   });
+  const externalKnowledgeSync = buildExternalKnowledgeSyncAudit({
+    externalKnowledgeNote: options.externalKnowledgeNote,
+    externalKnowledgeSourceDraftPaths: options.externalKnowledgeSourceDraftPaths,
+    externalKnowledgeStatus: options.externalKnowledgeStatus,
+    externalKnowledgeSynced: options.externalKnowledgeSynced,
+    feishuSyncEvidence: options.feishuSyncEvidence,
+    obsidianSyncEvidence: options.obsidianSyncEvidence,
+  });
   const automatedPassed = automatedCommands.every(
     (command) => command.status === "passed"
   );
@@ -255,6 +359,7 @@ export function buildV1CompletionAudit(options = {}) {
     verdict,
     automatedCommands,
     manualEvidence,
+    externalKnowledgeSync,
   };
   return {
     ...audit,
@@ -307,6 +412,12 @@ export function writeV1CompletionAudit(options = {}) {
     manualEvidenceReportPath,
     manualRecord: options.manualRecord,
     manualRecordPath: options.manualRecordPath,
+    externalKnowledgeNote: options.externalKnowledgeNote,
+    externalKnowledgeSourceDraftPaths: options.externalKnowledgeSourceDraftPaths,
+    externalKnowledgeStatus: options.externalKnowledgeStatus,
+    externalKnowledgeSynced: options.externalKnowledgeSynced,
+    feishuSyncEvidence: options.feishuSyncEvidence,
+    obsidianSyncEvidence: options.obsidianSyncEvidence,
   });
   const jsonPath = path.join(outputDir, "v1-completion-audit.json");
   const markdownPath = path.join(outputDir, "v1-completion-audit.md");
@@ -338,6 +449,15 @@ function parseArgs(argv) {
     manualRecordPath: process.env.AI_CODE_V1_COMPLETION_MANUAL_RECORD,
     runAutomatedCommands:
       process.env.AI_CODE_V1_COMPLETION_RUN_AUTOMATED_COMMANDS === "1",
+    externalKnowledgeSynced:
+      process.env.AI_CODE_EXTERNAL_KNOWLEDGE_SYNCED === "1",
+    externalKnowledgeNote: process.env.AI_CODE_EXTERNAL_KNOWLEDGE_NOTE,
+    externalKnowledgeStatus: process.env.AI_CODE_EXTERNAL_KNOWLEDGE_STATUS,
+    externalKnowledgeSourceDraftPaths: process.env.AI_CODE_EXTERNAL_KNOWLEDGE_SOURCE_DRAFTS
+      ? process.env.AI_CODE_EXTERNAL_KNOWLEDGE_SOURCE_DRAFTS.split(",").filter(Boolean)
+      : [],
+    feishuSyncEvidence: process.env.AI_CODE_FEISHU_SYNC_EVIDENCE,
+    obsidianSyncEvidence: process.env.AI_CODE_OBSIDIAN_SYNC_EVIDENCE,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -351,6 +471,23 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--run-automated-commands") {
       args.runAutomatedCommands = true;
+    } else if (arg === "--external-knowledge-synced") {
+      args.externalKnowledgeSynced = true;
+    } else if (arg === "--external-knowledge-status") {
+      args.externalKnowledgeStatus = argv[index + 1];
+      index += 1;
+    } else if (arg === "--source-draft") {
+      args.externalKnowledgeSourceDraftPaths.push(argv[index + 1]);
+      index += 1;
+    } else if (arg === "--feishu-sync-evidence") {
+      args.feishuSyncEvidence = argv[index + 1];
+      index += 1;
+    } else if (arg === "--obsidian-sync-evidence") {
+      args.obsidianSyncEvidence = argv[index + 1];
+      index += 1;
+    } else if (arg === "--external-knowledge-note") {
+      args.externalKnowledgeNote = argv[index + 1];
+      index += 1;
     } else if (arg === "--help" || arg === "-h") {
       args.help = true;
     } else {
@@ -364,6 +501,8 @@ function printUsage() {
   console.log(`Usage:
   node scripts/collect-v1-completion-audit.mjs [--output-dir <dir>] [--manual-record <path>]
   node scripts/collect-v1-completion-audit.mjs --run-automated-commands --manual-record <path>
+  node scripts/collect-v1-completion-audit.mjs --external-knowledge-status not_synced|synced|partial|unknown
+  node scripts/collect-v1-completion-audit.mjs --external-knowledge-synced --external-knowledge-note <text>
 
 Default mode writes an audit checklist without running heavy automated commands.
 Use --run-automated-commands only for a formal completion audit.`);

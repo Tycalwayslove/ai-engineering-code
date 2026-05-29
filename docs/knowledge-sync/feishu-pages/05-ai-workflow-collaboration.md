@@ -443,3 +443,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - `validate:native-shells` 现在守住 `manual-evidence-gaps.md` 和 `manualEvidenceReportPath`，防止最终收尾报告归档能力被误删。
 
 这让 goal 模式的收尾更少依赖聊天记忆：一个 completion audit 输出目录就能说明还差哪些人工证据，或者证明补证报告在最终审计时已经随包保存。
+
+## completion audit 结构化外部知识库同步状态
+
+2026-05-29 的收尾治理把外部知识库同步状态也纳入了 `pnpm collect:v1-completion-audit`。审计 JSON 现在包含 `externalKnowledgeSync`，默认状态是 `not_synced`，并记录飞书源稿路径、Feishu / Obsidian target 状态、同步证据列表，以及最终回复必须披露的“仓库已更新，外部知识库未同步”。
+
+这项能力的协作边界是：
+
+- completion audit 可以记录外部同步状态，但不会自动执行飞书或 Obsidian 同步。
+- 仓库内 `docs/knowledge-sync/feishu-pages/` 是源稿更新；只有实际执行同步命令并留下证据，才能把对应 target 标记为 `synced`。
+- 如果只同步了一个外部目标，可以用 `--external-knowledge-status partial` 并补 `--feishu-sync-evidence` 或 `--obsidian-sync-evidence`。
+- 如果未同步，审计包会保留 `finalDisclosureRequired=true`，最终回复仍必须明确“仓库已更新，外部知识库未同步”。
+
+这让收尾判断更稳：产品完成证据、人工验收证据和知识库同步状态都在同一份 audit JSON 中可查，而不是散落在对话记忆里。

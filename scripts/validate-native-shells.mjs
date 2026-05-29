@@ -82,11 +82,14 @@ assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "validate:i
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "validate:native-shells");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manual-evidence-gaps.md");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manualEvidenceReportPath");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "externalKnowledgeSync");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "external-knowledge-status");
 
 const v1CompletionAuditTestPath = "scripts/collect-v1-completion-audit.test.mjs";
 const v1CompletionAuditTest = readRequired(v1CompletionAuditTestPath);
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "collect:v1-completion-audit");
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "archives manual evidence gap report");
+assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "external knowledge sync");
 
 const iosBuildScriptPath = "scripts/validate-ios-build.mjs";
 const iosBuildScript = readRequired(iosBuildScriptPath);

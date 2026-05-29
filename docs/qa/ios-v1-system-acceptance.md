@@ -133,6 +133,8 @@ pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record .tm
 
 只要传入 `--manual-record`，completion audit 会在同一个输出目录额外归档 `manual-evidence-gaps.md`，并在 `v1-completion-audit.json` / `.md` 的 `manualEvidence.reportPath` 中记录该文件。即使人工记录已经通过，保留这份报告也便于后续复查当时的人工验收状态。
 
+completion audit 还会结构化记录外部知识库同步状态。默认 `externalKnowledgeSync.status=not_synced`，并记录飞书源稿路径和最终回复必须披露的“仓库已更新，外部知识库未同步”。如果收尾时已经真实执行飞书或 Obsidian 同步，可以追加 `--external-knowledge-status synced|partial`、`--feishu-sync-evidence <path>` 或 `--obsidian-sync-evidence <path>`，把同步证据写进同一份审计 JSON。
+
 ## 必验项目
 
 ### H5 地址覆盖

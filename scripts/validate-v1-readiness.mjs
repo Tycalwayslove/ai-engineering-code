@@ -49,6 +49,8 @@ for (const expected of [
   "pnpm validate:native-shells",
   "pnpm validate:context-sync",
   "pnpm collect:v1-completion-audit",
+  "externalKnowledgeSync",
+  "--external-knowledge-status",
   "git diff --check",
   "未完成证据",
   "完成判定门槛",

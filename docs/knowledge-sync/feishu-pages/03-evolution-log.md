@@ -4216,3 +4216,43 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 completion audit 从“能指出缺口”推进到“能把完整补证缺口报告随审计包归档”。后续正式收尾时，自动化命令结果、人工证据记录、缺口报告和 goal complete 判定会更容易一起复查。
+
+## 阶段 154：completion audit 结构化外部知识库同步状态
+
+问题背景：
+
+- 项目协议要求：如果未实际执行飞书或 Obsidian 同步，最终回复必须明确“仓库已更新，外部知识库未同步”。
+- readiness 文档和当前项目状态已经有中文声明，但 completion audit JSON 还没有机器可读字段表达外部知识库同步状态。
+- 如果最终审计包只记录自动化命令和人工验收，容易把“仓库源稿已更新”和“外部知识库已同步”混在一起。
+
+完成内容：
+
+- `collect-v1-completion-audit` 新增 `externalKnowledgeSync` 字段，默认记录：
+  - `status=not_synced`
+  - `sourceDraftsUpdated=true`
+  - `sourceDraftPaths`
+  - Feishu / Obsidian target 状态
+  - `syncEvidence`
+  - 最终披露文案“仓库已更新，外部知识库未同步”
+- CLI 新增：
+  - `--external-knowledge-status not_synced|synced|partial|unknown`
+  - `--source-draft <path>`
+  - `--feishu-sync-evidence <path-or-command-log>`
+  - `--obsidian-sync-evidence <path-or-note>`
+  - `--external-knowledge-synced`
+  - `--external-knowledge-note <text>`
+- `validate:native-shells` 守住 `externalKnowledgeSync` 和 `--external-knowledge-status`。
+- `validate:v1-readiness` 守住 readiness 文档中的 `externalKnowledgeSync` 和 `--external-knowledge-status`。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-v1-completion-audit.test.mjs` 先因缺少 `externalKnowledgeSync` 失败。
+- 绿灯：补齐字段、默认状态和 CLI 参数后，同一测试通过。
+- 红灯：`node --test scripts/validate-native-shells.test.mjs` 先因 validator 未守住 `externalKnowledgeSync` 失败。
+- 绿灯：补齐 validator 检查后，同一测试通过。
+- 红灯：`pnpm validate:v1-readiness` 先因 readiness 文档未包含新字段失败。
+- 绿灯：补齐 readiness 文档后重新通过。
+
+阶段价值：
+
+这一阶段把“外部知识库是否同步”从最终回复里的人工提醒，推进到 completion audit 的结构化证据字段。后续收尾时，即使没有实际同步飞书或 Obsidian，审计包也会明确记录未同步状态和必须披露的文案，避免把仓库源稿更新误说成外部知识库已同步。
