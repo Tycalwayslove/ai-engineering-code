@@ -3731,3 +3731,28 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 iOS 系统辅助证据采集从“人工拼多个 opt-in 参数”推进到“一键打开当前全部支持的系统辅助材料”。它减少后续 completion audit 前的采证操作成本，但仍保持 `manualAcceptanceRequired=true`，真实语音、附件、通知展示 / 点击和系统 Calendar 事件详情仍必须人工补证。
+
+## 阶段 137：iOS 系统辅助证据采集根命令
+
+问题背景：
+
+- 上一阶段已经有 `--seed-supported-system-evidence`，但实际执行仍需要记住较长命令 `pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence`。
+- completion audit 前会多次补采系统辅助材料，命令越短越不容易漏参数。
+
+完成内容：
+
+- 根 `package.json` 新增 `pnpm collect:ios-system-evidence`。
+- 该命令等价于 `node scripts/collect-ios-acceptance-evidence.mjs --seed-supported-system-evidence`。
+- 采集器参数解析会忽略单独的 `--`，支持 `pnpm collect:ios-system-evidence -- --dry-run --output-dir ...` 这类追加参数形式。
+- `validate:native-shells` 已把 `collect:ios-system-evidence` 和 `--seed-supported-system-evidence` 纳入根命令护栏，防止后续误删。
+- `docs/qa/ios-v1-system-acceptance.md`、`docs/qa/v1-readiness-audit.md`、当前项目状态和工作流边界源稿已同步推荐新命令。
+
+验证结果：
+
+- 红灯：`pnpm validate:ios-acceptance-evidence` 先因 `packageJson.scripts["collect:ios-system-evidence"]` 缺失失败。
+- 红灯：直接运行 `pnpm collect:ios-system-evidence -- --dry-run --output-dir ...` 暴露出 `Unsupported argument: --`。
+- 绿灯：补充 `--` 分隔符回归测试和解析兼容后，`pnpm validate:ios-acceptance-evidence` 通过，11 个测试全部通过；新命令 dry-run 成功写出 `.tmp/ios-acceptance-evidence/system-command-dry-run/`；`pnpm validate:native-shells` 通过。
+
+阶段价值：
+
+这一阶段把系统辅助证据集中采集入口从“长参数组合”收束成一个明确命令，方便后续在真实模拟器或真机验收前快速生成同一形态的辅助证据包。

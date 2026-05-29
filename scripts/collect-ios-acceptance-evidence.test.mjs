@@ -634,10 +634,45 @@ test("collect iOS acceptance evidence can batch supported system evidence via en
   assert.equal(evidence.notificationDelivery.enabled, true);
 });
 
+test("collect iOS acceptance evidence ignores pnpm argument separator", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-pnpm-separator-")
+  );
+
+  const result = spawnSync(
+    "node",
+    [
+      scriptPath,
+      "--seed-supported-system-evidence",
+      "--",
+      "--dry-run",
+      "--output-dir",
+      outputDir,
+    ],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+
+  assert.equal(evidence.mode, "dry-run");
+  assert.equal(evidence.acceptanceFactSeed.enabled, true);
+});
+
 test("package exposes iOS acceptance evidence collection command", () => {
   assert.equal(
     packageJson.scripts["collect:ios-acceptance-evidence"],
     "node scripts/collect-ios-acceptance-evidence.mjs"
+  );
+  assert.equal(
+    packageJson.scripts["collect:ios-system-evidence"],
+    "node scripts/collect-ios-acceptance-evidence.mjs --seed-supported-system-evidence"
   );
   assert.equal(
     packageJson.scripts["validate:ios-acceptance-evidence"],

@@ -54,6 +54,8 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-build"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-build.mjs");
 assertIncludes(packageJsonPath, packageJson, '"collect:ios-acceptance-evidence"');
 assertIncludes(packageJsonPath, packageJson, "scripts/collect-ios-acceptance-evidence.mjs");
+assertIncludes(packageJsonPath, packageJson, '"collect:ios-system-evidence"');
+assertIncludes(packageJsonPath, packageJson, "--seed-supported-system-evidence");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-acceptance-evidence"');
 assertIncludes(packageJsonPath, packageJson, "scripts/collect-ios-acceptance-evidence.test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-manual-acceptance"');

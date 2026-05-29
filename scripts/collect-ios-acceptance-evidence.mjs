@@ -273,6 +273,8 @@ function parseArgs(argv) {
     const value = argv[index];
     if (value === "--dry-run") {
       args.dryRun = true;
+    } else if (value === "--") {
+      continue;
     } else if (value === "--reset-app") {
       args.resetApp = true;
     } else if (value === "--seed-acceptance-facts") {

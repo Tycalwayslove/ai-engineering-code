@@ -144,6 +144,7 @@
 - 2026-05-29 已新增 iOS 人工验收记录校验器：`pnpm validate:ios-manual-evidence-record` 会先运行 validator 单元测试，再生成 dry-run 证据包并校验 `manual-evidence-record.template.json` 结构；最终验收时可运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`，要求 `acceptanceVerdict=passed`、所有必验项 `status=passed`，且每项必填截图 / API / bridge marker / 系统证据均已补齐。该命令已纳入 `docs/qa/v1-readiness-audit.md` 的完成判定门槛。
 - 2026-05-29 已为 iOS 自动证据包新增人工补证草稿：除空模板外，采集器还会生成 `manual-evidence-record.draft.json`，把自动辅助信号预填到每项 `evidence.operatorNotes`，但保持 `status=pending`、`acceptanceVerdict=not_evaluated`，且不把辅助信号写成截图、录屏、系统证据或通过状态。dry-run 抽查 `.tmp/ios-acceptance-evidence/manual-record-draft-dry-run/` 显示 draft 有 13 项、`generatedFromTemplate=manual-evidence-record.template.json`、语音项仍为 `pending` 且提示“待人工补充”。
 - 2026-05-29 已为 iOS 自动证据包新增系统辅助证据批量开关：`collect:ios-acceptance-evidence` 支持 `--seed-supported-system-evidence` / `AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE=1`，一次性启用验收事实种子、系统 Calendar App 截图、系统日历取消清理、日历权限拒绝降级、通知点击回流和通知 delivered 诊断。该开关只减少采证参数成本，仍保持 `manualAcceptanceRequired=true` 和人工验收完成门槛。
+- 2026-05-29 已新增系统辅助证据采集根命令：`pnpm collect:ios-system-evidence` 等价于 `collect:ios-acceptance-evidence --seed-supported-system-evidence`，用于 completion audit 前集中补齐当前可自动化的 iOS 系统辅助材料；采集器已兼容 `pnpm ... -- --dry-run --output-dir ...` 传入的单独 `--` 分隔符，并已纳入 `validate:native-shells` 根命令护栏。
 - Postgres 本地容器已能运行，数据库名 `ai_code`，用户 `ai_code`。
 - 第一版 migration 已建立：`conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger`、`calendar_events`、`expense_records`、`reminders` 等表。
 - 后端设置 `DATABASE_URL` 后使用 Postgres repository；未设置时仍可使用 in-memory repository 便于测试。
@@ -1293,6 +1294,6 @@ pnpm validate:h5-runtime
 3. 用 `pnpm validate:ios-build` 验证 iOS 原生壳能真实编译；再结合 Xcode 模拟器或真机运行检查语音、附件、系统日历和本地通知权限弹窗。
 4. 用 `pnpm validate:ios-simulator-smoke` 验证 iOS App 能安装并启动到 Simulator；再结合 Xcode 模拟器或真机运行检查语音、附件、系统日历和本地通知权限弹窗。
 5. 用 `pnpm validate:ios-manual-acceptance` 检查人工验收清单完整性，并按 `docs/qa/ios-v1-system-acceptance.md` 在模拟器或真机逐项记录系统权限和系统 App 证据。
-6. 用 `pnpm collect:ios-acceptance-evidence` 生成 iOS 辅助证据包，先确认 H5 地址、构建、安装、启动和截图证据齐全；需要集中补系统辅助材料时追加 `--seed-supported-system-evidence`，再把 `manual-checklist.todo.md`、`manual-evidence-record.template.json` 和 `manual-evidence-record.draft.json` 作为人工验收记录入口继续补真实系统能力证据。
+6. 用 `pnpm collect:ios-acceptance-evidence` 生成 iOS 辅助证据包，先确认 H5 地址、构建、安装、启动和截图证据齐全；需要集中补系统辅助材料时运行 `pnpm collect:ios-system-evidence`，再把 `manual-checklist.todo.md`、`manual-evidence-record.template.json` 和 `manual-evidence-record.draft.json` 作为人工验收记录入口继续补真实系统能力证据。
 7. 人工补证完成后，用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete` 检查补证文件，避免空模板或缺证据项被误当作完成。
 8. 下一轮真实系统能力优先补：真实通知 banner / 锁屏 / 点击录屏、语音识别质量、照片 / 文件 / PDF 真实样本质量、系统 Calendar 事件详情 notes marker 人工复核，以及附件上传的真机质量与交互细节优化。

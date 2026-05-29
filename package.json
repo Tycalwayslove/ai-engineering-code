@@ -8,6 +8,7 @@
     "dev:h5:host": "pnpm --filter @ai-code/h5 dev:host",
     "dev:admin": "pnpm --filter @ai-code/admin dev",
     "collect:ios-acceptance-evidence": "node scripts/collect-ios-acceptance-evidence.mjs",
+    "collect:ios-system-evidence": "node scripts/collect-ios-acceptance-evidence.mjs --seed-supported-system-evidence",
     "db:migrate": "PATH=.venv/bin:$PATH python scripts/db_migrate.py",
     "dev:api": "pnpm db:migrate && DATABASE_URL=postgresql://ai_code:ai_code@127.0.0.1:5432/ai_code PATH=.venv/bin:$PATH uvicorn backend.app.main:app --app-dir python/backend --host 0.0.0.0 --port 8000 --reload",
     "dev:full": "sh -c 'pnpm db:migrate || exit 1; DATABASE_URL=postgresql://ai_code:ai_code@127.0.0.1:5432/ai_code PATH=.venv/bin:$PATH uvicorn backend.app.main:app --app-dir python/backend --host 0.0.0.0 --port 8000 --reload & api=$!; pnpm dev:h5:host & h5=$!; trap \"kill $api $h5 2>/dev/null\" INT TERM EXIT; wait $api $h5'",
