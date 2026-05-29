@@ -3330,6 +3330,7 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
   - `calendar.foundStoredEventBackendIds`
   - `calendar.removedEventIds`
 - 证据包新增 `calendarCleanupSeed`，记录目标 event、取消前 / 取消后状态、取消前 / 取消后 EventKit identifier 是否存在，以及 Native removed ids。
+- 后续增强：`calendarCleanupSeed` 进一步记录取消前 / 取消后系统 Calendar App 日期页截图路径，用于把 identifier diagnostics 和系统 UI 辅助材料放在同一 lifecycle 证据对象里；截图仍不替代人工打开事件详情和核对 notes marker。
 
 验证结果：
 
@@ -3482,6 +3483,7 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 
 - `collect-ios-acceptance-evidence.mjs` 新增 `--capture-calendar-system-app` 参数和 `AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP=1` 环境变量。
 - 该能力必须配合 `--seed-acceptance-facts` 使用：采集器先通过真实 Agent 提交 / 确认流写入 seed 日程，再读取 seed 日程的 `startAt`。
+- 顶层 `calendarSystemAppEvidence` 只表示“写入后打开 seed 日期并截图”；系统日历取消清理的取消前 / 取消后截图归属 `calendarCleanupSeed`，两者证明目的不同。
 - 采集器根据 `startAt` 计算 Apple reference date seconds，执行：
   - `xcrun simctl openurl <udid> calshow:<seconds>`
   - `xcrun simctl io <udid> screenshot system-calendar-app.png`

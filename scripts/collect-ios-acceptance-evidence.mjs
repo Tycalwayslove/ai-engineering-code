@@ -469,6 +469,7 @@ function emptyCalendarCleanupSeed({
   acceptanceFactSeed,
   conversationId,
   enabled,
+  outputDir,
 }) {
   return {
     available: false,
@@ -485,7 +486,18 @@ function emptyCalendarCleanupSeed({
     removedEventIds: [],
     requiresAcceptanceFactSeed: true,
     seedRunId: acceptanceFactSeed?.seedRunId ?? null,
+    systemCalendarAppScreenshots: {
+      afterAvailable: false,
+      afterPath: path.join(outputDir, "calendar-cleanup-after.png"),
+      beforeAvailable: false,
+      beforePath: path.join(outputDir, "calendar-cleanup-before.png"),
+      calshowSeconds: null,
+      calshowUrl: null,
+      errors: [],
+      supportingOnly: true,
+    },
     targetEventId: null,
+    targetEventStartAt: null,
     targetEventTitle: null,
   };
 }
@@ -1090,11 +1102,61 @@ async function findSeedCalendarEvent({
   return { event: bySourceAction ?? bySeedRunId ?? null, request };
 }
 
+function captureCalendarCleanupSystemScreenshot({
+  cleanup,
+  dryRun,
+  phase,
+  simulatorUdid,
+  waitMs,
+}) {
+  const screenshots = cleanup.systemCalendarAppScreenshots;
+  if (!cleanup.targetEventStartAt) {
+    screenshots.errors.push("calendar cleanup target startAt was not found");
+    return;
+  }
+  if (!simulatorUdid && !dryRun) {
+    screenshots.errors.push(
+      `Simulator UDID was not found; calendar cleanup ${phase} screenshot skipped.`
+    );
+    return;
+  }
+
+  screenshots.calshowSeconds = secondsSinceAppleReferenceDate(
+    cleanup.targetEventStartAt
+  );
+  if (screenshots.calshowSeconds === null) {
+    screenshots.errors.push(
+      `calendar cleanup target startAt was not parseable: ${cleanup.targetEventStartAt}`
+    );
+    return;
+  }
+
+  screenshots.calshowUrl = `calshow:${screenshots.calshowSeconds}`;
+  const pathKey = phase === "before" ? "beforePath" : "afterPath";
+  const availableKey = phase === "before" ? "beforeAvailable" : "afterAvailable";
+  const openCommand = run(
+    "xcrun",
+    ["simctl", "openurl", simulatorUdid ?? "booted", screenshots.calshowUrl],
+    { dryRun }
+  );
+  cleanup.commands[`calendarCleanup.${phase}.openCalendarApp`] = openCommand;
+  sleep(Math.max(1000, waitMs ?? 1000));
+  const screenshotCommand = run(
+    "xcrun",
+    ["simctl", "io", simulatorUdid ?? "booted", "screenshot", screenshots[pathKey]],
+    { dryRun }
+  );
+  cleanup.commands[`calendarCleanup.${phase}.screenshot`] = screenshotCommand;
+  screenshots[availableKey] =
+    commandOk(openCommand) && commandOk(screenshotCommand);
+}
+
 async function seedCalendarCleanup({
   acceptanceFactSeed,
   conversationId,
   dryRun,
   enabled,
+  outputDir,
   preferencesPlist,
   seedRefresh,
   simulatorUdid,
@@ -1104,6 +1166,7 @@ async function seedCalendarCleanup({
     acceptanceFactSeed,
     conversationId,
     enabled,
+    outputDir,
   });
   if (!enabled) {
     return cleanup;
@@ -1142,6 +1205,7 @@ async function seedCalendarCleanup({
   }
 
   cleanup.targetEventId = targetEvent?.id ?? null;
+  cleanup.targetEventStartAt = targetEvent?.startAt ?? null;
   cleanup.targetEventTitle = targetEvent?.title ?? null;
   cleanup.preCancelStatus = targetEvent?.status ?? null;
   if (!cleanup.targetEventId) {
@@ -1182,6 +1246,14 @@ async function seedCalendarCleanup({
     );
   }
 
+  captureCalendarCleanupSystemScreenshot({
+    cleanup,
+    dryRun,
+    phase: "before",
+    simulatorUdid,
+    waitMs,
+  });
+
   const encodedConversationId = encodeURIComponent(conversationId);
   const cancelUrl = `${apiBaseUrl}/calendar/events/${encodeURIComponent(
     cleanup.targetEventId
@@ -1204,7 +1276,13 @@ async function seedCalendarCleanup({
   return cleanup;
 }
 
-function finalizeCalendarCleanupSeed({ cleanup, refresh }) {
+function finalizeCalendarCleanupSeed({
+  cleanup,
+  dryRun,
+  refresh,
+  simulatorUdid,
+  waitMs,
+}) {
   if (!cleanup.enabled || !cleanup.targetEventId) {
     return cleanup;
   }
@@ -1216,6 +1294,13 @@ function finalizeCalendarCleanupSeed({ cleanup, refresh }) {
   cleanup.removedEventIds = splitDiagnosticIds(
     refresh?.systemDiagnostics?.["calendar.removedEventIds"]
   );
+  captureCalendarCleanupSystemScreenshot({
+    cleanup,
+    dryRun,
+    phase: "after",
+    simulatorUdid,
+    waitMs,
+  });
   cleanup.available =
     cleanup.errors.length === 0 &&
     cleanup.preCancelStatus === "scheduled" &&
@@ -2438,6 +2523,15 @@ function writeSummary(evidence, outputDir) {
     `- preCancelStoredIdentifierPresent：${evidence.calendarCleanupSeed.preCancelStoredIdentifierPresent === null ? "未采集" : String(evidence.calendarCleanupSeed.preCancelStoredIdentifierPresent)}`,
     `- postCancelStoredIdentifierPresent：${evidence.calendarCleanupSeed.postCancelStoredIdentifierPresent === null ? "未采集" : String(evidence.calendarCleanupSeed.postCancelStoredIdentifierPresent)}`,
     `- removedEventIds：${evidence.calendarCleanupSeed.removedEventIds.length > 0 ? evidence.calendarCleanupSeed.removedEventIds.join(", ") : "未采集"}`,
+    `- 系统 Calendar 取消前后截图不替代人工复核：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.supportingOnly ? "是" : "否"}`,
+    `- 系统 Calendar 取消前截图可用：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.beforeAvailable ? "是" : "否"}`,
+    `- 系统 Calendar 取消前截图：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.beforePath}`,
+    `- 系统 Calendar 取消后截图可用：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.afterAvailable ? "是" : "否"}`,
+    `- 系统 Calendar 取消后截图：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.afterPath}`,
+    `- 系统 Calendar 取消前后截图 calshowUrl：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.calshowUrl || "未采集"}`,
+    ...(evidence.calendarCleanupSeed.systemCalendarAppScreenshots.errors.length > 0
+      ? evidence.calendarCleanupSeed.systemCalendarAppScreenshots.errors.map((error) => `- screenshotError：${error}`)
+      : []),
     ...(evidence.calendarCleanupSeed.errors.length > 0
       ? evidence.calendarCleanupSeed.errors.map((error) => `- error：${error}`)
       : []),
@@ -2622,6 +2716,7 @@ async function main() {
     conversationId: currentNativeConversationId,
     dryRun: args.dryRun,
     enabled: args.seedCalendarCleanup,
+    outputDir,
     preferencesPlist: ios.conversationPersistence?.preferencesPlist,
     seedRefresh,
     simulatorUdid: ios.simulatorUdid,
@@ -2637,7 +2732,10 @@ async function main() {
     : { commands: {}, systemDiagnostics: {} };
   finalizeCalendarCleanupSeed({
     cleanup: calendarCleanupSeed,
+    dryRun: args.dryRun,
     refresh: cleanupRefresh,
+    simulatorUdid: ios.simulatorUdid,
+    waitMs: args.screenshotDelayMs,
   });
   if (Object.keys(cleanupRefresh.systemDiagnostics).length > 0) {
     ios.systemDiagnostics = cleanupRefresh.systemDiagnostics;

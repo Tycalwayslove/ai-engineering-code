@@ -137,6 +137,7 @@
 - 2026-05-28 已把 LLM provider 调用观测接入 DecisionTrace / debug / H5 设置页：`LlmPlanningEngine` 会把 provider、model、mode、status、durationMs、prompt/response 字符数和 `promptSha256` 挂到 `PlanningResult.llm_call`，`ExecutionPlanner` 写入 `DecisionTrace.llm_call`，Postgres 通过 `0009_decision_trace_llm_call` 持久化为 JSONB，`GET /agent/conversations/{conversationId}/debug` 透出 `llmCall`，H5 设置页展示 provider、model、耗时和 prompt hash 前缀。provider 调用异常触发 rule fallback 时也会保留 `status=failed`、`errorType`、耗时和 prompt hash。完整 prompt/response preview 默认不进入 trace，只有显式设置 `AI_PLANNER_TRACE_PROMPT=1` / `AI_PLANNER_TRACE_RESPONSE=1` 才会出现在 debug 快照。
 - 2026-05-28 已为 iOS 自动证据包新增系统 Calendar App 辅助截图：`collect:ios-acceptance-evidence` 支持显式 `--capture-calendar-system-app` / `AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP=1`，必须配合 `--seed-acceptance-facts` 使用；采集器会根据 seed 日程 `startAt` 计算 `calshow:<seconds>`，用 `xcrun simctl openurl` 打开 Simulator 系统 Calendar 到对应日期并保存 `system-calendar-app.png`。本轮 live 证据包 `.tmp/ios-acceptance-evidence/system-calendar-app-live/` 显示 `calendarSystemAppEvidence.available=true`、`targetEventStartAt=2026-05-29T15:00:00+08:00`、`calshowUrl=calshow:801730800`，截图中 2026 年 5 月 29 日可见系统 Calendar 事件。该证据是辅助材料，仍不替代人工复核标题、日期、notes marker 和取消清理后的系统 App 截图。
 - 2026-05-28 已为 iOS 自动证据包新增本地通知 delivered 诊断辅助证据：`collect:ios-acceptance-evidence` 支持显式 `--seed-notification-delivery` / `AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_DELIVERY=1`。采集器会通过真实 Agent 确认流创建“2 分钟后”的 seed 提醒，轮询确认目标 `ai-code.reminder.{reminderId}` 进入 `notifications.pendingReminderIds`，等待到期和缓冲时间后轮询 `notifications.deliveredReminderIds`。本轮修复了 iOS reminder sync 清理 delivered notifications 的问题，并为采集器补充 delivered 诊断轮询。live 证据包 `.tmp/ios-acceptance-evidence/notification-delivery-live-4/` 显示 `notificationDelivery.available=true`、`pendingNotificationFound=true`、`deliveredNotificationFound=true`、`seedDueAt=2026-05-28T17:45:11+08:00`、`notificationIdentifier=ai-code.reminder.reminder_321fb33cc6e94939a1ed3949b8e1fe77`。该证据仍是辅助材料，不替代真实 banner、锁屏展示、声音、badge 或用户点击录屏。
+- 2026-05-29 已扩展系统日历取消清理辅助证据：`calendarCleanupSeed` 现在包含 `systemCalendarAppScreenshots`，在取消 seed 日程前后分别通过 `calshow:` 打开系统 Calendar 日期页并保存 `calendar-cleanup-before.png`、`calendar-cleanup-after.png`。该能力把 EventKit identifier diagnostics 与系统 Calendar UI 辅助截图放进同一个 cleanup lifecycle 证据对象；截图仍不替代人工复核事件详情、notes marker、无重复事件和取消后消失。
 - Postgres 本地容器已能运行，数据库名 `ai_code`，用户 `ai_code`。
 - 第一版 migration 已建立：`conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger`、`calendar_events`、`expense_records`、`reminders` 等表。
 - 后端设置 `DATABASE_URL` 后使用 Postgres repository；未设置时仍可使用 in-memory repository 便于测试。
@@ -1273,6 +1274,7 @@ pnpm validate:h5-runtime
 - 本次“短时间提醒与通知回流目标稳定定位”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“系统 Calendar App 辅助截图采集”已更新飞书源稿 `03 阶段演进记录`，并更新 iOS v1 系统能力验收清单；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“本地通知 delivered 诊断辅助证据”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
+- 本次“系统日历取消清理前后截图辅助证据”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 飞书同步不是自动的；需要先更新 `docs/knowledge-sync/feishu-pages/` 源稿，再用 `lark-cli docs +update --api-version v2` 同步对应页面。
 - 如果新窗口没有执行 Obsidian 或飞书写入，就不能声称外部知识库已经更新。
 
@@ -1284,4 +1286,4 @@ pnpm validate:h5-runtime
 4. 用 `pnpm validate:ios-simulator-smoke` 验证 iOS App 能安装并启动到 Simulator；再结合 Xcode 模拟器或真机运行检查语音、附件、系统日历和本地通知权限弹窗。
 5. 用 `pnpm validate:ios-manual-acceptance` 检查人工验收清单完整性，并按 `docs/qa/ios-v1-system-acceptance.md` 在模拟器或真机逐项记录系统权限和系统 App 证据。
 6. 用 `pnpm collect:ios-acceptance-evidence` 生成 iOS 辅助证据包，先确认 H5 地址、构建、安装、启动和截图证据齐全；再把 `manual-checklist.todo.md` 作为人工验收记录入口继续补真实系统能力证据。
-7. 下一轮真实系统能力优先补：真实通知 banner / 锁屏 / 点击录屏、语音识别质量、照片 / 文件 / PDF 真实样本质量、系统 Calendar 事件详情 notes marker 和取消后系统 App 消失截图，以及附件上传的真机质量与交互细节优化。
+7. 下一轮真实系统能力优先补：真实通知 banner / 锁屏 / 点击录屏、语音识别质量、照片 / 文件 / PDF 真实样本质量、系统 Calendar 事件详情 notes marker 人工复核，以及附件上传的真机质量与交互细节优化。

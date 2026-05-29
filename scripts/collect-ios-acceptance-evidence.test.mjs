@@ -420,9 +420,22 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
   assert.equal(evidence.calendarCleanupSeed.available, false);
   assert.equal(evidence.calendarCleanupSeed.requiresAcceptanceFactSeed, true);
   assert.equal(evidence.calendarCleanupSeed.targetEventId, null);
+  assert.equal(
+    evidence.calendarCleanupSeed.systemCalendarAppScreenshots.supportingOnly,
+    true
+  );
+  assert.match(
+    evidence.calendarCleanupSeed.systemCalendarAppScreenshots.beforePath,
+    /calendar-cleanup-before\.png$/
+  );
+  assert.match(
+    evidence.calendarCleanupSeed.systemCalendarAppScreenshots.afterPath,
+    /calendar-cleanup-after\.png$/
+  );
   assert.ok(evidence.automatedEvidence.includes("calendar_cleanup_seed"));
   assert.match(summary, /系统日历取消清理种子/);
   assert.match(summary, /仅在显式开启时取消 seed 日程/);
+  assert.match(summary, /系统 Calendar 取消前后截图/);
 });
 
 test("package exposes iOS acceptance evidence collection command", () => {
