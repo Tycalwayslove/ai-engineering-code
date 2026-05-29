@@ -3,6 +3,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 
+import { fetchWithRetry } from "./http-retry.mjs";
+
 const rootDir = process.cwd();
 const scheme = process.env.AI_CODE_IOS_SCHEME ?? "AIEngineeringCode";
 const configuration = process.env.AI_CODE_IOS_CONFIGURATION ?? "Debug";
@@ -725,7 +727,7 @@ function emptyNotificationDeliverySeed({
 }
 
 async function postJson(url, body) {
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     body: JSON.stringify(body),
     headers: {
       "content-type": "application/json",
@@ -748,7 +750,7 @@ async function postJson(url, body) {
 }
 
 async function postEmpty(url) {
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: "POST",
   });
   const text = await response.text();
@@ -767,7 +769,7 @@ async function postEmpty(url) {
 }
 
 async function getJson(url) {
-  const response = await fetch(url);
+  const response = await fetchWithRetry(url);
   const text = await response.text();
   let payload;
   try {
@@ -1618,7 +1620,7 @@ async function seedNotificationClickBackflow({
     return { backflow, refresh: { commands: {}, systemDiagnostics: {} } };
   }
 
-  const refresh = refreshNativeSystemDiagnostics({
+  let refresh = refreshNativeSystemDiagnostics({
     dryRun,
     preferencesPlist,
     simulatorUdid,

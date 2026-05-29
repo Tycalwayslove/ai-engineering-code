@@ -237,6 +237,8 @@ iOS 自动证据包的当前边界是：采集器可以在显式 opt-in 下创�
 
 本地通知 delivered 诊断辅助证据的当前边界是：采集器可以在显式 opt-in 下创建“2 分钟后”的 seed 提醒，先轮询确认目标 `ai-code.reminder.{reminderId}` 进入 `notifications.pendingReminderIds`，再等待到期和缓冲时间，最后轮询 `notifications.deliveredReminderIds`，确认系统通知中心 delivered diagnostics 包含目标 identifier。Native reminder sync 不应清理已 delivered 的 `ai-code.reminder.*` 通知，否则重启或刷新会擦掉用户可见的通知历史，也会破坏验收证据。`notificationDelivery.supportingOnly=true` 的含义是：这只证明系统 delivered diagnostics 层已出现目标通知，不证明 banner、锁屏、声音、badge 或用户真实点击；这些仍必须按 iOS 人工验收清单保留截图或录屏。
 
+自动采证稳定性的当前边界是：采集器可以对本地 API 的瞬时连接错误做有限重试，避免 `ECONNRESET`、`ECONNREFUSED`、`EPIPE`、`ETIMEDOUT` 或 `UND_ERR_SOCKET` 这类本机联调抖动直接中断整包证据；但它不会吞掉非瞬时错误，也不会把某个辅助项失败改写为通过。2026-05-29 的 live 证据包显示通知点击回流和通知 delivered 诊断已经能穿过重试与轮询路径，但系统日历取消清理仍可能因为 Simulator 权限或 EventKit 同步诊断未出现而不可用。此时正确处理方式是把失败原因写入证据包和当前状态，而不是把自动采证结果等同于人工验收完成。
+
 短时间提醒的当前边界是：规则解析器可以把“2 分钟后提醒我喝水”“半小时后提醒我喝水”这类输入解释为相对 `clientContext.now` 的提醒创建候选，并继续走确认卡、Policy 和领域 service。它用于补真实本地通知验收窗口，也改善真实用户的短提醒体验。H5 提醒列表为了保持扫描密度仍默认展示最近 6 条，但当 Native 通知点击携带 `reminderId` 时，focused reminder 必须被强制纳入渲染列表并高亮，不能被最近项裁剪丢掉。采集器读 Native pending notification 诊断时要轮询目标 identifier，因为 seed 确认、H5 刷新、Native 同步和 plist 写入是异步链路。
 
 当前可交互 mock 版的协作方式是：

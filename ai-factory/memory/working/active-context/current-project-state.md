@@ -145,6 +145,7 @@
 - 2026-05-29 已为 iOS 自动证据包新增人工补证草稿：除空模板外，采集器还会生成 `manual-evidence-record.draft.json`，把自动辅助信号预填到每项 `evidence.operatorNotes`，但保持 `status=pending`、`acceptanceVerdict=not_evaluated`，且不把辅助信号写成截图、录屏、系统证据或通过状态。dry-run 抽查 `.tmp/ios-acceptance-evidence/manual-record-draft-dry-run/` 显示 draft 有 13 项、`generatedFromTemplate=manual-evidence-record.template.json`、语音项仍为 `pending` 且提示“待人工补充”。
 - 2026-05-29 已为 iOS 自动证据包新增系统辅助证据批量开关：`collect:ios-acceptance-evidence` 支持 `--seed-supported-system-evidence` / `AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE=1`，一次性启用验收事实种子、系统 Calendar App 截图、系统日历取消清理、日历权限拒绝降级、通知点击回流和通知 delivered 诊断。该开关只减少采证参数成本，仍保持 `manualAcceptanceRequired=true` 和人工验收完成门槛。
 - 2026-05-29 已新增系统辅助证据采集根命令：`pnpm collect:ios-system-evidence` 等价于 `collect:ios-acceptance-evidence --seed-supported-system-evidence`，用于 completion audit 前集中补齐当前可自动化的 iOS 系统辅助材料；采集器已兼容 `pnpm ... -- --dry-run --output-dir ...` 传入的单独 `--` 分隔符，并已纳入 `validate:native-shells` 根命令护栏。
+- 2026-05-29 已增强 iOS 自动采证稳定性：采集器的后端 HTTP 调用现在通过 `fetchWithRetry()` 对 `ECONNRESET`、`ECONNREFUSED`、`EPIPE`、`ETIMEDOUT` 和 `UND_ERR_SOCKET` 做有限重试，避免本地 API 偶发连接重置直接中断整包采集；同时修复通知点击回流轮询里 `const refresh` 被重新赋值导致 live 路径崩溃的问题。`pnpm validate:ios-acceptance-evidence` 当前 14 个测试通过；live 证据包 `.tmp/ios-acceptance-evidence/system-live-fixed-20260529-152913/` 显示 H5 / App 目标识别、验收事实种子、系统 Calendar App 截图、日历权限拒绝降级、通知点击回流和通知 delivered 诊断可用，且补证缺口报告已写入 `manual-evidence-gaps.md`。同一证据包里 `calendarCleanupSeed.available=false`，原因是本轮 seed 日程取消前未被 Native EventKit 诊断看到；因此系统日历取消清理仍需继续人工补证或单独排查 Simulator 权限 / EventKit 同步状态，不能视为完成验收。
 - Postgres 本地容器已能运行，数据库名 `ai_code`，用户 `ai_code`。
 - 第一版 migration 已建立：`conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger`、`calendar_events`、`expense_records`、`reminders` 等表。
 - 后端设置 `DATABASE_URL` 后使用 Postgres repository；未设置时仍可使用 in-memory repository 便于测试。
@@ -1284,6 +1285,7 @@ pnpm validate:h5-runtime
 - 本次“系统日历取消清理前后截图辅助证据”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“系统日历取消清理采证稳定性收口”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“App 包 H5DevServerURL 目标页面识别”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单和当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
+- 本次“iOS 自动采证 HTTP 重试与 live 崩溃修复”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 飞书同步不是自动的；需要先更新 `docs/knowledge-sync/feishu-pages/` 源稿，再用 `lark-cli docs +update --api-version v2` 同步对应页面。
 - 如果新窗口没有执行 Obsidian 或飞书写入，就不能声称外部知识库已经更新。
 

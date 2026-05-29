@@ -634,6 +634,17 @@ test("collect iOS acceptance evidence can batch supported system evidence via en
   assert.equal(evidence.notificationDelivery.enabled, true);
 });
 
+test("notification click backflow can refresh diagnostics repeatedly", () => {
+  const source = fs.readFileSync(scriptPath, "utf8");
+  const match = source.match(
+    /async function seedNotificationClickBackflow[\s\S]*?async function seedNotificationDelivery/
+  );
+
+  assert.ok(match, "seedNotificationClickBackflow source should be present");
+  assert.match(match[0], /let refresh = refreshNativeSystemDiagnostics/);
+  assert.doesNotMatch(match[0], /const refresh = refreshNativeSystemDiagnostics/);
+});
+
 test("collect iOS acceptance evidence ignores pnpm argument separator", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-pnpm-separator-")
@@ -676,6 +687,6 @@ test("package exposes iOS acceptance evidence collection command", () => {
   );
   assert.equal(
     packageJson.scripts["validate:ios-acceptance-evidence"],
-    "node --test scripts/collect-ios-acceptance-evidence.test.mjs"
+    "node --test scripts/http-retry.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs"
   );
 });

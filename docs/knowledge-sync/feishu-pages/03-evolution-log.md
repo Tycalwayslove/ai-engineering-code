@@ -3786,3 +3786,31 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把人工补证从“校验失败后看错误列表”推进到“可生成稳定 Markdown 缺口报告”。它不替代人工验收，但能让验收人员按项目补齐证据，并让后续 Agent 从报告中快速判断剩余缺口。
+
+## 阶段 139：iOS 自动采证 HTTP 重试与 live 崩溃修复
+
+问题背景：
+
+- 集中运行 `pnpm collect:ios-system-evidence` 时，真实本地 API 调用曾因 `ECONNRESET` 中断整包采集，但 API `/health` 随后仍正常，属于本地采证链路的瞬时连接抖动。
+- 重跑后又暴露通知点击回流 live 路径里的 `Assignment to constant variable`：采集器首次读取 Native 诊断时把 `refresh` 声明为 `const`，随后轮询 pending notification 时需要重新赋值。
+- 这两类问题都会让辅助证据包在人工补证前提前失败，降低 completion audit 的采证效率。
+
+完成内容：
+
+- 新增 `scripts/http-retry.mjs`，封装 `fetchWithRetry()`。
+- 后端采证脚本中的 `postJson()`、`postEmpty()` 和 `getJson()` 改为通过有限重试访问本地 API。
+- 重试只覆盖瞬时连接错误：`ECONNRESET`、`ECONNREFUSED`、`EPIPE`、`ETIMEDOUT` 和 `UND_ERR_SOCKET`；非瞬时错误仍立即抛出。
+- 通知点击回流诊断轮询改用可变 `let refresh`，避免真实 live 路径在 pending notification 轮询时崩溃。
+- `validate:ios-acceptance-evidence` 新增 HTTP retry 测试，并补充通知点击回流重复刷新回归。
+
+验证结果：
+
+- 红灯：`node --test scripts/http-retry.test.mjs` 先因缺少 `scripts/http-retry.mjs` 失败。
+- 红灯：通知点击回流重复刷新回归先捕获 `const refresh = refreshNativeSystemDiagnostics`。
+- 绿灯：`pnpm validate:ios-acceptance-evidence` 通过，14 个测试全部通过。
+- live 验证：`.tmp/ios-acceptance-evidence/system-live-fixed-20260529-152913/` 已成功写出证据包，H5 / App 目标识别、验收事实种子、系统 Calendar App 截图、日历权限拒绝降级、通知点击回流和通知 delivered 诊断可用，并生成 `manual-evidence-gaps.md`。
+- 限制：同一 live 证据包中 `calendarCleanupSeed.available=false`，错误为 seed 日程取消前未被 Native EventKit 诊断看到；这说明系统日历取消清理仍不能视为本轮自动验收完成，后续需继续人工补证或单独排查 Simulator 权限 / EventKit 同步状态。
+
+阶段价值：
+
+这一阶段把自动辅助采证从“本地瞬时网络抖动或 live 分支变量错误就整包失败”推进到“可容忍短暂 API 连接抖动，并能稳定穿过通知回流轮询”。它提升了补证效率，但仍保持人工验收边界：自动证据包不是系统能力验收通过。

@@ -24,7 +24,7 @@
     "validate:h5-click-smoke": "node scripts/validate-h5-click-smoke.mjs",
     "validate:h5-runtime": "node scripts/validate-h5-runtime.mjs",
     "validate:ios-build": "node scripts/validate-ios-build.mjs",
-    "validate:ios-acceptance-evidence": "node --test scripts/collect-ios-acceptance-evidence.test.mjs",
+    "validate:ios-acceptance-evidence": "node --test scripts/http-retry.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs",
     "validate:ios-manual-acceptance": "node scripts/validate-ios-manual-acceptance.mjs",
     "validate:ios-manual-evidence-record": "node --test scripts/validate-ios-manual-evidence-record.test.mjs && node scripts/validate-ios-manual-evidence-record.mjs",
     "validate:ios-simulator-smoke": "node scripts/validate-ios-simulator-smoke.mjs",
