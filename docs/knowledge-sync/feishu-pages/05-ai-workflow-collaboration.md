@@ -241,6 +241,8 @@ iOS 自动证据包的当前边界是：采集器可以在显式 opt-in 下创�
 
 Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和系统日历取消清理依赖 EventKit 写入能力，因此采集器在这些步骤前会通过 `simctl privacy grant calendar` 对目标 Simulator 做预授权并 relaunch App，避免上一轮权限拒绝采证留下的 TCC 状态污染后续 seed 写入。权限拒绝降级证据仍必须在 cleanup 之后单独 revoke 并验证 Native 返回日历权限错误。不同 iOS / Simulator 组合中 `EKAuthorizationStatus` 可能显示为 `denied`，也可能在 Native 同步失败时仍显示 `authorized`；因此权限拒绝辅助证据以 `calendar.lastSyncStatus=failed` 和 Native “日历权限”错误原因为准，而不是把某个授权状态字符串当作唯一事实。
 
+人工复核 review 记录的当前边界是：`manual-evidence-record.review.json` 可以把自动辅助材料客观映射到 `screenshots`、`apiSummaries`、`bridgeMarkers` 和 `systemArtifacts` 字段，减少人工复核前的复制整理成本；但它必须保持所有 item 为 `pending`，并保持 `acceptanceVerdict=not_evaluated`。只有人工真正复核截图、录屏、接口摘要、系统 App 状态和 Bridge marker 后，才允许把对应 item 改为 `passed`、`failed` 或 `blocked`。review 不是 completion audit，它只是把“证据在哪里”整理清楚。
+
 短时间提醒的当前边界是：规则解析器可以把“2 分钟后提醒我喝水”“半小时后提醒我喝水”这类输入解释为相对 `clientContext.now` 的提醒创建候选，并继续走确认卡、Policy 和领域 service。它用于补真实本地通知验收窗口，也改善真实用户的短提醒体验。H5 提醒列表为了保持扫描密度仍默认展示最近 6 条，但当 Native 通知点击携带 `reminderId` 时，focused reminder 必须被强制纳入渲染列表并高亮，不能被最近项裁剪丢掉。采集器读 Native pending notification 诊断时要轮询目标 identifier，因为 seed 确认、H5 刷新、Native 同步和 plist 写入是异步链路。
 
 当前可交互 mock 版的协作方式是：

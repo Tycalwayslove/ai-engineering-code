@@ -3843,3 +3843,35 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把系统辅助证据根命令从“受旧 Simulator 权限状态影响”推进到“先恢复 Calendar 写入前置条件，再单独验证权限拒绝降级”。它让自动辅助材料更适合作为 completion audit 的输入，同时不改变人工验收门槛。
+
+## 阶段 141：iOS 人工复核证据 review 记录
+
+问题背景：
+
+- 自动证据包已经能生成 `manual-evidence-record.template.json` 和 `manual-evidence-record.draft.json`。
+- draft 只把自动辅助信号写进 `operatorNotes`，不会填充 `screenshots`、`apiSummaries`、`bridgeMarkers` 或 `systemArtifacts`。
+- 在完整 live 包里，辅助证据已经覆盖 H5 页面截图、后端事实摘要、系统 Calendar App 截图、系统日历取消清理、权限拒绝降级、通知点击回流和通知 delivered 诊断；如果这些材料不进入结构化 evidence 字段，人工复核时仍要手工复制大量路径和摘要。
+
+完成内容：
+
+- 新增 `scripts/manual-evidence-review.mjs`。
+- `collect-ios-acceptance-evidence` 现在会额外生成 `manual-evidence-record.review.json`。
+- review 文件会把可客观映射的自动辅助材料填入：
+  - H5 / Native 启动与地址 marker。
+  - 会话 ID、后端事实 API 摘要。
+  - H5 七页面截图。
+  - 系统 Calendar App 截图、取消清理截图与 bridge marker。
+  - 日历权限拒绝截图、Native error marker。
+  - 通知 pending / delivered / synthetic 回流相关摘要。
+- review 文件不会自动把任何 item 改为 `passed`，也不会改变 `acceptanceVerdict=not_evaluated`。
+
+验证结果：
+
+- 红灯：`node --test scripts/manual-evidence-review.test.mjs` 先因缺少 `scripts/manual-evidence-review.mjs` 失败。
+- 绿灯：实现 review 生成后，`pnpm validate:ios-acceptance-evidence` 通过，17 个测试全部通过。
+- dry-run 验证：`.tmp/ios-acceptance-evidence/review-dry-run-20260529-155942/` 成功生成 `manual-evidence-record.review.json`，首个 item 仍为 `pending`。
+- 既有完整 live 包复用：在 `.tmp/ios-acceptance-evidence/system-pregrant-denial-live-20260529-154919/` 上生成 `manual-evidence-record.review.json` 和 `manual-evidence-review-gaps.md` 后，缺失证据数从 draft 的 81 条降到 42 条；剩余缺口仍集中在必须人工操作的键盘、语音、照片 / 文件 / PDF、真实通知展示和真实通知点击录屏。
+
+阶段价值：
+
+这一阶段把“自动辅助证据已经齐”推进到“人工验收人员可以直接复核结构化 evidence 字段”。它减少复制整理成本，但仍不越过人工验收边界：review 是复核草稿，不是通过结论。

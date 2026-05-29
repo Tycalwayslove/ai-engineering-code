@@ -38,12 +38,17 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
     outputDir,
     "manual-evidence-record.draft.json"
   );
+  const manualEvidenceReviewPath = path.join(
+    outputDir,
+    "manual-evidence-record.review.json"
+  );
   const summaryPath = path.join(outputDir, "summary.md");
   assert.equal(fs.existsSync(evidenceJsonPath), true);
   assert.equal(fs.existsSync(manifestPath), true);
   assert.equal(fs.existsSync(manualChecklistPath), true);
   assert.equal(fs.existsSync(manualEvidenceRecordPath), true);
   assert.equal(fs.existsSync(manualEvidenceDraftPath), true);
+  assert.equal(fs.existsSync(manualEvidenceReviewPath), true);
   assert.equal(fs.existsSync(summaryPath), true);
 
   const evidence = JSON.parse(fs.readFileSync(evidenceJsonPath, "utf8"));
@@ -53,6 +58,9 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   );
   const manualEvidenceDraft = JSON.parse(
     fs.readFileSync(manualEvidenceDraftPath, "utf8")
+  );
+  const manualEvidenceReview = JSON.parse(
+    fs.readFileSync(manualEvidenceReviewPath, "utf8")
   );
   assert.equal(evidence.mode, "dry-run");
   assert.equal(evidence.serviceHealth.h5NativeTargetMarkerFound, false);
@@ -148,6 +156,9 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(manualEvidenceDraft.manualAcceptanceRequired, true);
   assert.equal(manualEvidenceDraft.automationCanReplaceManualAcceptance, false);
   assert.equal(manualEvidenceDraft.generatedFromTemplate, "manual-evidence-record.template.json");
+  assert.equal(manualEvidenceReview.generatedFromDraft, "manual-evidence-record.draft.json");
+  assert.equal(manualEvidenceReview.items[0].status, "pending");
+  assert.match(manualEvidenceReview.instructions, /人工复核/);
   assert.equal(manualEvidenceDraft.items.length, manualEvidenceRecord.items.length);
   assert.ok(Array.isArray(manualEvidenceRecord.items));
   assert.ok(
@@ -703,6 +714,6 @@ test("package exposes iOS acceptance evidence collection command", () => {
   );
   assert.equal(
     packageJson.scripts["validate:ios-acceptance-evidence"],
-    "node --test scripts/http-retry.test.mjs scripts/ios-acceptance-predicates.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs"
+    "node --test scripts/http-retry.test.mjs scripts/ios-acceptance-predicates.test.mjs scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs"
   );
 });

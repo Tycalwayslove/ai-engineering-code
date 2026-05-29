@@ -5,6 +5,7 @@ import process from "node:process";
 
 import { fetchWithRetry } from "./http-retry.mjs";
 import { isCalendarPermissionDenialAvailable } from "./ios-acceptance-predicates.mjs";
+import { buildManualEvidenceReview } from "./manual-evidence-review.mjs";
 
 const rootDir = process.cwd();
 const scheme = process.env.AI_CODE_IOS_SCHEME ?? "AIEngineeringCode";
@@ -3034,6 +3035,7 @@ function buildManualEvidenceRecord(evidence, manifest) {
       manifestJson: "manifest.json",
       summaryMarkdown: "summary.md",
       manualChecklist: "manual-checklist.todo.md",
+      manualEvidenceReview: "manual-evidence-record.review.json",
     },
     instructions:
       "将每个 item 的 status 改为 passed/failed/blocked，并把截图、录屏、接口摘要、bridge marker 或系统证据路径填入 evidence；不要把自动辅助证据当成人工验收通过。",
@@ -3084,6 +3086,7 @@ function buildManualEvidenceDraft(record) {
 function writeManualEvidenceRecords(evidence, manifest, outputDir) {
   const record = buildManualEvidenceRecord(evidence, manifest);
   const draft = buildManualEvidenceDraft(record);
+  const review = buildManualEvidenceReview(draft, evidence);
 
   writeText(
     path.join(outputDir, "manual-evidence-record.template.json"),
@@ -3092,6 +3095,10 @@ function writeManualEvidenceRecords(evidence, manifest, outputDir) {
   writeText(
     path.join(outputDir, "manual-evidence-record.draft.json"),
     `${JSON.stringify(draft, null, 2)}\n`
+  );
+  writeText(
+    path.join(outputDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(review, null, 2)}\n`
   );
 }
 
