@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import process from "node:process";
 
 import { fetchWithRetry } from "./http-retry.mjs";
+import { isCalendarPermissionDenialAvailable } from "./ios-acceptance-predicates.mjs";
 
 const rootDir = process.cwd();
 const scheme = process.env.AI_CODE_IOS_SCHEME ?? "AIEngineeringCode";
@@ -1558,14 +1559,13 @@ async function seedCalendarPermissionDenial({
     );
   }
 
-  denial.available =
-    denial.errors.length === 0 &&
-    denial.backendFactPersisted === true &&
-    denial.postAuthorizationStatus === "denied" &&
-    refresh.systemDiagnostics["calendar.lastSyncStatus"] === "failed" &&
-    typeof denial.nativeErrorReason === "string" &&
-    denial.nativeErrorReason.includes("日历权限") &&
-    commandOk(denial.commands.screenshot);
+  denial.available = isCalendarPermissionDenialAvailable({
+    backendFactPersisted: denial.backendFactPersisted,
+    errors: denial.errors,
+    nativeErrorReason: denial.nativeErrorReason,
+    screenshotAvailable: commandOk(denial.commands.screenshot),
+    systemDiagnostics: refresh.systemDiagnostics,
+  });
 
   return { denial, refresh };
 }
@@ -2271,6 +2271,65 @@ function refreshNativeSystemDiagnostics({
   return result;
 }
 
+function prepareCalendarAccessForSystemEvidence({
+  captureCalendarSystemApp,
+  dryRun,
+  seedCalendarCleanup,
+  simulatorUdid,
+  waitMs,
+}) {
+  const requiredFor = [
+    ...(captureCalendarSystemApp ? ["system_calendar_app_screenshot"] : []),
+    ...(seedCalendarCleanup ? ["calendar_cleanup_seed"] : []),
+  ];
+  const commands = {};
+  const result = {
+    available: false,
+    commands,
+    enabled: requiredFor.length > 0,
+    errors: [],
+    requiredFor,
+  };
+
+  if (!result.enabled) {
+    return result;
+  }
+
+  if (!simulatorUdid && !dryRun) {
+    result.errors.push("Simulator UDID was not found; calendar access grant skipped.");
+    return result;
+  }
+
+  commands.grantCalendar = run(
+    "xcrun",
+    [
+      "simctl",
+      "privacy",
+      simulatorUdid ?? "<simulator>",
+      "grant",
+      "calendar",
+      bundleId,
+    ],
+    { dryRun }
+  );
+  commands.launchAfterGrant = run(
+    "xcrun",
+    ["simctl", "launch", simulatorUdid ?? "booted", bundleId],
+    { dryRun }
+  );
+  if (!dryRun) {
+    sleep(Math.max(1000, waitMs ?? 1000));
+  }
+
+  result.available =
+    commandOk(commands.grantCalendar) && commandOk(commands.launchAfterGrant);
+  if (!result.available) {
+    result.errors.push("calendar access grant failed before system evidence seeding");
+  }
+
+  return result;
+}
+
 function collectConversationPersistence({ dryRun, simulatorUdid, postRelaunchDelayMs }) {
   const commands = {};
   const result = {
@@ -2691,6 +2750,11 @@ function writeSummary(evidence, outputDir) {
     `- H5DevServerURL 目标页面识别：${evidence.ios.h5DevServerTargetMarkerFound ? "是" : "否"}`,
     `- Simulator UDID：${evidence.ios.simulatorUdid || "未采集"}`,
     `- App container：${evidence.ios.appContainer || "未采集"}`,
+    `- 系统日历权限预授权：${evidence.ios.calendarAccessPreparation.enabled ? evidence.ios.calendarAccessPreparation.available ? "已执行" : "失败" : "未开启"}`,
+    `- 系统日历权限预授权用途：${evidence.ios.calendarAccessPreparation.requiredFor.length > 0 ? evidence.ios.calendarAccessPreparation.requiredFor.join(", ") : "无"}`,
+    ...(evidence.ios.calendarAccessPreparation.errors.length > 0
+      ? evidence.ios.calendarAccessPreparation.errors.map((error) => `- calendarAccessError：${error}`)
+      : []),
     `- Native conversationId：${evidence.ios.conversationPersistence.beforeRelaunch || "未采集"}`,
     `- Native conversationId 重启后保持一致：${evidence.ios.conversationPersistence.stableAcrossRelaunch === null ? "未验证" : evidence.ios.conversationPersistence.stableAcrossRelaunch ? "是" : "否"}`,
     `- 截图：${evidence.ios.screenshotPath}`,
@@ -3045,6 +3109,13 @@ async function main() {
   const git = collectGitState(args);
   const serviceHealth = collectServiceHealth(args);
   const ios = collectBuildAndLaunch({ ...args, outputDir });
+  const calendarAccessPreparation = prepareCalendarAccessForSystemEvidence({
+    captureCalendarSystemApp: args.captureCalendarSystemApp,
+    dryRun: args.dryRun,
+    seedCalendarCleanup: args.seedCalendarCleanup,
+    simulatorUdid: ios.simulatorUdid,
+    waitMs: args.screenshotDelayMs,
+  });
   const currentNativeConversationId =
     ios.conversationPersistence?.beforeRelaunch ??
     ios.conversationPersistence?.afterRelaunch;
@@ -3239,6 +3310,10 @@ async function main() {
       h5DevServerUrl: ios.h5DevServerUrl,
       screenshotPath: ios.screenshotPath,
       screenshotDelayMs: ios.screenshotDelayMs,
+      calendarAccessPreparation: {
+        ...calendarAccessPreparation,
+        commands: compactCommands(calendarAccessPreparation.commands),
+      },
       conversationPersistence: ios.conversationPersistence,
       systemDiagnostics: ios.systemDiagnostics,
       seedRefresh: {

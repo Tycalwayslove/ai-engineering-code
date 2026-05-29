@@ -93,6 +93,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(evidence.calendarSystemAppEvidence.enabled, false);
   assert.equal(evidence.calendarSystemAppEvidence.available, false);
   assert.equal(evidence.calendarSystemAppEvidence.supportingOnly, true);
+  assert.equal(evidence.ios.calendarAccessPreparation.enabled, false);
   assert.equal(evidence.calendarCleanupSeed.enabled, false);
   assert.equal(evidence.calendarCleanupSeed.available, false);
   assert.equal(evidence.calendarPermissionDenialSeed.enabled, false);
@@ -509,6 +510,15 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
   const summary = fs.readFileSync(path.join(outputDir, "summary.md"), "utf8");
 
   assert.equal(evidence.calendarCleanupSeed.enabled, true);
+  assert.equal(evidence.ios.calendarAccessPreparation.enabled, true);
+  assert.equal(evidence.ios.calendarAccessPreparation.available, true);
+  assert.deepEqual(evidence.ios.calendarAccessPreparation.requiredFor, [
+    "calendar_cleanup_seed",
+  ]);
+  assert.match(
+    evidence.ios.calendarAccessPreparation.commands.grantCalendar.command,
+    /xcrun simctl privacy .* grant calendar com\.aiengineeringcode\.shell/
+  );
   assert.equal(evidence.calendarCleanupSeed.available, false);
   assert.equal(evidence.calendarCleanupSeed.requiresAcceptanceFactSeed, true);
   assert.equal(evidence.calendarCleanupSeed.preCancelRequiresStoredIdentifier, true);
@@ -548,6 +558,7 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
   assert.match(summary, /取消后 Native 清理最多轮询/);
   assert.match(summary, /取消后截图必须先成功取消日程/);
   assert.match(summary, /系统 Calendar 取消前后截图/);
+  assert.match(summary, /系统日历权限预授权/);
 });
 
 test("collect iOS acceptance evidence can batch all supported system evidence seeds", () => {
@@ -581,6 +592,11 @@ test("collect iOS acceptance evidence can batch all supported system evidence se
   assert.equal(evidence.calendarSystemAppEvidence.enabled, true);
   assert.equal(evidence.calendarCleanupSeed.enabled, true);
   assert.equal(evidence.calendarPermissionDenialSeed.enabled, true);
+  assert.equal(evidence.ios.calendarAccessPreparation.enabled, true);
+  assert.deepEqual(evidence.ios.calendarAccessPreparation.requiredFor, [
+    "system_calendar_app_screenshot",
+    "calendar_cleanup_seed",
+  ]);
   assert.equal(evidence.notificationClickBackflow.enabled, true);
   assert.equal(evidence.notificationDelivery.enabled, true);
   assert.deepEqual(
@@ -687,6 +703,6 @@ test("package exposes iOS acceptance evidence collection command", () => {
   );
   assert.equal(
     packageJson.scripts["validate:ios-acceptance-evidence"],
-    "node --test scripts/http-retry.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs"
+    "node --test scripts/http-retry.test.mjs scripts/ios-acceptance-predicates.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs"
   );
 });

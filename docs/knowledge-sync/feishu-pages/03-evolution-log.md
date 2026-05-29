@@ -3814,3 +3814,32 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把自动辅助采证从“本地瞬时网络抖动或 live 分支变量错误就整包失败”推进到“可容忍短暂 API 连接抖动，并能稳定穿过通知回流轮询”。它提升了补证效率，但仍保持人工验收边界：自动证据包不是系统能力验收通过。
+
+## 阶段 140：iOS 自动采证 Calendar 预授权与权限拒绝判定兼容
+
+问题背景：
+
+- `pnpm collect:ios-system-evidence -- --reset-app ...` 仍可能让 `calendarCleanupSeed` 失败，错误为 seed 日程取消前未同步到 EventKit。
+- 根因是 Simulator 的 Calendar privacy / TCC 状态不会随 App uninstall / install 自动重置；上一轮 `calendarPermissionDenialSeed` 或手动权限拒绝可能让后续 EventKit 写入保持 denied。
+- 同时部分 iOS / Simulator 组合中，即使 Native 已返回“未获得日历权限”的同步错误，`EKAuthorizationStatus` 仍可能显示 `authorized`，导致权限拒绝辅助证据被误判不可用。
+
+完成内容：
+
+- `collect-ios-acceptance-evidence` 新增 `ios.calendarAccessPreparation`。
+- 当启用系统 Calendar App 截图或系统日历取消清理时，采集器会先执行 `xcrun simctl privacy <udid> grant calendar com.aiengineeringcode.shell` 并 relaunch App，再创建 seed 事实。
+- 权限拒绝场景仍在 cleanup 后单独执行 revoke，验证“后端事实已保存、系统同步降级失败”的路径。
+- 新增 `scripts/ios-acceptance-predicates.mjs`，把 `calendarPermissionDenialSeed.available` 的判定调整为以 Native `calendar.lastSyncStatus=failed` 和“日历权限”错误原因为准，不再强依赖 `calendar.authorizationStatus=denied`。
+- `docs/qa/ios-v1-system-acceptance.md` 和 `docs/qa/v1-readiness-audit.md` 已补充 Calendar 预授权和权限状态差异说明。
+
+验证结果：
+
+- 红灯：`node --test --test-name-pattern "calendar cleanup seed" scripts/collect-ios-acceptance-evidence.test.mjs` 先因 `ios.calendarAccessPreparation` 缺失失败。
+- 红灯：`node --test scripts/ios-acceptance-predicates.test.mjs` 先因缺少 `scripts/ios-acceptance-predicates.mjs` 失败。
+- 绿灯：`pnpm validate:ios-acceptance-evidence` 通过，16 个测试全部通过。
+- 短 live 验证：`.tmp/ios-acceptance-evidence/calendar-cleanup-pregrant-live-20260529-154310/` 显示 `calendarAccessPreparation.available=true`、`calendarSystemAppEvidence.available=true`、`calendarCleanupSeed.available=true`、取消前 EventKit identifier 存在、取消后 identifier 清除且 `postCancelRemovedEventIdPresent=true`。
+- 完整 live 验证：`.tmp/ios-acceptance-evidence/system-pregrant-denial-live-20260529-154919/` 显示 `acceptanceFactSeed`、`calendarSystemAppEvidence`、`calendarCleanupSeed`、`calendarPermissionDenialSeed`、`notificationClickBackflow` 和 `notificationDelivery` 全部 `available=true`；manifest 仍保持 `acceptanceVerdict=not_evaluated`、`manualAcceptanceRequired=true`、`automationCanReplaceManualAcceptance=false`。
+- 人工补证报告：同一完整 live 包已写出 `manual-evidence-gaps.md`，继续明确真实系统能力仍需人工补截图、录屏、API 摘要和 bridge marker。
+
+阶段价值：
+
+这一阶段把系统辅助证据根命令从“受旧 Simulator 权限状态影响”推进到“先恢复 Calendar 写入前置条件，再单独验证权限拒绝降级”。它让自动辅助材料更适合作为 completion audit 的输入，同时不改变人工验收门槛。

@@ -79,5 +79,5 @@ Goal 不能标记 complete。
 
 1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:ios-manual-evidence-record`、`pnpm validate:context-sync` 和 `git diff --check`。
 2. 如果 `.env.local` 有可用 key，再运行 `pnpm validate:llm-smoke`。
-3. 需要集中补自动辅助材料时，运行 `pnpm collect:ios-system-evidence`，一次性启用当前支持的系统辅助证据；该命令可能等待通知投递，且仍不能替代人工证据。
+3. 需要集中补自动辅助材料时，运行 `pnpm collect:ios-system-evidence`，一次性启用当前支持的系统辅助证据；该命令会在 Calendar 写入类辅助证据前预授权 Simulator 日历权限，并在权限拒绝场景里单独撤销权限验证降级路径。它可能等待通知投递，且仍不能替代人工证据。
 4. 按 `docs/qa/ios-v1-system-acceptance.md` 做一次真实模拟器或真机验收，把证据沉淀到仓库或外部知识库。
