@@ -221,6 +221,24 @@ const manualEvidenceGuides = {
   },
 };
 
+const manualEvidenceRecordStatuses = ["pending", "passed", "failed", "blocked"];
+
+const manualEvidenceRecordIds = {
+  "H5 地址覆盖": "h5_address_override",
+  "会话持久 ID": "conversation_persistence",
+  键盘输入: "keyboard_input",
+  语音输入: "voice_input",
+  照片附件: "photo_attachment",
+  文件附件: "file_attachment",
+  "PDF 文本提取": "pdf_text_extraction",
+  本地通知: "local_notification",
+  通知点击回流: "notification_click_backflow",
+  系统日历写入: "system_calendar_write",
+  系统日历取消清理: "system_calendar_cleanup",
+  后端事实确认: "backend_fact_confirmation",
+  系统同步降级: "system_sync_degradation",
+};
+
 function parseArgs(argv) {
   const args = {
     dryRun: false,
@@ -2482,6 +2500,7 @@ function buildManifest(evidence) {
     headSha: evidence.git.commit,
     acceptanceVerdict: "not_evaluated",
     manualAcceptanceRequired: true,
+    manualEvidenceRecordTemplate: "manual-evidence-record.template.json",
     automationCanReplaceManualAcceptance: false,
     notCoveredByAutomation: evidence.manualEvidenceStillRequired,
     items: [
@@ -2852,6 +2871,7 @@ function writeManualChecklist(evidence, outputDir) {
     ...evidence.manualEvidenceStillRequired.flatMap((item) => [
       `## ${item}`,
       "",
+      `- record_id: ${manualEvidenceRecordIds[item]}`,
       "- status: manual_required",
       ...guideLines(item),
       "- evidence_placeholder:",
@@ -2860,6 +2880,99 @@ function writeManualChecklist(evidence, outputDir) {
     ]),
   ];
   writeText(path.join(outputDir, "manual-checklist.todo.md"), lines.join("\n"));
+}
+
+function manualRecordItem({ item, evidence, guide, requiredEvidence }) {
+  return {
+    id: manualEvidenceRecordIds[item],
+    item,
+    title: item,
+    status: "pending",
+    allowedStatuses: manualEvidenceRecordStatuses,
+    requiredEvidence,
+    supportingAutomationSignals: supportingSignalsForManualItem(item, evidence),
+    evidence: {
+      screenshots: [],
+      recordings: [],
+      apiSummaries: [],
+      bridgeMarkers: [],
+      systemArtifacts: [],
+      operatorNotes: "",
+      blocker: "",
+    },
+    guide,
+  };
+}
+
+function writeManualEvidenceRecordTemplate(evidence, manifest, outputDir) {
+  const h5Guide = {
+    apiSummaries: [],
+    bridgeMarkers: ["H5DevServerURL", "h5NativeTargetMarkerFound=true"],
+    screenshots: ["默认地址 App 启动截图", "局域网地址 App 启动截图"],
+    systemArtifacts: ["构建产物 Info.plist 的 H5DevServerURL"],
+  };
+  const h5RequiredEvidence = {
+    screenshots: h5Guide.screenshots,
+    recordings: [],
+    apiSummaries: h5Guide.apiSummaries,
+    bridgeMarkers: h5Guide.bridgeMarkers,
+    systemArtifacts: h5Guide.systemArtifacts,
+  };
+
+  const manualItems = evidence.manualEvidenceStillRequired.map((item) => {
+    const guide = evidence.manualEvidenceGuides[item] ?? {};
+    return manualRecordItem({
+      item,
+      evidence,
+      guide,
+      requiredEvidence: {
+        screenshots: guide.screenshots ?? [],
+        recordings: [],
+        apiSummaries: guide.apiSummaries ?? [],
+        bridgeMarkers: guide.bridgeMarkers ?? [],
+        systemArtifacts: guide.systemArtifacts ?? [],
+      },
+    });
+  });
+
+  const record = {
+    schemaVersion: 1,
+    generatedAt: evidence.generatedAt,
+    repoRoot: rootDir,
+    branch: evidence.git.branch,
+    headSha: evidence.git.commit,
+    acceptanceVerdict: "not_evaluated",
+    manualAcceptanceRequired: true,
+    automationCanReplaceManualAcceptance: false,
+    packageEvidence: {
+      acceptanceEvidenceJson: "acceptance-evidence.json",
+      manifestJson: "manifest.json",
+      summaryMarkdown: "summary.md",
+      manualChecklist: "manual-checklist.todo.md",
+    },
+    instructions:
+      "将每个 item 的 status 改为 passed/failed/blocked，并把截图、录屏、接口摘要、bridge marker 或系统证据路径填入 evidence；不要把自动辅助证据当成人工验收通过。",
+    manifestItems: manifest.items.map((item) => ({
+      item: item.item,
+      status: item.status,
+      automationCanReplaceManualAcceptance: item.automationCanReplaceManualAcceptance,
+      supportingEvidenceSignals: item.supportingEvidenceSignals ?? [],
+    })),
+    items: [
+      manualRecordItem({
+        item: "H5 地址覆盖",
+        evidence,
+        guide: h5Guide,
+        requiredEvidence: h5RequiredEvidence,
+      }),
+      ...manualItems,
+    ],
+  };
+
+  writeText(
+    path.join(outputDir, "manual-evidence-record.template.json"),
+    `${JSON.stringify(record, null, 2)}\n`
+  );
 }
 
 async function main() {
@@ -3103,6 +3216,7 @@ async function main() {
   );
   writeSummary(evidence, outputDir);
   writeManualChecklist(evidence, outputDir);
+  writeManualEvidenceRecordTemplate(evidence, manifest, outputDir);
 
   const requiredLiveCommands =
     mode === "dry-run"

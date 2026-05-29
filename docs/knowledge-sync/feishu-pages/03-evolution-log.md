@@ -3609,3 +3609,32 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 H5 环境验收从“默认端口是对的”推进到“App 包实际加载地址也是对的”。它能更早发现 Xcode / Simulator 使用旧 H5 地址的问题，减少系统能力联调时被环境误导。
+
+## 阶段 133：iOS 人工验收记录模板结构化
+
+问题背景：
+
+- 自动证据包已经能生成 `manual-checklist.todo.md`，但它主要服务人读，缺少机器可读取的人工验收记录结构。
+- v1 completion audit 需要知道每个系统能力是 `passed`、`failed` 还是 `blocked`，以及对应截图、录屏、接口摘要、bridge marker 和系统证据路径。
+- 如果只靠 Markdown 勾选，后续很难自动检查人工证据是否覆盖所有必验项，也难以把同一份证据包传递给下一轮 Agent。
+
+完成内容：
+
+- `collect:ios-acceptance-evidence` 新增 `manual-evidence-record.template.json` 输出。
+- 每条人工记录包含稳定 `id`、`title`、`status=pending`、允许状态 `pending/passed/failed/blocked`、`requiredEvidence`、`supportingAutomationSignals` 和空的 `evidence` 占位。
+- `manual-checklist.todo.md` 每个必验项新增 `record_id`，与 JSON 模板中的记录 id 对齐。
+- `manifest.json` 新增 `manualEvidenceRecordTemplate=manual-evidence-record.template.json`，但继续保持 `acceptanceVerdict=not_evaluated`、`manualAcceptanceRequired=true` 和 `automationCanReplaceManualAcceptance=false`。
+- `docs/qa/ios-v1-system-acceptance.md` 和 `docs/qa/v1-readiness-audit.md` 补充模板使用说明：人工验收后才能把项目状态改为 `passed`、`failed` 或 `blocked`，空模板不代表通过。
+
+验证结果：
+
+- 红灯 1：`pnpm validate:ios-acceptance-evidence` 先因缺少 `manual-evidence-record.template.json` 失败。
+- 绿灯 1：补充模板生成后，`pnpm validate:ios-acceptance-evidence` 通过。
+- 红灯 2：加入 `record_id=voice_input` 和 JSON `id/title` 断言后，测试先失败。
+- 绿灯 2：补充稳定记录 id 后，`pnpm validate:ios-acceptance-evidence` 通过。
+- 红灯 3：`pnpm validate:ios-manual-acceptance` 先因清单文档缺少 `manual-evidence-record.template.json`、`passed` 和 `blocked` 说明失败。
+- 绿灯 3：补充人工验收文档后，`pnpm validate:ios-manual-acceptance` 通过。
+
+阶段价值：
+
+这一阶段把 iOS v1 手工补证从“清单提示”推进到“可结构化记录”。它仍不替代语音、附件、通知、系统日历等真实系统能力人工验收，但能让后续 completion audit 明确读取每个必验项的状态和证据路径，减少人工补证遗漏。

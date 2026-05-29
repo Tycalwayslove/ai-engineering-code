@@ -48,6 +48,11 @@ for (const expected of [
   "pnpm validate:ios-build",
   "pnpm validate:ios-simulator-smoke",
   "pnpm validate:h5-click-smoke",
+  "manual-evidence-record.template.json",
+  "passed",
+  "failed",
+  "blocked",
+  "automationCanReplaceManualAcceptance=false",
 ]) {
   assertIncludes(content, expected);
 }
