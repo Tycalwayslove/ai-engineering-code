@@ -4338,3 +4338,39 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 completion audit 从“证据字段齐全即可复查”推进到“证据必须属于当前代码状态”。后续正式收尾时，即使自动选择找到了缺口最少的记录，只要它来自旧 HEAD，audit 也会保持 `not_complete`，迫使我们重新采证或明确补证当前版本。
+
+## 阶段 158：当前 HEAD iOS 辅助证据包刷新
+
+问题背景：
+
+- 上一轮 completion audit 已经能识别旧 HEAD 证据包，并把 `.tmp/ios-acceptance-evidence/system-pregrant-denial-live-20260529-154919/` 标记为 `packageFreshness.status=stale`。
+- 如果继续用旧包，审计会被版本新鲜度阻塞，无法准确反映当前代码 `d474ea4` 的真实剩余缺口。
+- 需要在当前 HEAD 下重新采集自动辅助证据，并确认 `--manual-record best` 会选择新包。
+
+完成内容：
+
+- 运行 `pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-full-supporting-20260529`。
+- 新证据包写出：
+  - `manifest.json`
+  - `manual-evidence-record.review.json`
+  - H5 七页面截图
+  - 系统 Calendar App 截图
+  - 系统日历取消前后截图
+  - 日历权限拒绝截图
+  - 通知点击回流截图
+  - 键盘输入辅助截图
+  - 附件输入辅助截图
+- `manifest.headSha` 和 `manual-evidence-record.review.json.headSha` 均为 `d474ea4`。
+- 运行 `node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/current-head-full-supporting-20260529/manual-evidence-record.review.json --require-complete --report .tmp/ios-acceptance-evidence/current-head-full-supporting-20260529/manual-evidence-gaps.md` 生成当前包缺口报告。
+- 运行 `pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-after-current-head-20260529 --external-knowledge-status not_synced`，确认自动选择新包。
+
+验证结果：
+
+- 新 completion audit 的 `manualEvidence.selection.selectedRecordPath` 指向 `.tmp/ios-acceptance-evidence/current-head-full-supporting-20260529/manual-evidence-record.review.json`。
+- `manualEvidence.packageFreshness.status=current`，`recordHeadSha=currentHeadSha=d474ea4`。
+- `manualEvidence.missingEvidenceCount=33`，比上一轮旧包的 42 条缺口少 9 条。
+- `verdict=not_complete`，原因是 review 记录仍保持 `acceptanceVerdict=not_evaluated`，且真实系统能力人工证据仍未全部补齐。
+
+阶段价值：
+
+这一阶段把收尾状态从“旧 HEAD 证据不能用”推进到“当前 HEAD 有最新自动辅助证据，剩余缺口明确为人工系统能力补证”。后续重点不再是重新采自动辅助材料，而是补真实语音、通知、Photos / Files / PDF 选择器、系统 Calendar 详情等人工验收记录，并生成通过 `--require-complete` 的 filled 记录。

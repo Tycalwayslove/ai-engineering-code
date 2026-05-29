@@ -494,3 +494,28 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - `validate:native-shells` 和 `validate:v1-readiness` 会守住这个字段和旧 HEAD 判定说明，避免后续误删。
 
 这让 goal 模式的收尾更贴近真实发布判断：证据不只是“存在”和“齐全”，还必须证明当前这版代码。旧证据包可以帮助定位缺口，但不能让当前迭代完成。
+
+## 当前 HEAD iOS 辅助证据包刷新
+
+2026-05-29 的收尾推进在 `d474ea4` 上重新生成了一份当前 HEAD 的 iOS 辅助证据包：
+
+```bash
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-full-supporting-20260529
+```
+
+这份包包含 H5 七页面截图、系统 Calendar App 截图、日历取消前后截图、日历权限拒绝截图、通知点击回流截图、键盘辅助截图、附件辅助截图和 `manual-evidence-record.review.json`。`manifest.headSha` 与 review 记录的 `headSha` 均为 `d474ea4`。
+
+随后运行：
+
+```bash
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-after-current-head-20260529 --external-knowledge-status not_synced
+```
+
+结果显示：
+
+- `manualEvidence.selection.selectedRecordPath` 自动选中当前 HEAD 新包。
+- `manualEvidence.packageFreshness.status=current`。
+- `manualEvidence.missingEvidenceCount=33`。
+- `verdict=not_complete`。
+
+这说明自动辅助材料已经刷新到当前代码状态，旧 HEAD 阻塞已消除；但 review 记录仍不能替代人工验收。下一步需要把 33 条缺口中的真实系统操作证据补进 filled 记录，再让 completion audit 通过。
