@@ -354,6 +354,60 @@ test("collect iOS acceptance evidence can opt into native keyboard input support
   assert.match(keyboardItem.evidence.operatorNotes, /待人工补充/);
 });
 
+test("collect iOS acceptance evidence can opt into native attachment inputs support", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-inputs-")
+  );
+
+  const result = spawnSync(
+    "node",
+    [
+      scriptPath,
+      "--dry-run",
+      "--seed-attachment-inputs",
+      "--output-dir",
+      outputDir,
+    ],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const review = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manual-evidence-record.review.json"), "utf8")
+  );
+  const summary = fs.readFileSync(path.join(outputDir, "summary.md"), "utf8");
+
+  assert.equal(evidence.nativeAttachmentInputs.enabled, true);
+  assert.equal(evidence.nativeAttachmentInputs.available, false);
+  assert.equal(evidence.nativeAttachmentInputs.supportingOnly, true);
+  assert.equal(evidence.nativeAttachmentInputs.mode, "h5_synthetic_native_attachment_inputs");
+  assert.deepEqual(
+    evidence.nativeAttachmentInputs.samples.map((sample) => sample.itemId),
+    ["photo_attachment", "file_attachment", "pdf_text_extraction"]
+  );
+  assert.match(
+    evidence.nativeAttachmentInputs.screenshotPath,
+    /native-attachment-inputs\.png$/
+  );
+  assert.ok(evidence.automatedEvidence.includes("native_attachment_inputs"));
+  assert.match(summary, /原生附件输入辅助证据/);
+  assert.match(summary, /不替代真实 PhotosPicker/);
+
+  for (const itemId of ["photo_attachment", "file_attachment", "pdf_text_extraction"]) {
+    const reviewItem = review.items.find((item) => item.id === itemId);
+    assert.equal(reviewItem.status, "pending");
+    assert.deepEqual(reviewItem.evidence.bridgeMarkers, []);
+    assert.match(reviewItem.evidence.operatorNotes, /待人工补充/);
+  }
+});
+
 test("collect iOS acceptance evidence can opt into notification delivery diagnostics", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-notification-delivery-")
@@ -762,6 +816,10 @@ test("package exposes iOS acceptance evidence collection command", () => {
   assert.equal(
     packageJson.scripts["collect:ios-keyboard-evidence"],
     "node scripts/collect-ios-acceptance-evidence.mjs --seed-keyboard-input"
+  );
+  assert.equal(
+    packageJson.scripts["collect:ios-attachment-evidence"],
+    "node scripts/collect-ios-acceptance-evidence.mjs --seed-attachment-inputs"
   );
   assert.equal(
     packageJson.scripts["collect:ios-system-evidence"],

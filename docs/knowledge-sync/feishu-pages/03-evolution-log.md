@@ -3900,3 +3900,31 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把键盘输入从“只能手工整理所有证据”推进到“自动整理 H5 / 后端处理原生键盘来源输入的候选证据”。它减少人工复核成本，但不替代真实 Native 输入框、系统键盘和用户实际发送动作的人工留证。
+
+## 阶段 143：iOS 附件输入辅助证据采集
+
+问题背景：
+
+- 照片、文件和 PDF 附件仍是 iOS v1 人工验收的重要缺口。
+- 真实 PhotosPicker、fileImporter、系统权限弹窗、安全作用域文件读取、Vision OCR 和 PDFKit 抽取质量必须人工留证；但 H5 / 后端处理 Native 附件 payload 的链路可以自动整理为候选证据。
+
+完成内容：
+
+- `collect-ios-acceptance-evidence` 新增 `--seed-attachment-inputs` 和 `AI_CODE_IOS_ACCEPTANCE_SEED_ATTACHMENT_INPUTS=1`。
+- 新增根命令 `pnpm collect:ios-attachment-evidence`。
+- 采集器会向当前 Native 会话注入同形态 `native.inputSubmitted` 附件消息，覆盖：
+  - `photo_attachment`：`source=native.composer.attachment.photo`。
+  - `file_attachment`：`source=native.composer.attachment.file`。
+  - `pdf_text_extraction`：PDF 文本样例。
+- H5 会按既有路径调用 `/attachments/upload`，后端写入附件读模型，证据包保存 `native-attachment-inputs.png`。
+- `manual-evidence-record.review.json` 会把截图、后端 attachment id 和 source marker 预填到照片、文件、PDF 三个 item，但仍保持 `pending`。
+- `docs/qa/ios-v1-system-acceptance.md` 和 `docs/qa/v1-readiness-audit.md` 已补充命令、边界和人工证据要求。
+
+验证结果：
+
+- 红灯：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 先因 `--seed-attachment-inputs`、根命令和 review 映射缺失失败。
+- 绿灯：实现后同一命令通过，15 个测试全部通过。
+
+阶段价值：
+
+这一阶段把照片 / 文件 / PDF 附件从“人工复核前必须手工整理所有 H5 / 后端证据”推进到“自动整理附件 payload、后端读模型和 H5 摘要卡候选证据”。它减少补证整理成本，但不替代真实系统选择器和原生文本抽取质量验收。

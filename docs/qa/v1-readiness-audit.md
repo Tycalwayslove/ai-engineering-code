@@ -48,9 +48,9 @@ Goal 不能标记 complete。
 | 会话持久 ID | 重启前后同一 `conversation_ios_*`、后端历史仍可读取 | Simulator smoke 只 launch App，不检查 H5 URL 和后端历史 |
 | 键盘输入 | 键盘弹出、`source=native.composer.keyboard`、后端确认卡和提醒事实 | `pnpm collect:ios-keyboard-evidence` 可补 H5 / 后端处理 `source=native.composer.keyboard` 的辅助证据，但不验证真实 Native 输入框、系统键盘和用户实际点击发送 |
 | 语音输入 | 麦克风 / 语音识别权限弹窗、`source=native.composer.voice`、识别文本和确认卡 | 自动脚本不能采集麦克风，也不能证明中文识别质量 |
-| 照片附件 | PhotosPicker 截图、`inputKind=attachment`、`attachmentKind=image`、OCR 文本、`base64Content` 小文件样例、附件接口摘要 | 自动脚本不能打开系统照片选择器或验证 Vision OCR 样本质量 |
-| 文件附件 | fileImporter 截图、文件名 / MIME / size、超过 5MB 不传 `base64Content` 的边界样例 | 自动脚本不打开文件选择器，也不覆盖真实安全作用域文件读取 |
-| PDF 文本提取 | PDF 选择截图、PDFKit 抽取文本摘要、后续追问或确认卡 | 自动脚本不验证真实 PDF 样本抽取质量 |
+| 照片附件 | PhotosPicker 截图、`inputKind=attachment`、`attachmentKind=image`、OCR 文本、`base64Content` 小文件样例、附件接口摘要 | `pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理照片附件 payload 的辅助证据，但不打开真实 PhotosPicker 或验证 Vision OCR 样本质量 |
+| 文件附件 | fileImporter 截图、文件名 / MIME / size、超过 5MB 不传 `base64Content` 的边界样例 | `pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理文件附件 payload 的辅助证据，但不打开真实文件选择器，也不覆盖安全作用域文件读取 |
+| PDF 文本提取 | PDF 选择截图、PDFKit 抽取文本摘要、后续追问或确认卡 | `pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理 PDF 文本 payload 的辅助证据，但不验证真实 PDFKit 样本抽取质量 |
 | 本地通知 | 通知权限弹窗、系统通知截图、`ai-code.reminder.{id}` 标识、提醒事实摘要 | payload smoke 不证明系统通知投递 |
 | 通知点击回流 | 点击通知录屏、reminders drawer 打开、目标提醒高亮、`source=native.notifications.reminders.opened` | 自动脚本不触发真实系统通知点击 |
 | 系统日历写入 | 日历权限弹窗、系统日历事件截图、`AI_CODE_EVENT_ID:{id}` 和 `AI_CODE_ACTION_ID:{sourceActionId}` notes marker | payload smoke 不证明 EventKit 写入用户可见日历 |
@@ -79,5 +79,5 @@ Goal 不能标记 complete。
 
 1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:ios-manual-evidence-record`、`pnpm validate:context-sync` 和 `git diff --check`。
 2. 如果 `.env.local` 有可用 key，再运行 `pnpm validate:llm-smoke`。
-3. 需要集中补自动辅助材料时，运行 `pnpm collect:ios-system-evidence`，一次性启用当前支持的系统辅助证据；该命令会在 Calendar 写入类辅助证据前预授权 Simulator 日历权限，并在权限拒绝场景里单独撤销权限验证降级路径。键盘输入的 H5 / 后端辅助证据可单独运行 `pnpm collect:ios-keyboard-evidence`。这些命令可能等待通知投递或写入 seed 事项，且仍不能替代人工证据。
+3. 需要集中补自动辅助材料时，运行 `pnpm collect:ios-system-evidence`，一次性启用当前支持的系统辅助证据；该命令会在 Calendar 写入类辅助证据前预授权 Simulator 日历权限，并在权限拒绝场景里单独撤销权限验证降级路径。键盘输入的 H5 / 后端辅助证据可单独运行 `pnpm collect:ios-keyboard-evidence`，照片 / 文件 / PDF 附件的 H5 / 后端辅助证据可单独运行 `pnpm collect:ios-attachment-evidence`。这些命令可能等待通知投递或写入 seed 事项，且仍不能替代人工证据。
 4. 按 `docs/qa/ios-v1-system-acceptance.md` 做一次真实模拟器或真机验收，把证据沉淀到仓库或外部知识库。

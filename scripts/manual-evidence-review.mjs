@@ -118,6 +118,32 @@ function evidenceSuggestionsForItem(item, evidence) {
       }
       break;
     }
+    case "photo_attachment":
+    case "file_attachment":
+    case "pdf_text_extraction": {
+      const sample = evidence?.nativeAttachmentInputs?.samples?.find(
+        (candidate) => candidate.itemId === item.id
+      );
+      if (evidence?.nativeAttachmentInputs?.available && sample) {
+        const screenshotLabel =
+          item.id === "pdf_text_extraction"
+            ? "PDF 文本提取后 H5 附件摘要卡"
+            : "H5 附件摘要卡";
+        addUnique(
+          suggestions.screenshots,
+          `${screenshotLabel}: ${evidence.nativeAttachmentInputs.screenshotPath}`
+        );
+        addUnique(
+          suggestions.apiSummaries,
+          `/attachments?conversationId=...: attachmentId=${sample.attachmentId}, backendId=${sample.backendAttachmentId}`
+        );
+        addUnique(
+          suggestions.bridgeMarkers,
+          `inputKind=attachment: source=${sample.source}, attachment=${sample.name}`
+        );
+      }
+      break;
+    }
     case "system_calendar_write": {
       if (evidence?.calendarSystemAppEvidence?.available) {
         addUnique(

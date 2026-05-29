@@ -267,6 +267,8 @@ function parseArgs(argv) {
       seedSupportedSystemEvidence,
     seedKeyboardInput:
       process.env.AI_CODE_IOS_ACCEPTANCE_SEED_KEYBOARD_INPUT === "1",
+    seedAttachmentInputs:
+      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_ATTACHMENT_INPUTS === "1",
     captureCalendarSystemApp:
       process.env.AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP === "1" ||
       seedSupportedSystemEvidence,
@@ -302,6 +304,8 @@ function parseArgs(argv) {
       args.seedNotificationDelivery = true;
     } else if (value === "--seed-keyboard-input") {
       args.seedKeyboardInput = true;
+    } else if (value === "--seed-attachment-inputs") {
+      args.seedAttachmentInputs = true;
     } else if (value === "--capture-calendar-system-app") {
       args.captureCalendarSystemApp = true;
     } else if (value === "--skip-build") {
@@ -756,6 +760,84 @@ function emptyNativeKeyboardInputSeed({
     source: "native.composer.keyboard",
     supportingOnly: true,
     syntheticNativeMessage: null,
+  };
+}
+
+function base64Utf8(value) {
+  return Buffer.from(value, "utf8").toString("base64");
+}
+
+function buildNativeAttachmentSamples(seedRunId) {
+  return [
+    {
+      attachmentId: `native_attachment_${seedRunId}_photo`,
+      attachmentKind: "image",
+      attachmentName: `${seedRunId}-receipt.jpg`,
+      attachmentSizeBytes: 2048,
+      attachmentType: "image/jpeg",
+      base64Content: base64Utf8(`照片票据识别文本 金额 88.5 元\n2026-05-28\n${seedRunId}`),
+      itemId: "photo_attachment",
+      source: "native.composer.attachment.photo",
+      text: `已选择附件：${seedRunId}-receipt.jpg（image，2048 bytes）。\n识别文本：照片票据 金额 88.5 元 2026-05-28`,
+    },
+    {
+      attachmentId: `native_attachment_${seedRunId}_file`,
+      attachmentKind: "text",
+      attachmentName: `${seedRunId}-notes.txt`,
+      attachmentSizeBytes: 512,
+      attachmentType: "text/plain",
+      base64Content: base64Utf8(`文件附件正文：${seedRunId} 项目会议材料`),
+      itemId: "file_attachment",
+      source: "native.composer.attachment.file",
+      text: `已选择附件：${seedRunId}-notes.txt（text，512 bytes）。\n识别文本：项目会议材料`,
+    },
+    {
+      attachmentId: `native_attachment_${seedRunId}_pdf`,
+      attachmentKind: "pdf",
+      attachmentName: `${seedRunId}-agenda.pdf`,
+      attachmentSizeBytes: 4096,
+      attachmentType: "application/pdf",
+      base64Content: base64Utf8(`%PDF-1.4\n${seedRunId} agenda placeholder`),
+      itemId: "pdf_text_extraction",
+      source: "native.composer.attachment.file",
+      text: `已选择附件：${seedRunId}-agenda.pdf（pdf，4096 bytes）。\n识别文本：PDF 日程材料 明天上午十点项目会`,
+    },
+  ];
+}
+
+function evidenceAttachmentSample(sample, attachment) {
+  return {
+    attachmentId: sample.attachmentId,
+    backendAttachmentId: attachment?.id ?? null,
+    contentStatus: attachment?.contentStatus ?? null,
+    itemId: sample.itemId,
+    kind: sample.attachmentKind,
+    name: sample.attachmentName,
+    source: sample.source,
+    type: sample.attachmentType,
+  };
+}
+
+function emptyNativeAttachmentInputsSeed({
+  conversationId,
+  enabled,
+  outputDir,
+  seedRunId,
+}) {
+  return {
+    available: false,
+    apiBaseUrl,
+    commands: {},
+    conversationId: conversationId ?? null,
+    enabled,
+    errors: [],
+    mode: "h5_synthetic_native_attachment_inputs",
+    samples: buildNativeAttachmentSamples(seedRunId).map((sample) =>
+      evidenceAttachmentSample(sample)
+    ),
+    screenshotPath: path.join(outputDir, "native-attachment-inputs.png"),
+    seedRunId,
+    supportingOnly: true,
   };
 }
 
@@ -2355,6 +2437,147 @@ async function seedNativeKeyboardInput({
   }
 }
 
+async function seedNativeAttachmentInputs({
+  conversationId,
+  dryRun,
+  enabled,
+  outputDir,
+}) {
+  const seedRunId =
+    process.env.AI_CODE_IOS_ACCEPTANCE_ATTACHMENT_INPUTS_RUN_ID ??
+    defaultSeedRunId();
+  const attachmentInputs = emptyNativeAttachmentInputsSeed({
+    conversationId,
+    enabled,
+    outputDir,
+    seedRunId,
+  });
+  if (!enabled) {
+    return attachmentInputs;
+  }
+  if (dryRun) {
+    attachmentInputs.errors.push("dry-run does not submit H5 synthetic native attachment inputs");
+    return attachmentInputs;
+  }
+  if (!conversationId) {
+    attachmentInputs.errors.push("Native conversationId was not found; attachment input seed skipped.");
+    return attachmentInputs;
+  }
+
+  const samples = buildNativeAttachmentSamples(seedRunId);
+  let browser;
+  try {
+    const { chromium, expect } = await import("@playwright/test");
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { height: 844, width: 390 } });
+    await page.addInitScript(() => {
+      window.__AI_NATIVE_MESSAGES__ = [];
+      window.__AI_NATIVE_HOST__ = {
+        bridgeVersion: "ios-acceptance-attachment-inputs",
+        platform: "ios",
+      };
+      window.webkit = {
+        messageHandlers: {
+          NativeBridge: {
+            postMessage(message) {
+              window.__AI_NATIVE_MESSAGES__.push(message);
+            },
+          },
+        },
+      };
+    });
+
+    const url = `${h5NativeBaseUrl}/?native=ios&bridgeDebug=1&conversationId=${encodeURIComponent(
+      conversationId
+    )}`;
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    const surfaceRegion = page.getByLabel("后端元素渲染区");
+    await expect(surfaceRegion).toContainText("AI 时间管理 Agent", {
+      timeout: 15000,
+    });
+    await sendH5NativeMessage(page, "native.hostContext", {
+      bridgeVersion: "ios-acceptance-attachment-inputs",
+      h5URL: page.url(),
+      platform: "ios",
+    });
+    await page.waitForTimeout(1000);
+
+    for (const sample of samples) {
+      await sendH5NativeMessage(page, "native.inputSubmitted", {
+        attachmentId: sample.attachmentId,
+        attachmentKind: sample.attachmentKind,
+        attachmentName: sample.attachmentName,
+        attachmentSizeBytes: String(sample.attachmentSizeBytes),
+        attachmentType: sample.attachmentType,
+        base64Content: sample.base64Content,
+        inputKind: "attachment",
+        source: sample.source,
+        text: sample.text,
+        view: "conversation",
+      });
+      await expect(surfaceRegion).toContainText(sample.attachmentName, {
+        timeout: 15000,
+      });
+      await expect(page.locator("body")).toContainText("已接收附件", {
+        timeout: 15000,
+      });
+    }
+
+    const attachmentsUrl = `${apiBaseUrl}/attachments?conversationId=${encodeURIComponent(
+      conversationId
+    )}&limit=20`;
+    const attachments = await getJson(attachmentsUrl);
+    attachmentInputs.commands.queryAttachments = {
+      command: `GET ${attachmentsUrl}`,
+      ok: attachments.ok,
+      status: attachments.status,
+    };
+    const attachmentList = Array.isArray(attachments.payload)
+      ? attachments.payload
+      : Array.isArray(attachments.payload?.attachments)
+        ? attachments.payload.attachments
+        : [];
+    attachmentInputs.samples = samples.map((sample) => {
+      const attachment = attachmentList.find(
+        (candidate) => candidate.attachmentId === sample.attachmentId
+      );
+      return evidenceAttachmentSample(sample, attachment);
+    });
+    const missing = attachmentInputs.samples.filter(
+      (sample) => !sample.backendAttachmentId
+    );
+    if (missing.length > 0) {
+      attachmentInputs.errors.push(
+        `attachment input seeds were not found after submission: ${missing
+          .map((sample) => sample.attachmentId)
+          .join(", ")}`
+      );
+    }
+
+    await page.screenshot({
+      fullPage: true,
+      path: attachmentInputs.screenshotPath,
+    });
+    attachmentInputs.commands.h5SyntheticAttachmentInputs = {
+      command: `Playwright ${url} + native.inputSubmitted inputKind=attachment`,
+      ok: true,
+      status: 0,
+    };
+    attachmentInputs.available =
+      attachmentInputs.errors.length === 0 &&
+      attachmentInputs.samples.length === samples.length &&
+      attachmentInputs.samples.every((sample) => sample.backendAttachmentId);
+    return attachmentInputs;
+  } catch (error) {
+    attachmentInputs.errors.push(error instanceof Error ? error.message : String(error));
+    return attachmentInputs;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
 function readConversationIdFromPreferences(preferencesPlist, { dryRun }) {
   if (dryRun) {
     return {
@@ -2851,6 +3074,23 @@ function supportingSignalsForManualItem(item, evidence) {
     ];
   }
 
+  const attachmentItemIds = {
+    "PDF 文本提取": "pdf_text_extraction",
+    文件附件: "file_attachment",
+    照片附件: "photo_attachment",
+  };
+  const attachmentItemId = attachmentItemIds[item];
+  const attachmentSample = evidence.nativeAttachmentInputs?.samples?.find(
+    (sample) => sample.itemId === attachmentItemId
+  );
+  if (attachmentSample && evidence.nativeAttachmentInputs?.available) {
+    return [
+      `H5 已接收 native.inputSubmitted 附件：source=${attachmentSample.source}`,
+      `附件 seed 已写入后端：attachmentId=${attachmentSample.attachmentId}, backendId=${attachmentSample.backendAttachmentId}`,
+      `mode=${evidence.nativeAttachmentInputs.mode}, supportingOnly=${String(evidence.nativeAttachmentInputs.supportingOnly)}`,
+    ];
+  }
+
   if (
     item === "系统日历写入" &&
     evidence.ios.systemDiagnostics["calendar.authorizationStatus"]
@@ -3084,6 +3324,26 @@ function writeSummary(evidence, outputDir) {
     `- 截图：${evidence.nativeKeyboardInput.screenshotPath}`,
     ...(evidence.nativeKeyboardInput.errors.length > 0
       ? evidence.nativeKeyboardInput.errors.map((error) => `- error：${error}`)
+      : []),
+    "",
+    "## 原生附件输入辅助证据",
+    "",
+    `- 仅在显式开启时写入并采集：${evidence.nativeAttachmentInputs.enabled ? "已开启" : "未开启"}`,
+    `- 可用：${evidence.nativeAttachmentInputs.available ? "是" : "否"}`,
+    `- 不替代真实 PhotosPicker / fileImporter / PDFKit 验收：${evidence.nativeAttachmentInputs.supportingOnly ? "是" : "否"}`,
+    `- mode：${evidence.nativeAttachmentInputs.mode}`,
+    `- conversationId：${evidence.nativeAttachmentInputs.conversationId || "未采集"}`,
+    `- seedRunId：${evidence.nativeAttachmentInputs.seedRunId || "未采集"}`,
+    `- 截图：${evidence.nativeAttachmentInputs.screenshotPath}`,
+    ...evidence.nativeAttachmentInputs.samples.flatMap((sample) => [
+      `- ${sample.itemId} name：${sample.name}`,
+      `- ${sample.itemId} source：${sample.source}`,
+      `- ${sample.itemId} attachmentId：${sample.attachmentId}`,
+      `- ${sample.itemId} backendAttachmentId：${sample.backendAttachmentId || "未采集"}`,
+      `- ${sample.itemId} contentStatus：${sample.contentStatus || "未采集"}`,
+    ]),
+    ...(evidence.nativeAttachmentInputs.errors.length > 0
+      ? evidence.nativeAttachmentInputs.errors.map((error) => `- error：${error}`)
       : []),
     "",
     "## H5 同会话页面截图",
@@ -3437,6 +3697,12 @@ async function main() {
     enabled: args.seedKeyboardInput,
     outputDir,
   });
+  const nativeAttachmentInputs = await seedNativeAttachmentInputs({
+    conversationId: currentNativeConversationId,
+    dryRun: args.dryRun,
+    enabled: args.seedAttachmentInputs,
+    outputDir,
+  });
   const backendFactSnapshot = collectBackendFactSnapshot({
     conversationId: currentNativeConversationId,
     dryRun: args.dryRun,
@@ -3470,6 +3736,7 @@ async function main() {
         ? ["notification_delivery_diagnostics"]
         : []),
       ...(args.seedKeyboardInput ? ["native_keyboard_input"] : []),
+      ...(args.seedAttachmentInputs ? ["native_attachment_inputs"] : []),
     ],
     manualEvidenceStillRequired,
     manualEvidenceGuides,
@@ -3516,6 +3783,10 @@ async function main() {
     nativeKeyboardInput: {
       ...nativeKeyboardInput,
       commands: compactCommands(nativeKeyboardInput.commands),
+    },
+    nativeAttachmentInputs: {
+      ...nativeAttachmentInputs,
+      commands: compactCommands(nativeAttachmentInputs.commands),
     },
     h5SurfaceScreenshots,
     ios: {

@@ -8,6 +8,7 @@
     "dev:h5:host": "pnpm --filter @ai-code/h5 dev:host",
     "dev:admin": "pnpm --filter @ai-code/admin dev",
     "collect:ios-acceptance-evidence": "node scripts/collect-ios-acceptance-evidence.mjs",
+    "collect:ios-attachment-evidence": "node scripts/collect-ios-acceptance-evidence.mjs --seed-attachment-inputs",
     "collect:ios-keyboard-evidence": "node scripts/collect-ios-acceptance-evidence.mjs --seed-keyboard-input",
     "collect:ios-system-evidence": "node scripts/collect-ios-acceptance-evidence.mjs --seed-supported-system-evidence",
     "db:migrate": "PATH=.venv/bin:$PATH python scripts/db_migrate.py",
