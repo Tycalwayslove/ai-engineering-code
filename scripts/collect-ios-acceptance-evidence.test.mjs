@@ -550,6 +550,90 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
   assert.match(summary, /系统 Calendar 取消前后截图/);
 });
 
+test("collect iOS acceptance evidence can batch all supported system evidence seeds", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-supported-system-")
+  );
+
+  const result = spawnSync(
+    "node",
+    [
+      scriptPath,
+      "--dry-run",
+      "--seed-supported-system-evidence",
+      "--output-dir",
+      outputDir,
+    ],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const summary = fs.readFileSync(path.join(outputDir, "summary.md"), "utf8");
+
+  assert.equal(evidence.acceptanceFactSeed.enabled, true);
+  assert.equal(evidence.calendarSystemAppEvidence.enabled, true);
+  assert.equal(evidence.calendarCleanupSeed.enabled, true);
+  assert.equal(evidence.calendarPermissionDenialSeed.enabled, true);
+  assert.equal(evidence.notificationClickBackflow.enabled, true);
+  assert.equal(evidence.notificationDelivery.enabled, true);
+  assert.deepEqual(
+    [
+      "acceptance_fact_seed",
+      "system_calendar_app_screenshot",
+      "calendar_cleanup_seed",
+      "calendar_permission_denial_seed",
+      "notification_click_backflow",
+      "notification_delivery_diagnostics",
+    ].filter((item) => !evidence.automatedEvidence.includes(item)),
+    []
+  );
+  assert.match(summary, /验收事实种子/);
+  assert.match(summary, /系统 Calendar App 辅助截图/);
+  assert.match(summary, /系统日历取消清理种子/);
+  assert.match(summary, /日历权限拒绝降级种子/);
+  assert.match(summary, /通知点击回流辅助证据/);
+  assert.match(summary, /通知投递诊断辅助证据/);
+});
+
+test("collect iOS acceptance evidence can batch supported system evidence via env", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-supported-system-env-")
+  );
+
+  const result = spawnSync(
+    "node",
+    [scriptPath, "--dry-run", "--output-dir", outputDir],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE: "1",
+      },
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+
+  assert.equal(evidence.acceptanceFactSeed.enabled, true);
+  assert.equal(evidence.calendarSystemAppEvidence.enabled, true);
+  assert.equal(evidence.calendarCleanupSeed.enabled, true);
+  assert.equal(evidence.calendarPermissionDenialSeed.enabled, true);
+  assert.equal(evidence.notificationClickBackflow.enabled, true);
+  assert.equal(evidence.notificationDelivery.enabled, true);
+});
+
 test("package exposes iOS acceptance evidence collection command", () => {
   assert.equal(
     packageJson.scripts["collect:ios-acceptance-evidence"],

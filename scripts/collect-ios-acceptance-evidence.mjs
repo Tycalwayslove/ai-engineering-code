@@ -240,22 +240,30 @@ const manualEvidenceRecordIds = {
 };
 
 function parseArgs(argv) {
+  const seedSupportedSystemEvidence =
+    process.env.AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE === "1";
   const args = {
     dryRun: false,
     outputDir: process.env.AI_CODE_IOS_ACCEPTANCE_EVIDENCE_DIR,
     resetApp: process.env.AI_CODE_IOS_ACCEPTANCE_RESET_APP === "1",
     seedAcceptanceFacts:
-      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_FACTS === "1",
+      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_FACTS === "1" ||
+      seedSupportedSystemEvidence,
     seedCalendarCleanup:
-      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_CALENDAR_CLEANUP === "1",
+      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_CALENDAR_CLEANUP === "1" ||
+      seedSupportedSystemEvidence,
     seedCalendarPermissionDenial:
-      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_CALENDAR_PERMISSION_DENIAL === "1",
+      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_CALENDAR_PERMISSION_DENIAL === "1" ||
+      seedSupportedSystemEvidence,
     seedNotificationClickBackflow:
-      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_CLICK_BACKFLOW === "1",
+      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_CLICK_BACKFLOW === "1" ||
+      seedSupportedSystemEvidence,
     seedNotificationDelivery:
-      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_DELIVERY === "1",
+      process.env.AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_DELIVERY === "1" ||
+      seedSupportedSystemEvidence,
     captureCalendarSystemApp:
-      process.env.AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP === "1",
+      process.env.AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP === "1" ||
+      seedSupportedSystemEvidence,
     skipBuild: process.env.AI_CODE_IOS_ACCEPTANCE_SKIP_BUILD === "1",
     screenshotDelayMs: Number(
       process.env.AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS ?? "3000"
@@ -269,6 +277,13 @@ function parseArgs(argv) {
       args.resetApp = true;
     } else if (value === "--seed-acceptance-facts") {
       args.seedAcceptanceFacts = true;
+    } else if (value === "--seed-supported-system-evidence") {
+      args.seedAcceptanceFacts = true;
+      args.seedCalendarCleanup = true;
+      args.seedCalendarPermissionDenial = true;
+      args.seedNotificationClickBackflow = true;
+      args.seedNotificationDelivery = true;
+      args.captureCalendarSystemApp = true;
     } else if (value === "--seed-calendar-cleanup") {
       args.seedCalendarCleanup = true;
     } else if (value === "--seed-calendar-permission-denial") {

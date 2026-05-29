@@ -3700,3 +3700,34 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把人工补证入口从“空模板”推进到“带辅助信号的草稿”。它能减少人工查找证据的成本，同时继续守住边界：自动辅助信号不等于人工验收通过，最终仍必须补真实截图、录屏、接口摘要和系统证据，并通过 completion 模式校验。
+
+## 阶段 136：iOS 系统辅助证据批量采集开关
+
+问题背景：
+
+- iOS 自动证据包已经支持多种系统辅助材料，但每次集中采证都需要手动组合 `--seed-acceptance-facts`、`--capture-calendar-system-app`、`--seed-calendar-cleanup`、`--seed-calendar-permission-denial`、`--seed-notification-click-backflow` 和 `--seed-notification-delivery`。
+- 这些能力之间存在依赖，例如系统 Calendar App 截图和日历取消清理都需要验收事实种子；人工拼参数容易漏开依赖项。
+- 第一版完成验收前，需要降低重复采证成本，同时不能改变“自动辅助证据不等于人工验收通过”的边界。
+
+完成内容：
+
+- `collect-ios-acceptance-evidence` 新增 `--seed-supported-system-evidence` 参数。
+- 同步新增环境变量 `AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE=1`。
+- 批量开关会一次性启用：
+  - 三领域验收事实种子。
+  - 系统 Calendar App 辅助截图。
+  - 系统日历取消清理辅助证据。
+  - 日历权限拒绝降级辅助证据。
+  - 通知点击回流辅助证据。
+  - 通知 delivered 诊断辅助证据。
+- `docs/qa/ios-v1-system-acceptance.md`、`docs/qa/v1-readiness-audit.md`、当前项目状态和工作流边界源稿已同步说明该开关的执行成本和人工验收边界。
+
+验证结果：
+
+- 红灯：`pnpm validate:ios-acceptance-evidence` 先因 `Unsupported argument: --seed-supported-system-evidence` 失败。
+- 绿灯：实现 CLI / env 批量开关后，`pnpm validate:ios-acceptance-evidence` 通过，10 个测试全部通过。
+- 旁路 subagent 审查未发现阻塞问题；建议补充验收清单文档，本阶段已完成。
+
+阶段价值：
+
+这一阶段把 iOS 系统辅助证据采集从“人工拼多个 opt-in 参数”推进到“一键打开当前全部支持的系统辅助材料”。它减少后续 completion audit 前的采证操作成本，但仍保持 `manualAcceptanceRequired=true`，真实语音、附件、通知展示 / 点击和系统 Calendar 事件详情仍必须人工补证。

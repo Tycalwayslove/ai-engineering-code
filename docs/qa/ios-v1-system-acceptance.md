@@ -54,6 +54,7 @@ pnpm collect:ios-acceptance-evidence
 - `AI_CODE_IOS_ACCEPTANCE_RESET_APP=1` 或 `--reset-app`：重新安装并启动 App，减少旧权限或旧 UI 状态干扰。
 - `AI_CODE_IOS_ACCEPTANCE_SKIP_BUILD=1` 或 `--skip-build`：复用已有构建产物，加快重复采集。
 - `AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=8000` 或 `--screenshot-delay-ms 8000`：等待 WebView 加载后再截图。
+- `AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE=1` 或 `--seed-supported-system-evidence`：一次性启用当前已支持的系统辅助证据采集，包括三领域验收事实种子、系统 Calendar App 截图、系统日历取消清理、日历权限拒绝降级、通知点击回流和通知 delivered 诊断。该模式会创建 / 取消 seed 事项、撤销并尽量恢复日历权限，并等待短提醒投递，完整运行可能需要数分钟；它仍不替代人工验收。
 - `AI_CODE_IOS_ACCEPTANCE_SEED_FACTS=1` 或 `--seed-acceptance-facts`：显式通过真实 Agent 提交 / 确认流向当前 Native 会话写入一条日程、一条费用和一条提醒，用于生成三领域后端事实和 H5 页面截图证据。默认关闭，避免普通采集污染当前会话。
 - `AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP=1` 或 `--capture-calendar-system-app`：必须配合 `--seed-acceptance-facts` 使用。采集器会根据 seed 日程的 `startAt` 计算 `calshow:<seconds>`，打开 Simulator 中的系统 Calendar App 到对应日期并保存 `system-calendar-app.png`。该截图是系统 Calendar UI 辅助证据，仍需人工复核标题、日期和事件是否匹配。
 - `AI_CODE_IOS_ACCEPTANCE_SEED_CALENDAR_CLEANUP=1` 或 `--seed-calendar-cleanup`：必须配合 `--seed-acceptance-facts` 使用。采集器会取消刚创建的 seed 日程，记录取消前 / 取消后 EventKit 标识符和 `calendar.removedEventIds`，并分别保存 `calendar-cleanup-before.png`、`calendar-cleanup-after.png` 两张系统 Calendar App 日期页截图。截图只作为辅助材料，机器不判断事件是否肉眼可见或消失。
