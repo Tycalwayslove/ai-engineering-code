@@ -3992,3 +3992,36 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把键盘自动门禁从“原生输入进入 H5”推进到“原生输入驱动后端提醒事实闭环”。它仍不替代人工验收中对截图、接口摘要和最终结论的记录，但已经能在工程上防住键盘路径、确认卡路径和提醒事实刷新路径的关键回归。
+
+## 阶段 146：iOS 原生语音到后端提醒事实门禁
+
+问题背景：
+
+- iOS 已经接入真实 `SFSpeechRecognizer` 和麦克风录音路径，但工程门禁此前只能覆盖键盘输入到后端提醒事实闭环。
+- 真实麦克风、系统权限弹窗和中文识别质量仍必须人工验收；不过 Native 语音按钮、H5 Bridge、确认卡和后端提醒读模型之间的工程链路可以用 UI test 自动防回归。
+- 语音 UI test 需要避免通知 / 日历系统权限弹窗污染输入路径，同时不能让测试注入在普通 App 运行时生效。
+
+完成内容：
+
+- `HybridShellView` 新增 UI test 专用 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT`，且只在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时生效。
+- 语音按钮被点击后，UI test 模式会短暂进入录音状态，把 transcript 通过既有 `submitNativeText(..., source: "native.composer.voice")` 提交给 H5；普通运行仍走真实 Speech / Microphone 路径。
+- `NativeKeyboardInputUITests` 新增 `testNativeVoiceComposerConfirmsReminderThroughBackend`：
+  - 启动独立 `AI_CODE_UI_TEST_CONVERSATION_ID`。
+  - 点击 `ai-code.composer.voice-button`。
+  - 等待 H5 Bridge Debug 出现 `source=native.composer.voice` 和提交文本。
+  - 等待 H5 确认卡 `请确认执行计划`，点击 `确认`。
+  - 断言确认后出现 `已确认执行`、`已创建提醒`、`scheduled` 和“带电脑”提醒事实。
+- 新增根命令 `pnpm validate:ios-voice-ui-test`，封装 `xcodebuild test` 并检查实际执行至少 1 个 XCTest，避免 0-test 假阳性。
+- `validate:native-shells` 新增结构护栏，要求 package script、voice UI test 脚本、环境变量、XCTest 名称、语音按钮标识和 `source=native.composer.voice` 断言都存在。
+- `apps/ios/README.md`、iOS 系统能力验收清单、v1 readiness 审计和工作流边界源稿已更新覆盖范围与边界。
+
+验证结果：
+
+- 红灯：`pnpm validate:native-shells` 先因缺少 `validate:ios-voice-ui-test`、脚本文件、`AI_CODE_UI_TEST_VOICE_TRANSCRIPT`、XCTest 名称和语音来源断言失败。
+- 绿灯：补齐实现后，`pnpm validate:native-shells` 通过。
+- live UI test：`pnpm validate:ios-voice-ui-test` 在本机 iPhone 16 Pro Max Simulator 上执行 1 个 XCTest、0 个失败，覆盖 Native 语音按钮、UI test transcript、H5 确认卡点击和后端提醒事实可见。
+- 收紧安全边界后再次验证：`AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 只在 UI test 系统权限旁路开启时生效，重新运行 `pnpm validate:native-shells` 和 `pnpm validate:ios-voice-ui-test` 均通过。
+
+阶段价值：
+
+这一阶段把语音自动门禁从“真实 Speech 路径只能人工验收”推进到“Native 语音入口、H5 确认卡和后端提醒事实闭环可由 Xcode UI test 自动防回归”。它刻意不声称证明真实麦克风权限、真实录音或中文识别质量；这些仍保留在 iOS 人工验收记录中。

@@ -64,6 +64,8 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-simulator-smoke"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-simulator-smoke.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-keyboard-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-keyboard-ui-test.mjs");
+assertIncludes(packageJsonPath, packageJson, '"validate:ios-voice-ui-test"');
+assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-voice-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:v1-readiness"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-v1-readiness.mjs");
 
@@ -88,6 +90,15 @@ assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "AIEngineer
 assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "NativeKeyboardInputUITests");
 assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "testNativeKeyboardComposerConfirmsReminderThroughBackend");
 assertIncludes(iosKeyboardUiTestScriptPath, iosKeyboardUiTestScript, "CODE_SIGNING_ALLOWED=NO");
+
+const iosVoiceUiTestScriptPath = "scripts/validate-ios-voice-ui-test.mjs";
+const iosVoiceUiTestScript = readRequired(iosVoiceUiTestScriptPath);
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "xcodebuild");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "AIEngineeringCodeUITests");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "NativeKeyboardInputUITests");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "testNativeVoiceComposerConfirmsReminderThroughBackend");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "CODE_SIGNING_ALLOWED=NO");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "Executed");
 
 const iosAcceptanceEvidenceScriptPath = "scripts/collect-ios-acceptance-evidence.mjs";
 const iosAcceptanceEvidenceScript = readRequired(iosAcceptanceEvidenceScriptPath);
@@ -144,6 +155,7 @@ assertIncludes(iosShellPath, iosShell, "import Vision");
 assertIncludes(iosShellPath, iosShell, "NativeConversationIdentity");
 assertIncludes(iosShellPath, iosShell, "ai-code.native.conversationId");
 assertIncludes(iosShellPath, iosShell, "AI_CODE_UI_TEST_CONVERSATION_ID");
+assertIncludes(iosShellPath, iosShell, "AI_CODE_UI_TEST_VOICE_TRANSCRIPT");
 assertIncludes(iosShellPath, iosShell, "ai-code.native.systemDiagnostics");
 assertIncludes(iosShellPath, iosShell, "recordNativeSystemDiagnostics");
 assertIncludes(iosShellPath, iosShell, "calendar.removedEventIds");
@@ -227,6 +239,10 @@ assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "已确认执行");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "已创建提醒");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "带电脑");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "scheduled");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeVoiceComposerConfirmsReminderThroughBackend");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "AI_CODE_UI_TEST_VOICE_TRANSCRIPT");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.voice-button");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "source=native.composer.voice");
 
 const iosInfoPlistPath = "apps/ios/AIEngineeringCode/Info.plist";
 const iosInfoPlist = readRequired(iosInfoPlistPath);

@@ -340,3 +340,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 最终 completion audit 仍需要人工验收记录，把截图、接口摘要、bridge marker 和结论补齐后再运行 `--require-complete` 校验。
 
 这让键盘输入验收从“完全依赖人工操作”推进到“真实原生输入和后端提醒事实闭环自动防回归，人工验收负责最终留证和结论”。
+
+## iOS 原生语音 UI test 门禁
+
+2026-05-29 的补证推进新增了 `pnpm validate:ios-voice-ui-test`。它通过 Xcode UI test 真实点击 Native composer 的 `ai-code.composer.voice-button`，在 UI test 专用权限旁路开启时使用 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 注入识别文本，并断言 H5 Bridge Debug 出现 `source=native.composer.voice`；随后继续点击 H5 确认卡，并断言确认完成后能看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。
+
+这项能力的协作边界是：
+
+- UI test 负责把“Native 语音按钮 + H5 Bridge + H5 确认卡 + 后端提醒事实可见”变成可重复运行的工程门禁。
+- transcript 注入只在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时生效，普通 App 运行仍走真实 `SFSpeechRecognizer`、麦克风权限和录音路径。
+- UI test 不证明系统麦克风权限弹窗、真实录音、识别延迟、嘈杂环境下准确率或中文识别质量；这些仍必须按 iOS 人工验收清单保留截图、录屏和结论。
+- 最终 completion audit 仍需要人工验收记录，把真实语音权限、识别文本、失败文案、接口摘要和 bridge marker 补齐后再运行 `--require-complete` 校验。
+
+这让语音输入验收从“只能人工点击观察整条链路”推进到“语音入口到后端提醒事实闭环自动防回归，真实 Speech 质量由人工验收负责”。

@@ -187,6 +187,14 @@ pnpm validate:ios-keyboard-ui-test
 - `AI_CODE_IOS_DERIVED_DATA_PATH`
 - `H5_DEV_SERVER_URL`
 
+如果要验证 Native 语音按钮到 H5 / 后端提醒事实的工程闭环，可以运行：
+
+```bash
+pnpm validate:ios-voice-ui-test
+```
+
+该命令通过 Xcode UI test 真实点击 `ai-code.composer.voice-button`，并通过 UI test 专用的 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 注入识别文本，随后断言 H5 Bridge Debug 出现 `source=native.composer.voice`，点击 H5 确认卡，并看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该注入只在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时生效，不影响普通 App 的真实 Speech / Microphone 路径；它不能替代麦克风权限弹窗、真实录音和中文识别质量的人工验收。
+
 系统权限和真机体验不能只靠自动 smoke 判断。第一版发布前需要按仓库清单执行人工验收：
 
 ```bash

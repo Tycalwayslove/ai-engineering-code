@@ -27,6 +27,7 @@
     "validate:h5-runtime": "node scripts/validate-h5-runtime.mjs",
     "validate:ios-build": "node scripts/validate-ios-build.mjs",
     "validate:ios-keyboard-ui-test": "node scripts/validate-ios-keyboard-ui-test.mjs",
+    "validate:ios-voice-ui-test": "node scripts/validate-ios-voice-ui-test.mjs",
     "validate:ios-acceptance-evidence": "node --test scripts/http-retry.test.mjs scripts/ios-acceptance-predicates.test.mjs scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs",
     "validate:ios-manual-acceptance": "node scripts/validate-ios-manual-acceptance.mjs",
     "validate:ios-manual-evidence-record": "node --test scripts/validate-ios-manual-evidence-record.test.mjs && node scripts/validate-ios-manual-evidence-record.mjs",

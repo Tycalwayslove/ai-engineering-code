@@ -18,6 +18,20 @@ private enum NativeRuntimeFlags {
         ProcessInfo.processInfo.arguments.contains("--ai-code-ui-test-disable-system-permission-requests") ||
             ProcessInfo.processInfo.environment["AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS"] == "1"
     }
+
+    static var uiTestVoiceTranscript: String? {
+        guard disablesSystemPermissionRequests else {
+            return nil
+        }
+
+        guard let transcript = ProcessInfo.processInfo.environment["AI_CODE_UI_TEST_VOICE_TRANSCRIPT"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !transcript.isEmpty else {
+            return nil
+        }
+
+        return transcript
+    }
 }
 
 private enum NativeConversationIdentity {
@@ -678,6 +692,19 @@ struct HybridShellView: View {
 
         draftText = ""
         voiceStatusText = "正在请求权限..."
+        if let uiTestVoiceTranscript = NativeRuntimeFlags.uiTestVoiceTranscript {
+            draftText = uiTestVoiceTranscript
+            voiceStatusText = uiTestVoiceTranscript
+            isVoiceRecording = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                isVoiceRecording = false
+                voiceStatusText = "点击说话"
+                draftText = ""
+                submitNativeText(uiTestVoiceTranscript, source: "native.composer.voice")
+            }
+            return
+        }
+
         voiceInput.start(
             onRecordingChanged: { recording in
                 isVoiceRecording = recording

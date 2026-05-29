@@ -7,12 +7,33 @@ final class NativeKeyboardInputUITests: XCTestCase {
 
     func testNativeKeyboardComposerConfirmsReminderThroughBackend() throws {
         let inputText = "明天上午十点提醒我带电脑"
-        let app = launchApp()
+        let app = launchApp(conversationPrefix: "conversation_ui_keyboard")
 
         submitKeyboardReminder(inputText, in: app)
+        confirmReminderFact(inputText, source: "source=native.composer.keyboard", in: app)
+    }
 
+    func testNativeVoiceComposerConfirmsReminderThroughBackend() throws {
+        let inputText = "明天上午十点提醒我带电脑"
+        let app = launchApp(
+            conversationPrefix: "conversation_ui_voice",
+            voiceTranscript: inputText
+        )
+
+        let voiceButton = app.buttons["ai-code.composer.voice-button"]
+        XCTAssertTrue(voiceButton.waitForExistence(timeout: 20), app.debugDescription)
+        voiceButton.tap()
+
+        confirmReminderFact(inputText, source: "source=native.composer.voice", in: app)
+    }
+
+    private func confirmReminderFact(
+        _ inputText: String,
+        source: String,
+        in app: XCUIApplication
+    ) {
         XCTAssertTrue(
-            waitForStaticText(containing: "source=native.composer.keyboard", in: app, timeout: 15),
+            waitForStaticText(containing: source, in: app, timeout: 15),
             app.debugDescription
         )
         XCTAssertTrue(
@@ -49,12 +70,18 @@ final class NativeKeyboardInputUITests: XCTestCase {
         )
     }
 
-    private func launchApp() -> XCUIApplication {
+    private func launchApp(
+        conversationPrefix: String,
+        voiceTranscript: String? = nil
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ai-code-ui-test-disable-system-permission-requests"]
         app.launchEnvironment["AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS"] = "1"
         app.launchEnvironment["AI_CODE_UI_TEST_CONVERSATION_ID"] =
-            "conversation_ui_keyboard_\(UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased())"
+            "\(conversationPrefix)_\(UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased())"
+        if let voiceTranscript {
+            app.launchEnvironment["AI_CODE_UI_TEST_VOICE_TRANSCRIPT"] = voiceTranscript
+        }
         app.launch()
         return app
     }

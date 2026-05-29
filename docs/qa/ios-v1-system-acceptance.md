@@ -67,6 +67,12 @@ pnpm collect:ios-keyboard-evidence
 pnpm validate:ios-keyboard-ui-test
 ```
 
+如果要自动验证 Native 语音按钮到 H5 / 后端提醒事实的工程闭环，可以运行：
+
+```bash
+pnpm validate:ios-voice-ui-test
+```
+
 如果要单独采集照片 / 文件 / PDF 附件输入的 H5 / 后端辅助证据，可以运行：
 
 ```bash
@@ -86,6 +92,7 @@ pnpm collect:ios-attachment-evidence
 - `AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_CLICK_BACKFLOW=1` 或 `--seed-notification-click-backflow`：显式创建一条“3 分钟后”的 seed 提醒，刷新 Native 诊断并轮询确认对应 `ai-code.reminder.{id}` 进入 pending local notification，再用同形态 `native.viewChanged` synthetic 事件验证 H5 能打开提醒页并高亮目标提醒。该证据只证明 Native pending notification 与 H5 回流处理两段链路，不替代真实系统通知点击。
 - `AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_DELIVERY=1` 或 `--seed-notification-delivery`：显式创建一条“2 分钟后”的 seed 提醒，确认目标先进入 pending local notification，再等待到期和缓冲时间，轮询 Native delivered diagnostics，验证对应 `ai-code.reminder.{id}` 出现在 `notifications.deliveredReminderIds`。该证据只证明系统通知中心 delivered 诊断链路，不替代真实 banner、锁屏展示、声音、badge 或用户点击。
 - `pnpm validate:ios-keyboard-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.mode-toggle-button`、`ai-code.composer.keyboard-text-field`、系统键盘和 `ai-code.composer.submit-button`，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本；随后点击 H5 确认卡，断言确认完成后出现 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该命令会通过 UI test 专用启动参数跳过通知 / 日历权限请求，避免键盘路径被系统同步弹窗污染，并为每次运行注入独立 `AI_CODE_UI_TEST_CONVERSATION_ID`，避免旧会话数据干扰。
+- `pnpm validate:ios-voice-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.voice-button`，并在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时通过 UI test 专用 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 注入“明天上午十点提醒我带电脑”，随后断言 H5 Bridge Debug 出现 `source=native.composer.voice`，点击 H5 确认卡，并看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该命令只证明 Native 语音入口、H5 Bridge、确认卡和后端提醒读模型的工程闭环，不替代麦克风权限弹窗、真实录音和中文识别质量验收。
 - `pnpm collect:ios-keyboard-evidence`、`AI_CODE_IOS_ACCEPTANCE_SEED_KEYBOARD_INPUT=1` 或 `--seed-keyboard-input`：显式向当前 Native 会话注入同形态 `native.inputSubmitted`，使用 `source=native.composer.keyboard` 走 H5 `/agent/turns`、确认卡、确认执行和 `/reminders` 读模型闭环，并保存 `native-keyboard-input.png`。该证据只证明 H5 / 后端能处理原生键盘来源的输入，不替代真实 Native 输入框获得焦点、系统键盘弹出、用户实际输入和点击发送的截图。
 - `pnpm collect:ios-attachment-evidence`、`AI_CODE_IOS_ACCEPTANCE_SEED_ATTACHMENT_INPUTS=1` 或 `--seed-attachment-inputs`：显式向当前 Native 会话注入同形态 `native.inputSubmitted` 附件消息，覆盖 `source=native.composer.attachment.photo`、`source=native.composer.attachment.file` 和 PDF 文本提取样例，走 H5 `/attachments/upload`、附件摘要卡和 `/attachments` 读模型闭环，并保存 `native-attachment-inputs.png`。该证据只证明 H5 / 后端能处理 Native 附件 payload，不替代真实 PhotosPicker、fileImporter、系统权限弹窗、安全作用域文件读取、Vision OCR 或 PDFKit 抽取质量验收。
 
@@ -190,6 +197,7 @@ node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptanc
 - 识别文本截图。
 - bridge/debug 日志或 H5 Bridge Debug 面板含 `source=native.composer.voice`。
 - 失败场景的 H5 状态栏文案。
+- `pnpm validate:ios-voice-ui-test` 可自动覆盖 Native 语音按钮、UI test 专用 transcript 注入、H5 Bridge Debug 来源、H5 确认卡点击和后端提醒事实可见路径。
 - 半自动采证可以定位 `ai-code.composer.voice-button` 和 `ai-code.composer.mode-toggle-button`，但语音权限弹窗和识别质量仍必须人工判断。
 
 ### 照片附件
