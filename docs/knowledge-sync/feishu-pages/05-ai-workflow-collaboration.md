@@ -519,3 +519,17 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - `verdict=not_complete`。
 
 这说明自动辅助材料已经刷新到当前代码状态，旧 HEAD 阻塞已消除；但 review 记录仍不能替代人工验收。下一步需要把 33 条缺口中的真实系统操作证据补进 filled 记录，再让 completion audit 通过。
+
+## completion audit 当前 HEAD 优先选择
+
+2026-05-29 的收尾治理继续修正了 `--manual-record best` 的语义。此前 `best` 会优先选择 completion 通过或缺口更少的记录；如果旧 HEAD 记录缺口更少，它会先被选中，然后 audit 再因 `packageFreshness.status=stale` 保持 `not_complete`。这虽然安全，但不利于复查当前版本真实剩余缺口。
+
+现在 `best` 的排序先看证据新鲜度：
+
+- 当前 HEAD 记录优先。
+- 新鲜度相同时，再比较 completion 是否通过。
+- 再比较缺口数、文件类型优先级和更新时间。
+
+审计 JSON 的 `manualEvidence.selection` 也会记录 `selectedRecordFreshnessStatus` 和 `selectedRecordHeadSha`。这样最终收尾时，`best` 会优先绑定当前代码的证据包，而不是被历史缺口更少的旧包吸走。
+
+同一阶段还补强了 review 候选证据映射：H5 七页面截图会补到“`H5 七页面切换截图或录屏`”，附件样本 `kind` 会补到 `attachmentKind=image|text|pdf`。这些仍只是候选证据，不会改变 item 的 `pending` 状态，也不会替代真实系统选择器和人工验收。

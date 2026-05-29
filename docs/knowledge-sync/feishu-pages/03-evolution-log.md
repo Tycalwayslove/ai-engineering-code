@@ -4374,3 +4374,34 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把收尾状态从“旧 HEAD 证据不能用”推进到“当前 HEAD 有最新自动辅助证据，剩余缺口明确为人工系统能力补证”。后续重点不再是重新采自动辅助材料，而是补真实语音、通知、Photos / Files / PDF 选择器、系统 Calendar 详情等人工验收记录，并生成通过 `--require-complete` 的 filled 记录。
+
+## 阶段 159：completion audit 优先选择当前 HEAD 证据
+
+问题背景：
+
+- `manualEvidence.packageFreshness` 已经能阻止旧 HEAD 证据让 audit 通过。
+- 但 `--manual-record best` 的排序仍先看 completion 状态和缺口数，导致旧包如果缺口更少，会被选中后再因 stale 阻塞。
+- 对正式收尾来说，`best` 应该先回答“哪份证据属于当前代码”，再回答“哪份证据缺口最少”。
+
+完成内容：
+
+- `manual-evidence-review` 增强客观证据映射：
+  - H5 七页面截图会汇总映射到“`H5 七页面切换截图或录屏`”。
+  - 附件样本 `kind` 会映射为 `attachmentKind=image|text|pdf` bridge marker。
+- `collect-v1-completion-audit` 的候选记录会记录：
+  - `recordHeadSha`
+  - `freshnessStatus`
+  - `freshnessRank`
+- `best` 排序现在优先选择当前 HEAD 证据；只有新鲜度相同时，才比较 completion 是否通过、缺口数、文件类型优先级和更新时间。
+- `manualEvidence.selection` 新增 `selectedRecordFreshnessStatus` 和 `selectedRecordHeadSha`，便于 Markdown / JSON 复查为什么选中某个记录。
+
+验证结果：
+
+- 红灯：新增单测先证明“旧 HEAD passed 记录”会压过“当前 HEAD pending 记录”。
+- 绿灯：补齐 freshness rank 后，同一测试通过。
+- `pnpm validate:ios-acceptance-evidence` 通过 19 项测试。
+- `pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-prefers-current-head-20260529 --external-knowledge-status not_synced` 显示当前 HEAD 记录被优先选中，`packageFreshness.status=current`。
+
+阶段价值：
+
+这一阶段把 `best` 从“全局缺口最少”修正为“当前代码下最适合收尾”。旧证据包仍可作为历史参考，但不会再因为缺口更少而遮住当前版本的真实验收状态。

@@ -163,7 +163,30 @@ function relativeToRoot(absolutePath) {
   return path.relative(rootDir, absolutePath) || ".";
 }
 
-function collectManualRecordCandidates(manualRecordRoot = defaultManualRecordRoot) {
+function freshnessStatusForRecordHead(recordHeadSha, currentHeadSha) {
+  if (recordHeadSha && currentHeadSha) {
+    return recordHeadSha === currentHeadSha ? "current" : "stale";
+  }
+  if (!recordHeadSha) {
+    return "missing_record_head";
+  }
+  return "unknown";
+}
+
+function manualRecordFreshnessRank(status) {
+  if (status === "current") {
+    return 0;
+  }
+  if (status === "missing_record_head" || status === "unknown") {
+    return 1;
+  }
+  return 2;
+}
+
+function collectManualRecordCandidates(
+  manualRecordRoot = defaultManualRecordRoot,
+  currentHeadSha = null
+) {
   const absoluteRoot = path.resolve(rootDir, manualRecordRoot);
   if (!fs.existsSync(absoluteRoot)) {
     return [];
@@ -191,11 +214,21 @@ function collectManualRecordCandidates(manualRecordRoot = defaultManualRecordRoo
           recordPath: relativeToRoot(entryPath),
         });
         const stat = fs.statSync(entryPath);
+        const relativePath = relativeToRoot(entryPath);
+        const manifest = readManifestForManualRecord(record, relativePath);
+        const recordHeadSha = record?.headSha ?? manifest?.headSha ?? null;
+        const freshnessStatus = freshnessStatusForRecordHead(
+          recordHeadSha,
+          currentHeadSha
+        );
         candidates.push({
           absolutePath: entryPath,
           fileName: entry.name,
+          freshnessRank: manualRecordFreshnessRank(freshnessStatus),
+          freshnessStatus,
           missingEvidenceCount: report.missingEvidenceCount,
           parseError: null,
+          recordHeadSha,
           requireCompletePassed: validation.failures.length === 0,
           mtimeMs: stat.mtimeMs,
           priority: manualEvidenceRecordPriority.get(entry.name),
@@ -204,8 +237,11 @@ function collectManualRecordCandidates(manualRecordRoot = defaultManualRecordRoo
         candidates.push({
           absolutePath: entryPath,
           fileName: entry.name,
+          freshnessRank: Number.POSITIVE_INFINITY,
+          freshnessStatus: "invalid",
           missingEvidenceCount: Number.POSITIVE_INFINITY,
           parseError: error.message,
+          recordHeadSha: null,
           requireCompletePassed: false,
           mtimeMs: 0,
           priority: manualEvidenceRecordPriority.get(entry.name),
@@ -218,6 +254,9 @@ function collectManualRecordCandidates(manualRecordRoot = defaultManualRecordRoo
 }
 
 function compareManualRecordCandidatesForBest(left, right) {
+  if (left.freshnessRank !== right.freshnessRank) {
+    return left.freshnessRank - right.freshnessRank;
+  }
   if (left.requireCompletePassed !== right.requireCompletePassed) {
     return left.requireCompletePassed ? -1 : 1;
   }
@@ -237,7 +276,7 @@ function compareManualRecordCandidatesForLatest(left, right) {
   return left.priority - right.priority;
 }
 
-function resolveManualRecordPath(manualRecordPath, manualRecordRoot) {
+function resolveManualRecordPath(manualRecordPath, manualRecordRoot, currentHeadSha) {
   if (!manualRecordStrategies.has(manualRecordPath)) {
     return {
       manualRecordPath,
@@ -245,7 +284,7 @@ function resolveManualRecordPath(manualRecordPath, manualRecordRoot) {
     };
   }
 
-  const candidates = collectManualRecordCandidates(manualRecordRoot);
+  const candidates = collectManualRecordCandidates(manualRecordRoot, currentHeadSha);
   const validCandidates = candidates.filter((candidate) => !candidate.parseError);
   const sortedCandidates = [...validCandidates].sort(
     manualRecordPath === "latest"
@@ -262,6 +301,8 @@ function resolveManualRecordPath(manualRecordPath, manualRecordRoot) {
       validCandidateCount: validCandidates.length,
       selectedRecordPath: selected ? relativeToRoot(selected.absolutePath) : null,
       selectedMissingEvidenceCount: selected?.missingEvidenceCount ?? null,
+      selectedRecordFreshnessStatus: selected?.freshnessStatus ?? null,
+      selectedRecordHeadSha: selected?.recordHeadSha ?? null,
       selectedRequireCompletePassed: selected?.requireCompletePassed ?? false,
     },
   };
@@ -551,7 +592,8 @@ export function buildV1CompletionAudit(options = {}) {
   const commandResults = options.commandResults ?? new Map();
   const resolvedManualRecord = resolveManualRecordPath(
     options.manualRecordPath,
-    options.manualRecordRoot
+    options.manualRecordRoot,
+    options.currentHeadSha ?? currentGitHeadSha()
   );
   const automatedCommands = requiredAutomatedCommands.map((commandSpec) => ({
     ...commandSpec,

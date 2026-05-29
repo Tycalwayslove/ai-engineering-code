@@ -380,6 +380,40 @@ test("v1 completion audit CLI can select --manual-record best from a root", () =
   assert.match(markdown, /selectedRequireCompletePassed: true/);
 });
 
+test("v1 completion audit best prefers current head evidence over stale candidates", () => {
+  const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
+  const staleDir = path.join(recordRoot, "stale-run");
+  const currentDir = path.join(recordRoot, "current-run");
+  fs.mkdirSync(staleDir, { recursive: true });
+  fs.mkdirSync(currentDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(staleDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify({ ...passedManualRecord(), headSha: "old1234" }, null, 2)}\n`
+  );
+  fs.writeFileSync(
+    path.join(currentDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(
+      { ...incompleteManualRecord(), headSha: "new5678" },
+      null,
+      2
+    )}\n`
+  );
+
+  const audit = buildV1CompletionAudit({
+    currentHeadSha: "new5678",
+    manualRecordPath: "best",
+    manualRecordRoot: recordRoot,
+  });
+
+  assert.equal(
+    audit.manualEvidence.recordPath,
+    path.relative(rootDir, path.join(currentDir, "manual-evidence-record.review.json"))
+  );
+  assert.equal(audit.manualEvidence.packageFreshness.status, "current");
+  assert.equal(audit.manualEvidence.selection.selectedRecordFreshnessStatus, "current");
+});
+
 test("v1 completion audit CLI ignores invalid manual evidence record candidates", () => {
   const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
   const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
