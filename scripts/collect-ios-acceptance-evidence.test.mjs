@@ -34,17 +34,25 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
     outputDir,
     "manual-evidence-record.template.json"
   );
+  const manualEvidenceDraftPath = path.join(
+    outputDir,
+    "manual-evidence-record.draft.json"
+  );
   const summaryPath = path.join(outputDir, "summary.md");
   assert.equal(fs.existsSync(evidenceJsonPath), true);
   assert.equal(fs.existsSync(manifestPath), true);
   assert.equal(fs.existsSync(manualChecklistPath), true);
   assert.equal(fs.existsSync(manualEvidenceRecordPath), true);
+  assert.equal(fs.existsSync(manualEvidenceDraftPath), true);
   assert.equal(fs.existsSync(summaryPath), true);
 
   const evidence = JSON.parse(fs.readFileSync(evidenceJsonPath, "utf8"));
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   const manualEvidenceRecord = JSON.parse(
     fs.readFileSync(manualEvidenceRecordPath, "utf8")
+  );
+  const manualEvidenceDraft = JSON.parse(
+    fs.readFileSync(manualEvidenceDraftPath, "utf8")
   );
   assert.equal(evidence.mode, "dry-run");
   assert.equal(evidence.serviceHealth.h5NativeTargetMarkerFound, false);
@@ -126,6 +134,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(manifest.acceptanceVerdict, "not_evaluated");
   assert.equal(manifest.automationCanReplaceManualAcceptance, false);
   assert.equal(manifest.manualEvidenceRecordTemplate, "manual-evidence-record.template.json");
+  assert.equal(manifest.manualEvidenceRecordDraft, "manual-evidence-record.draft.json");
   assert.equal(manualEvidenceRecord.schemaVersion, 1);
   assert.equal(manualEvidenceRecord.acceptanceVerdict, "not_evaluated");
   assert.equal(manualEvidenceRecord.manualAcceptanceRequired, true);
@@ -133,6 +142,12 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(manualEvidenceRecord.packageEvidence.acceptanceEvidenceJson, "acceptance-evidence.json");
   assert.equal(manualEvidenceRecord.packageEvidence.manifestJson, "manifest.json");
   assert.equal(manualEvidenceRecord.packageEvidence.manualChecklist, "manual-checklist.todo.md");
+  assert.equal(manualEvidenceDraft.schemaVersion, 1);
+  assert.equal(manualEvidenceDraft.acceptanceVerdict, "not_evaluated");
+  assert.equal(manualEvidenceDraft.manualAcceptanceRequired, true);
+  assert.equal(manualEvidenceDraft.automationCanReplaceManualAcceptance, false);
+  assert.equal(manualEvidenceDraft.generatedFromTemplate, "manual-evidence-record.template.json");
+  assert.equal(manualEvidenceDraft.items.length, manualEvidenceRecord.items.length);
   assert.ok(Array.isArray(manualEvidenceRecord.items));
   assert.ok(
     manualEvidenceRecord.items.some((item) => item.item === "H5 地址覆盖")
@@ -162,6 +177,12 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.deepEqual(voiceManualItem.evidence.screenshots, []);
   assert.deepEqual(voiceManualItem.evidence.apiSummaries, []);
   assert.equal(voiceManualItem.evidence.operatorNotes, "");
+  const draftVoiceItem = manualEvidenceDraft.items.find(
+    (item) => item.id === "voice_input"
+  );
+  assert.equal(draftVoiceItem.status, "pending");
+  assert.equal(draftVoiceItem.evidence.operatorNotes, "待人工补充。");
+  assert.deepEqual(draftVoiceItem.evidence.apiSummaries, []);
   assert.equal(
     manifest.items.find((item) => item.item === "会话持久 ID")
       .supportingEvidenceSignals.length,

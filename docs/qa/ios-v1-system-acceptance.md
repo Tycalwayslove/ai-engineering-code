@@ -49,7 +49,7 @@
 pnpm collect:ios-acceptance-evidence
 ```
 
-证据包默认输出到 `.tmp/ios-acceptance-evidence/<timestamp>/`，包含 `manifest.json`、`acceptance-evidence.json`、`summary.md`、`manual-checklist.todo.md`、`manual-evidence-record.template.json` 和 `simulator-launch.png`。常用参数：
+证据包默认输出到 `.tmp/ios-acceptance-evidence/<timestamp>/`，包含 `manifest.json`、`acceptance-evidence.json`、`summary.md`、`manual-checklist.todo.md`、`manual-evidence-record.template.json`、`manual-evidence-record.draft.json` 和 `simulator-launch.png`。常用参数：
 
 - `AI_CODE_IOS_ACCEPTANCE_RESET_APP=1` 或 `--reset-app`：重新安装并启动 App，减少旧权限或旧 UI 状态干扰。
 - `AI_CODE_IOS_ACCEPTANCE_SKIP_BUILD=1` 或 `--skip-build`：复用已有构建产物，加快重复采集。
@@ -63,13 +63,13 @@ pnpm collect:ios-acceptance-evidence
 
 自动证据包覆盖构建、安装、启动、H5 地址、服务可达性、启动截图、Native 会话 ID、同会话后端事实摘要、H5 同会话页面截图和 Native 系统诊断摘要；服务可达性不仅记录 HTTP 200，还会用 `h5NativeTargetMarkerFound` 判断默认 H5 地址是否真的是当前 AI 时间管理 H5，并用 `ios.h5DevServerTargetMarkerFound` 判断 App 包 `Info.plist` 中的 `H5DevServerURL` 是否也指向当前产品页面，避免其他本机 dev server 占用端口或 App 包地址指错时误判。显式开启 seed 时，`acceptanceFactSeed` 会记录 `seedRunId`、`seedNow`、三条输入、planId 和 actionType，证明这些事实来自真实 Agent 确认流，而不是直接写库或前端 demo。显式同时开启 `--capture-calendar-system-app` 时，`calendarSystemAppEvidence` 会打开系统 Calendar App 并保存对应日期截图；该能力使用 Simulator 的 `calshow:` URL scheme，作为可复查辅助材料，不作为机器强断言。显式同时开启 `--seed-calendar-cleanup` 时，`calendarCleanupSeed` 会取消刚创建的 seed 日程，并记录目标 event、取消前 / 取消后状态、取消前 / 取消后 EventKit identifier 是否存在、Native `calendar.removedEventIds`，以及取消前 / 取消后系统 Calendar App 日期页截图；取消前会轮询 Native 诊断并记录 `preCancelDiagnosticsFresh`，只有看到本轮 EventKit identifier 后才取消，取消后也会轮询到 identifier 删除且 removed ids 包含目标 event。截图不改变 `manualAcceptanceRequired=true`，仍需人工复核标题、日期、事件详情、notes marker、无重复事件和取消后消失。显式开启 `--seed-calendar-permission-denial` 时，`calendarPermissionDenialSeed` 会撤销目标 Simulator 日历权限，创建 seed 日程，并记录后端事实、`calendar.authorizationStatus=denied`、`calendar.lastSyncStatus=failed` 和 Native 错误原因。显式开启 `--seed-notification-click-backflow` 时，`notificationClickBackflow` 会记录 seed 提醒、pending notification identifier、H5 synthetic `native.viewChanged` 入站摘要、状态文案和高亮截图，并明确 `supportingOnly=true`。显式开启 `--seed-notification-delivery` 时，`notificationDelivery` 会记录 seed 提醒、pending / delivered notification identifier、等待窗口和 delivered diagnostics，并明确 `supportingOnly=true`。H5 页面截图会在 `h5-surfaces/` 下保存对话、Timeline、日程、费用、提醒、执行记录和设置 7 个页面，用于证明同一个 `conversationId` 的用户可见读模型能够渲染；如果 H5 截图失败，会额外保存 `h5-surface-error.png`、`h5-surface-error.html`、页面 URL、title 和正文片段，辅助判断错误页、空白页、hydration 失败或端口指错。它不替代 WKWebView 真实操作、系统权限弹窗或系统 App 截图。Native 系统诊断来自 Simulator data container 中 `Library/Preferences/com.aiengineeringcode.shell.plist` 的 `ai-code.native.systemDiagnostics`，用于归档通知权限、pending / delivered notification 数量、日历权限、本地 EventKit 标识符计数、后端 event id 列表、取消清理 id 列表和权限降级错误。包内 manifest 必须保留 `acceptanceVerdict=not_evaluated`、`manualAcceptanceRequired=true` 和 `automationCanReplaceManualAcceptance=false`；语音、照片 / 文件、PDF、本地通知真实展示、真实通知点击回流和系统 App UI 仍必须按下方清单人工操作并留证。
 
-`manual-evidence-record.template.json` 是机器可读的人工补证记录模板。每个 `items[]` 都有稳定 `id`，并与 `manual-checklist.todo.md` 中的 `record_id` 对齐；人工执行验收后，把 `status` 从 `pending` 改为 `passed`、`failed` 或 `blocked`，并把截图、录屏、接口摘要、bridge marker、系统证据路径和操作者备注写入 `evidence`。该文件默认仍是模板，不能把空模板当作验收通过；只有人工证据齐全且无 P0 / P1 阻塞时，才允许在最终 completion audit 中改变结论。
+`manual-evidence-record.template.json` 是机器可读的人工补证记录模板。每个 `items[]` 都有稳定 `id`，并与 `manual-checklist.todo.md` 中的 `record_id` 对齐；人工执行验收后，把 `status` 从 `pending` 改为 `passed`、`failed` 或 `blocked`，并把截图、录屏、接口摘要、bridge marker、系统证据路径和操作者备注写入 `evidence`。`manual-evidence-record.draft.json` 是同结构的补证草稿，会把已采集的自动辅助信号写入 `operatorNotes`，但不会把辅助信号填进截图、录屏、系统证据或通过状态。两个文件默认都不能当作验收通过；只有人工证据齐全且无 P0 / P1 阻塞时，才允许在最终 completion audit 中改变结论。
 
 可以用结构化记录校验器检查模板或已补证记录：
 
 ```bash
 pnpm validate:ios-manual-evidence-record
-node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.template.json --require-complete
+node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.draft.json --require-complete
 ```
 
 不传 `--record` 时，`pnpm validate:ios-manual-evidence-record` 会生成一份 dry-run 证据包并校验模板结构；传入 `--require-complete` 时，所有 `items[]` 必须为 `passed`，且每个必填证据类别都要补齐对应证据，适合最终验收前使用。

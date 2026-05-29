@@ -3669,3 +3669,34 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“人工验收记录模板”推进为“可校验的人工验收记录”。后续真正手动执行语音、附件、通知、系统日历等验收后，可以把证据填回 JSON，并用 completion 模式阻止空模板、pending 项或缺证据项进入完成结论。
+
+## 阶段 135：iOS 人工补证草稿预填
+
+问题背景：
+
+- `manual-evidence-record.template.json` 是干净模板，但自动证据包已经能采集一部分辅助信号，例如会话持久 ID、后端事实摘要、通知 delivered 诊断、日历写入诊断和系统日历取消清理诊断。
+- 如果人工验收人员只看空模板，需要在 summary / manifest / evidence JSON 间来回查辅助材料。
+- 但这些自动信号不能被误写成人工截图、录屏、系统 App 证据或通过状态。
+
+完成内容：
+
+- `collect:ios-acceptance-evidence` 新增 `manual-evidence-record.draft.json`。
+- draft 与 template 保持同结构，新增 `generatedFromTemplate=manual-evidence-record.template.json`。
+- 每项仍保持 `status=pending`，顶层仍保持 `acceptanceVerdict=not_evaluated`、`manualAcceptanceRequired=true` 和 `automationCanReplaceManualAcceptance=false`。
+- 自动辅助信号只写入 `evidence.operatorNotes`，没有信号的项写“待人工补充。”。
+- draft 不预填 `screenshots`、`recordings`、`systemArtifacts`，也不把 `supportingAutomationSignals` 伪装成人工证据。
+
+验证结果：
+
+- 红灯：`pnpm validate:ios-acceptance-evidence` 先因缺少 `manual-evidence-record.draft.json` 失败。
+- 绿灯：补充 draft 生成后，`pnpm validate:ios-acceptance-evidence` 通过。
+- `pnpm validate:ios-manual-evidence-record` 通过，证明模板结构校验未被 draft 影响。
+- dry-run 抽查 `.tmp/ios-acceptance-evidence/manual-record-draft-dry-run/`：
+  - `generatedFromTemplate=manual-evidence-record.template.json`
+  - `items.length=13`
+  - `voice_input.status=pending`
+  - `voice_input.evidence.operatorNotes=待人工补充。`
+
+阶段价值：
+
+这一阶段把人工补证入口从“空模板”推进到“带辅助信号的草稿”。它能减少人工查找证据的成本，同时继续守住边界：自动辅助信号不等于人工验收通过，最终仍必须补真实截图、录屏、接口摘要和系统证据，并通过 completion 模式校验。

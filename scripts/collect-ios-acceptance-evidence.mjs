@@ -2501,6 +2501,7 @@ function buildManifest(evidence) {
     acceptanceVerdict: "not_evaluated",
     manualAcceptanceRequired: true,
     manualEvidenceRecordTemplate: "manual-evidence-record.template.json",
+    manualEvidenceRecordDraft: "manual-evidence-record.draft.json",
     automationCanReplaceManualAcceptance: false,
     notCoveredByAutomation: evidence.manualEvidenceStillRequired,
     items: [
@@ -2883,6 +2884,7 @@ function writeManualChecklist(evidence, outputDir) {
 }
 
 function manualRecordItem({ item, evidence, guide, requiredEvidence }) {
+  const supportingAutomationSignals = supportingSignalsForManualItem(item, evidence);
   return {
     id: manualEvidenceRecordIds[item],
     item,
@@ -2890,7 +2892,7 @@ function manualRecordItem({ item, evidence, guide, requiredEvidence }) {
     status: "pending",
     allowedStatuses: manualEvidenceRecordStatuses,
     requiredEvidence,
-    supportingAutomationSignals: supportingSignalsForManualItem(item, evidence),
+    supportingAutomationSignals,
     evidence: {
       screenshots: [],
       recordings: [],
@@ -2904,7 +2906,7 @@ function manualRecordItem({ item, evidence, guide, requiredEvidence }) {
   };
 }
 
-function writeManualEvidenceRecordTemplate(evidence, manifest, outputDir) {
+function buildManualEvidenceRecord(evidence, manifest) {
   const h5Guide = {
     apiSummaries: [],
     bridgeMarkers: ["H5DevServerURL", "h5NativeTargetMarkerFound=true"],
@@ -2968,10 +2970,45 @@ function writeManualEvidenceRecordTemplate(evidence, manifest, outputDir) {
       ...manualItems,
     ],
   };
+  return record;
+}
+
+function buildManualEvidenceDraft(record) {
+  return {
+    ...record,
+    generatedFromTemplate: "manual-evidence-record.template.json",
+    instructions:
+      "本文件是人工补证草稿。自动辅助信号只写入 operatorNotes，不能替代截图、录屏、接口摘要、bridge marker 或系统证据；补证完成后再运行 --require-complete。",
+    items: record.items.map((item) => {
+      const supportingNotes =
+        item.supportingAutomationSignals.length > 0
+          ? `自动辅助信号：${item.supportingAutomationSignals.join("；")}`
+          : "待人工补充。";
+      return {
+        ...item,
+        status: "pending",
+        acceptanceNote: "自动辅助信号不等于人工验收通过。",
+        evidence: {
+          ...item.evidence,
+          operatorNotes: supportingNotes,
+          blocker: "",
+        },
+      };
+    }),
+  };
+}
+
+function writeManualEvidenceRecords(evidence, manifest, outputDir) {
+  const record = buildManualEvidenceRecord(evidence, manifest);
+  const draft = buildManualEvidenceDraft(record);
 
   writeText(
     path.join(outputDir, "manual-evidence-record.template.json"),
     `${JSON.stringify(record, null, 2)}\n`
+  );
+  writeText(
+    path.join(outputDir, "manual-evidence-record.draft.json"),
+    `${JSON.stringify(draft, null, 2)}\n`
   );
 }
 
@@ -3216,7 +3253,7 @@ async function main() {
   );
   writeSummary(evidence, outputDir);
   writeManualChecklist(evidence, outputDir);
-  writeManualEvidenceRecordTemplate(evidence, manifest, outputDir);
+  writeManualEvidenceRecords(evidence, manifest, outputDir);
 
   const requiredLiveCommands =
     mode === "dry-run"

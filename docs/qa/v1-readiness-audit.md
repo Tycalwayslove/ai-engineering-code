@@ -60,7 +60,7 @@ Goal 不能标记 complete。
 
 ## 未完成证据
 
-- 尚未在仓库中保存完整的 iOS 系统能力人工验收记录；当前自动证据包会生成 `manual-evidence-record.template.json`，但该文件默认是 `pending` 模板，需要人工把每项改为 `passed`、`failed` 或 `blocked` 并补齐证据路径。
+- 尚未在仓库中保存完整的 iOS 系统能力人工验收记录；当前自动证据包会生成 `manual-evidence-record.template.json` 和 `manual-evidence-record.draft.json`，但它们默认都是 `pending` / `not_evaluated`，需要人工把每项改为 `passed`、`failed` 或 `blocked` 并补齐证据路径。
 - 尚未在单一 completion audit 记录中留存全套自动化命令输出；本轮已补跑 LLM、SDK、readiness 和 factory 关键门禁。
 - 尚未执行外部知识库真实同步；当前只有仓库内 `docs/knowledge-sync/feishu-pages/` 源稿更新。
 
@@ -69,7 +69,7 @@ Goal 不能标记 complete。
 只有同时满足以下条件，才可以把 goal 标记为 complete：
 
 1. 自动化证据表中的命令在同一 completion audit 中重新运行，并且全部通过；如果某个命令因为环境原因无法运行，需要有明确风险说明，不能把缺证据当作已完成。
-2. `docs/qa/ios-v1-system-acceptance.md` 中的必验项目已经在模拟器或真机上逐项执行，并在 `manual-evidence-record.template.json` 派生的人工记录中沉淀截图、录屏、bridge/debug 或后端接口摘要。
+2. `docs/qa/ios-v1-system-acceptance.md` 中的必验项目已经在模拟器或真机上逐项执行，并在 `manual-evidence-record.draft.json` 派生的人工记录中沉淀截图、录屏、bridge/debug 或后端接口摘要。
 3. iOS 系统能力人工验收没有 P0 / P1 阻塞项；若有问题，需要在代码、文档或已知问题记录中闭环。
 4. 已对补证后的人工记录运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`，且命令通过。
 5. `pnpm validate:context-sync` 通过，且 `current-project-state.md` 记录最终 completion audit 的日期、命令和结论。

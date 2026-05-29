@@ -142,6 +142,7 @@
 - 2026-05-29 已把 App 包 `H5DevServerURL` 也纳入 iOS 自动证据包目标页面识别：采集器会读取构建产物 `Info.plist` 的 `H5DevServerURL`，并记录 `ios.h5DevServerTargetMarkerFound` / `ios.h5DevServerTargetUrl`，确认 Simulator 实际加载地址也指向当前 AI 时间管理 H5，而不只是默认 `127.0.0.1:3000` 可用。轻量 live 证据包 `.tmp/ios-acceptance-evidence/h5devserver-target-live/` 显示 `serviceHealth.h5NativeTargetMarkerFound=true`、`ios.h5DevServerUrl=http://127.0.0.1:3000/?native=ios`、`ios.h5DevServerTargetMarkerFound=true`，且 H5 7 页截图成功。
 - 2026-05-29 已把 iOS 人工验收补证从 Markdown 清单升级为可机器读取的记录模板：`collect:ios-acceptance-evidence` 现在会生成 `manual-evidence-record.template.json`，每个必验项都有稳定 `id`、`status=pending`、允许状态 `passed/failed/blocked`、所需截图 / 录屏 / API / bridge marker / 系统证据字段和空证据占位；`manual-checklist.todo.md` 同步写入 `record_id`，manifest 记录 `manualEvidenceRecordTemplate`。该模板仍不代表人工验收完成，必须由人工补齐证据后才能用于 completion audit。
 - 2026-05-29 已新增 iOS 人工验收记录校验器：`pnpm validate:ios-manual-evidence-record` 会先运行 validator 单元测试，再生成 dry-run 证据包并校验 `manual-evidence-record.template.json` 结构；最终验收时可运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`，要求 `acceptanceVerdict=passed`、所有必验项 `status=passed`，且每项必填截图 / API / bridge marker / 系统证据均已补齐。该命令已纳入 `docs/qa/v1-readiness-audit.md` 的完成判定门槛。
+- 2026-05-29 已为 iOS 自动证据包新增人工补证草稿：除空模板外，采集器还会生成 `manual-evidence-record.draft.json`，把自动辅助信号预填到每项 `evidence.operatorNotes`，但保持 `status=pending`、`acceptanceVerdict=not_evaluated`，且不把辅助信号写成截图、录屏、系统证据或通过状态。dry-run 抽查 `.tmp/ios-acceptance-evidence/manual-record-draft-dry-run/` 显示 draft 有 13 项、`generatedFromTemplate=manual-evidence-record.template.json`、语音项仍为 `pending` 且提示“待人工补充”。
 - Postgres 本地容器已能运行，数据库名 `ai_code`，用户 `ai_code`。
 - 第一版 migration 已建立：`conversation_turns`、`execution_plans`、`domain_actions`、`confirmations`、`execution_ledger`、`calendar_events`、`expense_records`、`reminders` 等表。
 - 后端设置 `DATABASE_URL` 后使用 Postgres repository；未设置时仍可使用 in-memory repository 便于测试。
@@ -1291,6 +1292,6 @@ pnpm validate:h5-runtime
 3. 用 `pnpm validate:ios-build` 验证 iOS 原生壳能真实编译；再结合 Xcode 模拟器或真机运行检查语音、附件、系统日历和本地通知权限弹窗。
 4. 用 `pnpm validate:ios-simulator-smoke` 验证 iOS App 能安装并启动到 Simulator；再结合 Xcode 模拟器或真机运行检查语音、附件、系统日历和本地通知权限弹窗。
 5. 用 `pnpm validate:ios-manual-acceptance` 检查人工验收清单完整性，并按 `docs/qa/ios-v1-system-acceptance.md` 在模拟器或真机逐项记录系统权限和系统 App 证据。
-6. 用 `pnpm collect:ios-acceptance-evidence` 生成 iOS 辅助证据包，先确认 H5 地址、构建、安装、启动和截图证据齐全；再把 `manual-checklist.todo.md` 和 `manual-evidence-record.template.json` 作为人工验收记录入口继续补真实系统能力证据。
+6. 用 `pnpm collect:ios-acceptance-evidence` 生成 iOS 辅助证据包，先确认 H5 地址、构建、安装、启动和截图证据齐全；再把 `manual-checklist.todo.md`、`manual-evidence-record.template.json` 和 `manual-evidence-record.draft.json` 作为人工验收记录入口继续补真实系统能力证据。
 7. 人工补证完成后，用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete` 检查补证文件，避免空模板或缺证据项被误当作完成。
 8. 下一轮真实系统能力优先补：真实通知 banner / 锁屏 / 点击录屏、语音识别质量、照片 / 文件 / PDF 真实样本质量、系统 Calendar 事件详情 notes marker 人工复核，以及附件上传的真机质量与交互细节优化。
