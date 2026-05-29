@@ -40,7 +40,18 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   assert.equal(evidence.mode, "dry-run");
   assert.equal(evidence.serviceHealth.h5NativeTargetMarkerFound, false);
+  assert.match(
+    evidence.serviceHealth.h5NativeTargetUrl,
+    /^http:\/\/127\.0\.0\.1:3000/
+  );
   assert.equal(evidence.ios.resetApp, true);
+  assert.equal(evidence.ios.h5DevServerTargetMarkerFound, false);
+  assert.equal(evidence.ios.h5DevServerTargetUrl, null);
+  assert.equal(evidence.ios.commands.h5DevServerDocument.ok, true);
+  assert.match(
+    evidence.ios.commands.h5DevServerDocument.stdout,
+    /\[dry-run\] curl -fsS <h5-url>/
+  );
   assert.equal(
     evidence.ios.conversationPersistence.storageKey,
     "ai-code.native.conversationId"
@@ -157,6 +168,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(summary, /H5 失败诊断截图/);
   assert.match(summary, /已采集的辅助证据信号/);
   assert.match(summary, /Native 系统诊断摘要/);
+  assert.match(summary, /H5DevServerURL 目标页面识别/);
   assert.match(manualChecklist, /bridge_marker: source=native\.composer\.voice/);
   assert.match(manualChecklist, /## 会话持久 ID/);
   assert.match(manualChecklist, /api_summary: \/agent\/conversations\/\{conversationId\}\/turns/);

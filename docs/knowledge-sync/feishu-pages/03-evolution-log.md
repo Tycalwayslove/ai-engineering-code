@@ -3583,3 +3583,29 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把系统日历取消清理采证从“能跑通但容易被本机环境和同步时序误导”推进到“先识别正确 H5、再证明本轮 Native 诊断新鲜、最后等待系统清理完成”。它提高了自动辅助证据可信度，但仍不替代系统 Calendar App 事件详情、notes marker、无重复事件和用户肉眼确认消失的人工复核。
+
+## 阶段 132：App 包 H5DevServerURL 目标页面识别
+
+问题背景：
+
+- 上一阶段已经能判断默认 H5 地址是否是当前 AI 时间管理 H5，但 iOS 真正加载的是 App 包 `Info.plist` 中的 `H5DevServerURL`。
+- 如果构建产物里的 `H5DevServerURL` 指向旧 IP、旧端口或其他本机服务，Native 仍可能加载错误页面，导致系统日历、通知和 Bridge 采证失败。
+
+完成内容：
+
+- `collect-ios-acceptance-evidence` 读取构建产物 `Info.plist` 的 `H5DevServerURL` 后，会对该实际 URL 进行目标页面识别。
+- 证据包新增 `ios.h5DevServerTargetMarkerFound` 和 `ios.h5DevServerTargetUrl`，summary 新增 “H5DevServerURL 目标页面识别”。
+- 目标识别只接受真实 `http(s)` URL；dry-run 不访问网络，并记录 `[dry-run] curl -fsS <h5-url>`，避免把 plutil dry-run 文本误当作 URL。
+
+验证结果：
+
+- `pnpm validate:ios-acceptance-evidence` 通过，dry-run 覆盖 `ios.h5DevServerTargetMarkerFound=false`、`ios.h5DevServerTargetUrl=null` 和 dry-run curl 命令。
+- 轻量 live 证据包：`.tmp/ios-acceptance-evidence/h5devserver-target-live/`
+  - `serviceHealth.h5NativeTargetMarkerFound=true`
+  - `ios.h5DevServerUrl=http://127.0.0.1:3000/?native=ios`
+  - `ios.h5DevServerTargetMarkerFound=true`
+  - H5 7 个页面截图均已生成。
+
+阶段价值：
+
+这一阶段把 H5 环境验收从“默认端口是对的”推进到“App 包实际加载地址也是对的”。它能更早发现 Xcode / Simulator 使用旧 H5 地址的问题，减少系统能力联调时被环境误导。

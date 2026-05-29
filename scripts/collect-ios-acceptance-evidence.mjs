@@ -351,6 +351,34 @@ function collectGitState({ dryRun }) {
   };
 }
 
+function checkH5TargetDocument({ dryRun, url }) {
+  const trimmedUrl = typeof url === "string" ? url.trim() : "";
+  const isHttpUrl = /^https?:\/\//.test(trimmedUrl);
+  if (!trimmedUrl || !isHttpUrl || dryRun) {
+    return {
+      command: {
+        command: isHttpUrl ? `curl -fsS ${trimmedUrl}` : "curl -fsS <h5-url>",
+        status: dryRun ? 0 : 1,
+        stdout: dryRun
+          ? `[dry-run] curl -fsS ${isHttpUrl ? trimmedUrl : "<h5-url>"}`
+          : "",
+        stderr: isHttpUrl ? "" : "H5 URL was not found.",
+      },
+      markerFound: false,
+      url: isHttpUrl ? trimmedUrl : null,
+    };
+  }
+  const command = run("curl", ["-fsS", trimmedUrl]);
+  return {
+    command,
+    markerFound:
+      commandOk(command) &&
+      command.stdout.includes("AI 时间管理 Agent") &&
+      command.stdout.includes("/_next/"),
+    url: trimmedUrl,
+  };
+}
+
 function collectServiceHealth({ dryRun }) {
   const api = run(
     "curl",
@@ -369,20 +397,16 @@ function collectServiceHealth({ dryRun }) {
     ],
     { dryRun }
   );
-  const h5Document = run(
-    "curl",
-    ["-fsS", "http://127.0.0.1:3000/?native=ios&bridgeDebug=1"],
-    { dryRun }
-  );
-  const h5NativeTargetMarkerFound =
-    commandOk(h5Document) &&
-    h5Document.stdout.includes("AI 时间管理 Agent") &&
-    h5Document.stdout.includes("/_next/");
+  const h5Target = checkH5TargetDocument({
+    dryRun,
+    url: `${h5NativeBaseUrl}/?native=ios&bridgeDebug=1`,
+  });
   return {
     apiHealthStatus: api.stdout.trim(),
-    h5NativeTargetMarkerFound,
+    h5NativeTargetMarkerFound: h5Target.markerFound,
+    h5NativeTargetUrl: h5Target.url,
     h5NativeStatus: h5.stdout.trim(),
-    commands: { api, h5, h5Document },
+    commands: { api, h5, h5Document: h5Target.command },
   };
 }
 
@@ -2359,6 +2383,12 @@ function collectBuildAndLaunch({
         stdout: "",
         stderr: `Info.plist not found at ${infoPlist}`,
       };
+  const h5DevServerUrl = commands.h5DevServerUrl.stdout.trim();
+  const h5DevServerTarget = checkH5TargetDocument({
+    dryRun,
+    url: h5DevServerUrl,
+  });
+  commands.h5DevServerDocument = h5DevServerTarget.command;
 
   const screenshotPath = path.join(outputDir, "simulator-launch.png");
   if (!dryRun) {
@@ -2398,7 +2428,9 @@ function collectBuildAndLaunch({
     resetApp,
     simulatorUdid,
     appContainer,
-    h5DevServerUrl: commands.h5DevServerUrl.stdout.trim(),
+    h5DevServerTargetMarkerFound: h5DevServerTarget.markerFound,
+    h5DevServerTargetUrl: h5DevServerTarget.url,
+    h5DevServerUrl,
     screenshotPath,
     screenshotDelayMs,
     conversationPersistence: {
@@ -2617,6 +2649,7 @@ function writeSummary(evidence, outputDir) {
     `- H5 native HTTP 状态：${evidence.serviceHealth.h5NativeStatus || "未采集"}`,
     `- H5 native 目标页面识别：${evidence.serviceHealth.h5NativeTargetMarkerFound ? "是" : "否"}`,
     `- H5DevServerURL：${evidence.ios.h5DevServerUrl || "未采集"}`,
+    `- H5DevServerURL 目标页面识别：${evidence.ios.h5DevServerTargetMarkerFound ? "是" : "否"}`,
     `- Simulator UDID：${evidence.ios.simulatorUdid || "未采集"}`,
     `- App container：${evidence.ios.appContainer || "未采集"}`,
     `- Native conversationId：${evidence.ios.conversationPersistence.beforeRelaunch || "未采集"}`,
@@ -2994,6 +3027,7 @@ async function main() {
     serviceHealth: {
       apiHealthStatus: serviceHealth.apiHealthStatus,
       h5NativeTargetMarkerFound: serviceHealth.h5NativeTargetMarkerFound,
+      h5NativeTargetUrl: serviceHealth.h5NativeTargetUrl,
       h5NativeStatus: serviceHealth.h5NativeStatus,
       commands: compactCommands(serviceHealth.commands),
     },
@@ -3031,6 +3065,8 @@ async function main() {
       resetApp: ios.resetApp,
       simulatorUdid: ios.simulatorUdid,
       appContainer: ios.appContainer,
+      h5DevServerTargetMarkerFound: ios.h5DevServerTargetMarkerFound,
+      h5DevServerTargetUrl: ios.h5DevServerTargetUrl,
       h5DevServerUrl: ios.h5DevServerUrl,
       screenshotPath: ios.screenshotPath,
       screenshotDelayMs: ios.screenshotDelayMs,
