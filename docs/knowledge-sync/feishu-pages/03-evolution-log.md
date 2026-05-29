@@ -3547,3 +3547,39 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把本地通知验收从“只证明 pending 和 H5 synthetic 回流”推进到“能自动证明目标提醒到点后进入系统 delivered diagnostics”。这是一份更强的辅助证据，但仍不代表用户已经看到了 banner、锁屏通知、声音、badge 或真实点击回流；发布前仍必须补人工截图或录屏。
+
+## 阶段 131：系统日历取消清理采证稳定性收口
+
+问题背景：
+
+- live 采证一度出现 `calendarCleanupSeed.available=false`，原因不是后端业务事实失败，而是本机 3000 端口被其他 Vite 应用占用，H5 页面空白，Native 没有加载当前 AI 时间管理 H5，也就不会触发本轮 `calendar.events.sync`。
+- 原采集器只检查 H5 HTTP 200，无法识别“端口可达但不是当前产品页面”。
+- 取消后 Native 诊断原本只刷新一次，真实系统同步稍慢时会出现后端已 `canceled`、但 EventKit identifier 尚未清理的短暂不一致。
+
+完成内容：
+
+- `collect-ios-acceptance-evidence` 的服务健康检查新增 `h5NativeTargetMarkerFound`，要求 H5 文档同时包含 `AI 时间管理 Agent` 和 `/_next/`，避免把其他 dev server 的 HTTP 200 当作本产品 H5。
+- `calendarCleanupSeed` 新增取消前诊断新鲜度字段：`preCancelDiagnosticsUpdatedAt` 和 `preCancelDiagnosticsFresh`。如果 Native plist 仍是旧 `updatedAt`，采集器会明确记录 stale error，并且不会继续取消目标 seed 日程。
+- 取消前 EventKit identifier 不存在时，采集器会停止取消和系统 Calendar before 截图，避免生成语义不成立的 cleanup 证据。
+- 取消后清理新增最多 8 次轮询，只有 `postCancelStoredIdentifierPresent=false` 且 `postCancelRemovedEventIdPresent=true` 时才认定 cleanup 可用。
+- H5 surface 截图失败时新增 `h5-surface-error.png`、`h5-surface-error.html`、页面 URL、title 和正文片段，便于定位空白页、错误页、hydration 失败或端口指错。
+- 最终一次 post-cancel Native diagnostics 会同步回顶层 `ios.systemDiagnostics`，避免 summary 中 cleanup 局部结果和 Native 诊断摘要不一致。
+
+验证结果：
+
+- 红灯 / 绿灯按 TDD 覆盖新增字段：`preCancelRefreshMaxAttempts`、`postCancelRefreshMaxAttempts`、`preCancelDiagnosticsFresh`、`postCancelRemovedEventIdPresent`、H5 失败诊断和 `h5NativeTargetMarkerFound`。
+- 发现并处理本机环境问题：`127.0.0.1:3000` 原本是 `/Users/mac/company_code/mall4vs-bbc` 的 Vite 进程，已停止该进程并启动当前项目 `pnpm dev:h5:host`。
+- 最终 live 证据包：`.tmp/ios-acceptance-evidence/calendar-cleanup-guard-live-5/`
+  - `serviceHealth.h5NativeTargetMarkerFound=true`
+  - `calendarCleanupSeed.available=true`
+  - `targetEventId=calendar_event_51c6533d803347e19c23ec88b8ae65a4`
+  - `preCancelStoredIdentifierPresent=true`
+  - `postCancelStoredIdentifierPresent=false`
+  - `postCancelRemovedEventIdPresent=true`
+  - `calendar.removedEventIds` 包含目标 event id
+  - `calendar-cleanup-before.png` 和 `calendar-cleanup-after.png` 均已生成
+  - H5 7 个页面截图均已生成
+
+阶段价值：
+
+这一阶段把系统日历取消清理采证从“能跑通但容易被本机环境和同步时序误导”推进到“先识别正确 H5、再证明本轮 Native 诊断新鲜、最后等待系统清理完成”。它提高了自动辅助证据可信度，但仍不替代系统 Calendar App 事件详情、notes marker、无重复事件和用户肉眼确认消失的人工复核。

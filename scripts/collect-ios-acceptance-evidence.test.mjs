@@ -39,6 +39,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   const evidence = JSON.parse(fs.readFileSync(evidenceJsonPath, "utf8"));
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   assert.equal(evidence.mode, "dry-run");
+  assert.equal(evidence.serviceHealth.h5NativeTargetMarkerFound, false);
   assert.equal(evidence.ios.resetApp, true);
   assert.equal(
     evidence.ios.conversationPersistence.storageKey,
@@ -77,6 +78,17 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(evidence.notificationDelivery.supportingOnly, true);
   assert.equal(evidence.h5SurfaceScreenshots.available, false);
   assert.equal(evidence.h5SurfaceScreenshots.conversationId, null);
+  assert.match(
+    evidence.h5SurfaceScreenshots.errorDiagnostics.screenshotPath,
+    /h5-surface-error\.png$/
+  );
+  assert.match(
+    evidence.h5SurfaceScreenshots.errorDiagnostics.htmlPath,
+    /h5-surface-error\.html$/
+  );
+  assert.equal(evidence.h5SurfaceScreenshots.errorDiagnostics.pageUrl, null);
+  assert.equal(evidence.h5SurfaceScreenshots.errorDiagnostics.pageTitle, null);
+  assert.equal(evidence.h5SurfaceScreenshots.errorDiagnostics.bodyTextPreview, null);
   assert.deepEqual(Object.keys(evidence.h5SurfaceScreenshots.surfaces), [
     "conversation",
     "timeline",
@@ -142,6 +154,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(summary, /系统日历写入/);
   assert.match(summary, /后端事实摘要/);
   assert.match(summary, /H5 同会话页面截图/);
+  assert.match(summary, /H5 失败诊断截图/);
   assert.match(summary, /已采集的辅助证据信号/);
   assert.match(summary, /Native 系统诊断摘要/);
   assert.match(manualChecklist, /bridge_marker: source=native\.composer\.voice/);
@@ -419,6 +432,22 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
   assert.equal(evidence.calendarCleanupSeed.enabled, true);
   assert.equal(evidence.calendarCleanupSeed.available, false);
   assert.equal(evidence.calendarCleanupSeed.requiresAcceptanceFactSeed, true);
+  assert.equal(evidence.calendarCleanupSeed.preCancelRequiresStoredIdentifier, true);
+  assert.equal(evidence.calendarCleanupSeed.afterScreenshotRequiresCanceledEvent, true);
+  assert.equal(evidence.calendarCleanupSeed.preCancelDiagnosticsUpdatedAt, null);
+  assert.equal(evidence.calendarCleanupSeed.preCancelDiagnosticsFresh, null);
+  assert.equal(
+    Number.isInteger(evidence.calendarCleanupSeed.preCancelRefreshMaxAttempts),
+    true
+  );
+  assert.ok(evidence.calendarCleanupSeed.preCancelRefreshMaxAttempts >= 8);
+  assert.equal(
+    Number.isInteger(evidence.calendarCleanupSeed.postCancelRefreshMaxAttempts),
+    true
+  );
+  assert.ok(evidence.calendarCleanupSeed.postCancelRefreshMaxAttempts >= 8);
+  assert.equal(evidence.calendarCleanupSeed.postCancelRemovedEventIdPresent, false);
+  assert.deepEqual(evidence.calendarCleanupSeed.postCancelSystemDiagnostics, {});
   assert.equal(evidence.calendarCleanupSeed.targetEventId, null);
   assert.equal(
     evidence.calendarCleanupSeed.systemCalendarAppScreenshots.supportingOnly,
@@ -435,6 +464,10 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
   assert.ok(evidence.automatedEvidence.includes("calendar_cleanup_seed"));
   assert.match(summary, /系统日历取消清理种子/);
   assert.match(summary, /仅在显式开启时取消 seed 日程/);
+  assert.match(summary, /取消前 Native 诊断最多轮询/);
+  assert.match(summary, /取消前 Native 诊断新鲜/);
+  assert.match(summary, /取消后 Native 清理最多轮询/);
+  assert.match(summary, /取消后截图必须先成功取消日程/);
   assert.match(summary, /系统 Calendar 取消前后截图/);
 });
 

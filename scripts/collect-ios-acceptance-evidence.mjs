@@ -326,6 +326,15 @@ function parseJson(stdout) {
   }
 }
 
+function isIsoAtOrAfter(value, threshold) {
+  const valueMs = Date.parse(value);
+  const thresholdMs = Date.parse(threshold);
+  if (!Number.isFinite(valueMs) || !Number.isFinite(thresholdMs)) {
+    return null;
+  }
+  return valueMs >= thresholdMs;
+}
+
 function writeText(filePath, content) {
   fs.writeFileSync(filePath, content, "utf8");
 }
@@ -360,10 +369,20 @@ function collectServiceHealth({ dryRun }) {
     ],
     { dryRun }
   );
+  const h5Document = run(
+    "curl",
+    ["-fsS", "http://127.0.0.1:3000/?native=ios&bridgeDebug=1"],
+    { dryRun }
+  );
+  const h5NativeTargetMarkerFound =
+    commandOk(h5Document) &&
+    h5Document.stdout.includes("AI 时间管理 Agent") &&
+    h5Document.stdout.includes("/_next/");
   return {
     apiHealthStatus: api.stdout.trim(),
+    h5NativeTargetMarkerFound,
     h5NativeStatus: h5.stdout.trim(),
-    commands: { api, h5 },
+    commands: { api, h5, h5Document },
   };
 }
 
@@ -473,6 +492,7 @@ function emptyCalendarCleanupSeed({
 }) {
   return {
     available: false,
+    afterScreenshotRequiresCanceledEvent: true,
     apiBaseUrl,
     canceledEvent: null,
     commands: {},
@@ -480,8 +500,21 @@ function emptyCalendarCleanupSeed({
     enabled,
     errors: [],
     postCancelStoredIdentifierPresent: null,
+    postCancelRefreshMaxAttempts: Number(
+      process.env.AI_CODE_IOS_ACCEPTANCE_CALENDAR_CLEANUP_POST_CANCEL_ATTEMPTS ??
+        "8"
+    ),
+    postCancelRemovedEventIdPresent: false,
     postCancelStatus: null,
+    postCancelSystemDiagnostics: {},
+    preCancelDiagnosticsFresh: null,
+    preCancelDiagnosticsUpdatedAt: null,
     preCancelStatus: null,
+    preCancelRefreshMaxAttempts: Number(
+      process.env.AI_CODE_IOS_ACCEPTANCE_CALENDAR_CLEANUP_PRE_CANCEL_ATTEMPTS ??
+        "8"
+    ),
+    preCancelRequiresStoredIdentifier: true,
     preCancelStoredIdentifierPresent: null,
     removedEventIds: [],
     requiresAcceptanceFactSeed: true,
@@ -1158,6 +1191,7 @@ async function seedCalendarCleanup({
   enabled,
   outputDir,
   preferencesPlist,
+  runStartedAt,
   seedRefresh,
   simulatorUdid,
   waitMs,
@@ -1224,7 +1258,8 @@ async function seedCalendarCleanup({
   let latestPreCancelRefresh = seedRefresh;
   for (
     let attempt = 1;
-    cleanup.preCancelStoredIdentifierPresent === false && attempt <= 3;
+    cleanup.preCancelStoredIdentifierPresent === false &&
+    attempt <= cleanup.preCancelRefreshMaxAttempts;
     attempt += 1
   ) {
     latestPreCancelRefresh = refreshNativeSystemDiagnostics({
@@ -1245,6 +1280,27 @@ async function seedCalendarCleanup({
       cleanup.targetEventId
     );
   }
+  if (cleanup.preCancelStoredIdentifierPresent !== true) {
+    cleanup.preCancelDiagnosticsUpdatedAt =
+      latestPreCancelRefresh?.systemDiagnostics?.updatedAt ?? null;
+    cleanup.preCancelDiagnosticsFresh = cleanup.preCancelDiagnosticsUpdatedAt
+      ? isIsoAtOrAfter(cleanup.preCancelDiagnosticsUpdatedAt, runStartedAt)
+      : null;
+    if (cleanup.preCancelDiagnosticsFresh === false) {
+      cleanup.errors.push(
+        `calendar cleanup Native diagnostics were stale before cancel: updatedAt=${cleanup.preCancelDiagnosticsUpdatedAt}`
+      );
+    }
+    cleanup.errors.push(
+      `calendar cleanup seed target was not synced to EventKit before cancel: ${cleanup.targetEventId}`
+    );
+    return cleanup;
+  }
+  cleanup.preCancelDiagnosticsUpdatedAt =
+    latestPreCancelRefresh?.systemDiagnostics?.updatedAt ?? null;
+  cleanup.preCancelDiagnosticsFresh = cleanup.preCancelDiagnosticsUpdatedAt
+    ? isIsoAtOrAfter(cleanup.preCancelDiagnosticsUpdatedAt, runStartedAt)
+    : null;
 
   captureCalendarCleanupSystemScreenshot({
     cleanup,
@@ -1279,6 +1335,7 @@ async function seedCalendarCleanup({
 function finalizeCalendarCleanupSeed({
   cleanup,
   dryRun,
+  preferencesPlist,
   refresh,
   simulatorUdid,
   waitMs,
@@ -1286,6 +1343,7 @@ function finalizeCalendarCleanupSeed({
   if (!cleanup.enabled || !cleanup.targetEventId) {
     return cleanup;
   }
+  let latestPostCancelRefresh = refresh;
   const afterRead = refresh?.commands?.readAfterRefresh;
   cleanup.postCancelStoredIdentifierPresent = preferenceKeyPresent(
     afterRead,
@@ -1294,6 +1352,43 @@ function finalizeCalendarCleanupSeed({
   cleanup.removedEventIds = splitDiagnosticIds(
     refresh?.systemDiagnostics?.["calendar.removedEventIds"]
   );
+  cleanup.postCancelRemovedEventIdPresent = cleanup.removedEventIds.includes(
+    cleanup.targetEventId
+  );
+  for (
+    let attempt = 1;
+    cleanup.postCancelStatus === "canceled" &&
+    (cleanup.postCancelStoredIdentifierPresent !== false ||
+      cleanup.postCancelRemovedEventIdPresent !== true) &&
+    attempt <= cleanup.postCancelRefreshMaxAttempts;
+    attempt += 1
+  ) {
+    latestPostCancelRefresh = refreshNativeSystemDiagnostics({
+      dryRun,
+      preferencesPlist,
+      simulatorUdid,
+      waitMs,
+    });
+    for (const [key, command] of Object.entries(latestPostCancelRefresh.commands)) {
+      cleanup.commands[`postCancelRefresh${attempt}.${key}`] = command;
+    }
+    const latestAfterRead = latestPostCancelRefresh.commands.readAfterRefresh;
+    cleanup.postCancelStoredIdentifierPresent = preferenceKeyPresent(
+      latestAfterRead,
+      calendarStoredIdentifierKey(cleanup.targetEventId)
+    );
+    cleanup.removedEventIds = splitDiagnosticIds(
+      latestPostCancelRefresh.systemDiagnostics?.["calendar.removedEventIds"]
+    );
+    cleanup.postCancelRemovedEventIdPresent = cleanup.removedEventIds.includes(
+      cleanup.targetEventId
+    );
+  }
+  cleanup.postCancelSystemDiagnostics =
+    latestPostCancelRefresh?.systemDiagnostics ?? {};
+  if (cleanup.postCancelStatus !== "canceled") {
+    return cleanup;
+  }
   captureCalendarCleanupSystemScreenshot({
     cleanup,
     dryRun,
@@ -1733,6 +1828,13 @@ function buildEmptyH5SurfaceScreenshots({ conversationId, outputDir, error }) {
     available: false,
     baseUrl: h5NativeBaseUrl,
     conversationId: conversationId ?? null,
+    errorDiagnostics: {
+      bodyTextPreview: null,
+      htmlPath: path.join(screenshotDir, "h5-surface-error.html"),
+      pageTitle: null,
+      pageUrl: null,
+      screenshotPath: path.join(screenshotDir, "h5-surface-error.png"),
+    },
     screenshotDir,
     surfaces: Object.fromEntries(
       h5Surfaces.map((surface) => [
@@ -1746,6 +1848,44 @@ function buildEmptyH5SurfaceScreenshots({ conversationId, outputDir, error }) {
     ),
     errors: error ? [error] : [],
   };
+}
+
+async function collectH5SurfaceErrorDiagnostics({ empty, page }) {
+  const diagnostics = { ...empty.errorDiagnostics };
+  if (!page) {
+    return diagnostics;
+  }
+  try {
+    diagnostics.pageUrl = page.url();
+  } catch {
+    diagnostics.pageUrl = null;
+  }
+  try {
+    diagnostics.pageTitle = await page.title();
+  } catch {
+    diagnostics.pageTitle = null;
+  }
+  try {
+    diagnostics.bodyTextPreview = (
+      await page.locator("body").innerText({ timeout: 1000 })
+    ).slice(0, 1000);
+  } catch {
+    diagnostics.bodyTextPreview = null;
+  }
+  try {
+    writeText(diagnostics.htmlPath, await page.content());
+  } catch {
+    // Best-effort diagnostic artifact only.
+  }
+  try {
+    await page.screenshot({
+      fullPage: true,
+      path: diagnostics.screenshotPath,
+    });
+  } catch {
+    // Best-effort diagnostic artifact only.
+  }
+  return diagnostics;
 }
 
 async function sendH5NativeMessage(page, type, payload) {
@@ -1784,10 +1924,11 @@ async function collectH5SurfaceScreenshots({ conversationId, dryRun, outputDir }
 
   ensureDir(empty.screenshotDir);
   let browser;
+  let page;
   try {
     const { chromium, expect } = await import("@playwright/test");
     browser = await chromium.launch();
-    const page = await browser.newPage({ viewport: { height: 844, width: 390 } });
+    page = await browser.newPage({ viewport: { height: 844, width: 390 } });
     await page.addInitScript(() => {
       window.__AI_NATIVE_MESSAGES__ = [];
       window.__AI_NATIVE_HOST__ = {
@@ -1847,11 +1988,16 @@ async function collectH5SurfaceScreenshots({ conversationId, dryRun, outputDir }
       surfaces,
     };
   } catch (error) {
-    return buildEmptyH5SurfaceScreenshots({
+    const failed = buildEmptyH5SurfaceScreenshots({
       conversationId,
       outputDir,
       error: error instanceof Error ? error.message : String(error),
     });
+    failed.errorDiagnostics = await collectH5SurfaceErrorDiagnostics({
+      empty: failed,
+      page,
+    });
+    return failed;
   } finally {
     if (browser) {
       await browser.close();
@@ -2469,6 +2615,7 @@ function writeSummary(evidence, outputDir) {
     "",
     `- API health HTTP 状态：${evidence.serviceHealth.apiHealthStatus || "未采集"}`,
     `- H5 native HTTP 状态：${evidence.serviceHealth.h5NativeStatus || "未采集"}`,
+    `- H5 native 目标页面识别：${evidence.serviceHealth.h5NativeTargetMarkerFound ? "是" : "否"}`,
     `- H5DevServerURL：${evidence.ios.h5DevServerUrl || "未采集"}`,
     `- Simulator UDID：${evidence.ios.simulatorUdid || "未采集"}`,
     `- App container：${evidence.ios.appContainer || "未采集"}`,
@@ -2520,8 +2667,15 @@ function writeSummary(evidence, outputDir) {
     `- targetEventTitle：${evidence.calendarCleanupSeed.targetEventTitle || "未采集"}`,
     `- preCancelStatus：${evidence.calendarCleanupSeed.preCancelStatus || "未采集"}`,
     `- postCancelStatus：${evidence.calendarCleanupSeed.postCancelStatus || "未采集"}`,
+    `- 取消前 Native 诊断最多轮询：${evidence.calendarCleanupSeed.preCancelRefreshMaxAttempts}`,
+    `- 取消前 Native 诊断更新时间：${evidence.calendarCleanupSeed.preCancelDiagnosticsUpdatedAt || "未采集"}`,
+    `- 取消前 Native 诊断新鲜：${evidence.calendarCleanupSeed.preCancelDiagnosticsFresh === null ? "未采集" : evidence.calendarCleanupSeed.preCancelDiagnosticsFresh ? "是" : "否"}`,
+    `- 取消前必须存在 EventKit 标识符：${evidence.calendarCleanupSeed.preCancelRequiresStoredIdentifier ? "是" : "否"}`,
+    `- 取消后截图必须先成功取消日程：${evidence.calendarCleanupSeed.afterScreenshotRequiresCanceledEvent ? "是" : "否"}`,
+    `- 取消后 Native 清理最多轮询：${evidence.calendarCleanupSeed.postCancelRefreshMaxAttempts}`,
     `- preCancelStoredIdentifierPresent：${evidence.calendarCleanupSeed.preCancelStoredIdentifierPresent === null ? "未采集" : String(evidence.calendarCleanupSeed.preCancelStoredIdentifierPresent)}`,
     `- postCancelStoredIdentifierPresent：${evidence.calendarCleanupSeed.postCancelStoredIdentifierPresent === null ? "未采集" : String(evidence.calendarCleanupSeed.postCancelStoredIdentifierPresent)}`,
+    `- postCancelRemovedEventIdPresent：${evidence.calendarCleanupSeed.postCancelRemovedEventIdPresent ? "是" : "否"}`,
     `- removedEventIds：${evidence.calendarCleanupSeed.removedEventIds.length > 0 ? evidence.calendarCleanupSeed.removedEventIds.join(", ") : "未采集"}`,
     `- 系统 Calendar 取消前后截图不替代人工复核：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.supportingOnly ? "是" : "否"}`,
     `- 系统 Calendar 取消前截图可用：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.beforeAvailable ? "是" : "否"}`,
@@ -2602,6 +2756,11 @@ function writeSummary(evidence, outputDir) {
       ([surface, screenshot]) =>
         `- ${surface}：${screenshot.captured ? screenshot.path : "未采集"}`
     ),
+    `- H5 失败诊断截图：${evidence.h5SurfaceScreenshots.errorDiagnostics.screenshotPath}`,
+    `- H5 失败诊断 HTML：${evidence.h5SurfaceScreenshots.errorDiagnostics.htmlPath}`,
+    `- H5 失败诊断 URL：${evidence.h5SurfaceScreenshots.errorDiagnostics.pageUrl || "未采集"}`,
+    `- H5 失败诊断标题：${evidence.h5SurfaceScreenshots.errorDiagnostics.pageTitle || "未采集"}`,
+    `- H5 失败诊断正文片段：${evidence.h5SurfaceScreenshots.errorDiagnostics.bodyTextPreview || "未采集"}`,
     ...(evidence.h5SurfaceScreenshots.errors.length > 0
       ? evidence.h5SurfaceScreenshots.errors.map((error) => `- error：${error}`)
       : []),
@@ -2672,6 +2831,7 @@ function writeManualChecklist(evidence, outputDir) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  const runStartedAt = new Date().toISOString();
   const mode = args.dryRun ? "dry-run" : "live";
   const outputDir = path.resolve(
     rootDir,
@@ -2718,6 +2878,7 @@ async function main() {
     enabled: args.seedCalendarCleanup,
     outputDir,
     preferencesPlist: ios.conversationPersistence?.preferencesPlist,
+    runStartedAt,
     seedRefresh,
     simulatorUdid: ios.simulatorUdid,
     waitMs: args.screenshotDelayMs,
@@ -2733,12 +2894,16 @@ async function main() {
   finalizeCalendarCleanupSeed({
     cleanup: calendarCleanupSeed,
     dryRun: args.dryRun,
+    preferencesPlist: ios.conversationPersistence?.preferencesPlist,
     refresh: cleanupRefresh,
     simulatorUdid: ios.simulatorUdid,
     waitMs: args.screenshotDelayMs,
   });
   if (Object.keys(cleanupRefresh.systemDiagnostics).length > 0) {
     ios.systemDiagnostics = cleanupRefresh.systemDiagnostics;
+  }
+  if (Object.keys(calendarCleanupSeed.postCancelSystemDiagnostics).length > 0) {
+    ios.systemDiagnostics = calendarCleanupSeed.postCancelSystemDiagnostics;
   }
   const {
     denial: calendarPermissionDenialSeed,
@@ -2798,6 +2963,7 @@ async function main() {
 
   const evidence = {
     generatedAt: new Date().toISOString(),
+    runStartedAt,
     mode,
     replacesManualAcceptance: false,
     automatedEvidence: [
@@ -2827,6 +2993,7 @@ async function main() {
     },
     serviceHealth: {
       apiHealthStatus: serviceHealth.apiHealthStatus,
+      h5NativeTargetMarkerFound: serviceHealth.h5NativeTargetMarkerFound,
       h5NativeStatus: serviceHealth.h5NativeStatus,
       commands: compactCommands(serviceHealth.commands),
     },
