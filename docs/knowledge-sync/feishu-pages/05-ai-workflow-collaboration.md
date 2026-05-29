@@ -481,3 +481,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - `validate:native-shells` 已守住“人工证据记录选择”小节，防止后续只保留 JSON 字段、删掉人工复查入口。
 
 这让最终审计更容易复盘：不打开 JSON，也能在 Markdown 里看到 completion audit 绑定了哪份人工记录，以及这份记录是否真正通过了 completion 校验。
+
+## completion audit 人工证据 HEAD 新鲜度
+
+2026-05-29 的收尾治理继续补强了人工证据记录和当前代码状态之间的绑定。`manualEvidence.packageFreshness` 会读取人工记录自身的 `headSha`，必要时读取同目录 `manifest.json` 的 `headSha`，并和当前 `git rev-parse --short HEAD` 做对比。
+
+关键边界：
+
+- `packageFreshness.status=current` 表示人工记录和当前代码 HEAD 一致。
+- `packageFreshness.status=stale` 表示人工记录来自旧 HEAD；即使自动化命令通过、人工记录本身通过 completion 校验，`v1-completion-audit` 也必须保持 `not_complete`。
+- Markdown 报告会展示 `packageFreshness`、`recordHeadSha` 和 `currentHeadSha`，让人工复查时不用打开 JSON 也能看见证据版本是否匹配。
+- `validate:native-shells` 和 `validate:v1-readiness` 会守住这个字段和旧 HEAD 判定说明，避免后续误删。
+
+这让 goal 模式的收尾更贴近真实发布判断：证据不只是“存在”和“齐全”，还必须证明当前这版代码。旧证据包可以帮助定位缺口，但不能让当前迭代完成。

@@ -145,6 +145,41 @@ test("v1 completion audit can pass when all command and manual evidence inputs p
   assert.match(audit.markdown, /仓库已更新，外部知识库未同步/);
 });
 
+test("v1 completion audit does not pass with a stale manual evidence record head", () => {
+  const record = {
+    ...passedManualRecord(),
+    headSha: "old1234",
+  };
+  const commandResults = new Map(
+    buildV1CompletionAudit({ manualRecord: record }).automatedCommands.map(
+      (command) => [
+        command.script,
+        {
+          status: "passed",
+          command: `pnpm ${command.script}`,
+          exitCode: 0,
+          durationMs: 10,
+        },
+      ]
+    )
+  );
+
+  const audit = buildV1CompletionAudit({
+    commandResults,
+    currentHeadSha: "new5678",
+    generatedAt: "2026-05-29T10:00:00.000Z",
+    manualRecord: record,
+    manualRecordPath: "manual-evidence-record.filled.json",
+  });
+
+  assert.equal(audit.verdict, "not_complete");
+  assert.equal(audit.manualEvidence.status, "passed");
+  assert.equal(audit.manualEvidence.packageFreshness.status, "stale");
+  assert.equal(audit.manualEvidence.packageFreshness.recordHeadSha, "old1234");
+  assert.equal(audit.manualEvidence.packageFreshness.currentHeadSha, "new5678");
+  assert.match(audit.markdown, /packageFreshness: stale/);
+});
+
 test("v1 completion audit writes json and markdown artifacts", () => {
   const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
   const result = writeV1CompletionAudit({

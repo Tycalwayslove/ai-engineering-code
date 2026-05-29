@@ -28,4 +28,6 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /manual-record-root/);
   assert.match(validator, /manual-record best/);
   assert.match(validator, /人工证据记录选择/);
+  assert.match(validator, /packageFreshness/);
+  assert.match(validator, /旧 HEAD/);
 });

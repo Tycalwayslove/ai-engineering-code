@@ -87,6 +87,8 @@ assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "external-k
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manual-record-root");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manualRecordStrategies");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "人工证据记录选择");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "packageFreshness");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "旧 HEAD");
 
 const v1CompletionAuditTestPath = "scripts/collect-v1-completion-audit.test.mjs";
 const v1CompletionAuditTest = readRequired(v1CompletionAuditTestPath);
@@ -94,6 +96,7 @@ assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "collect:v1-com
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "archives manual evidence gap report");
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "external knowledge sync");
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "manual-record best");
+assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "stale manual evidence record head");
 
 const iosBuildScriptPath = "scripts/validate-ios-build.mjs";
 const iosBuildScript = readRequired(iosBuildScriptPath);

@@ -4309,3 +4309,32 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把自动选择记录的证据从“机器可读”推进到“人可复查”。最终 completion audit 不仅能在 JSON 里说明选了哪份记录，也能在 Markdown 报告里直接展示选择依据，减少收尾沟通和人工复查成本。
+
+## 阶段 157：completion audit 人工证据 HEAD 新鲜度
+
+问题背景：
+
+- `manual-evidence-record.review.json`、`manual-evidence-record.draft.json` 和后续人工 filled 记录都来自某一次 iOS 证据包采集。
+- 如果当前代码已经继续变化，旧 HEAD 下采到的人工记录即使字段齐全，也不能证明当前代码状态已经通过验收。
+- 自动选择 `--manual-record best` 降低了找文件成本，但也必须防止选中旧 run 后让 completion audit 误判完成。
+
+完成内容：
+
+- `collect-v1-completion-audit` 新增 `manualEvidence.packageFreshness`。
+- 审计会读取人工记录自身的 `headSha`，必要时读取同目录 `manifest.json` 的 `headSha`，并与当前 `git rev-parse --short HEAD` 对比。
+- 当记录 HEAD 和当前 HEAD 不一致时，`packageFreshness.status=stale`，最终 `verdict` 必须保持 `not_complete`。
+- Markdown 报告会展示 `packageFreshness`、`recordHeadSha` 和 `currentHeadSha`，完成判定区也会明确说明旧 HEAD 证据不能证明当前代码状态。
+- `validate:native-shells` 和 `validate:v1-readiness` 已守住 `packageFreshness` 与旧 HEAD 判定说明。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-v1-completion-audit.test.mjs` 先用旧 `headSha=old1234` 的人工记录验证 audit 仍错误返回 `passed`。
+- 绿灯：补齐 `packageFreshness` 和 stale 阻断后，同一测试通过。
+- 红灯：`node --test scripts/validate-native-shells.test.mjs` 先因 validator 未守住 `packageFreshness` 失败。
+- 绿灯：补齐 validator 检查后，同一测试通过。
+- 红灯：`pnpm validate:v1-readiness` 先因 readiness 文档未声明旧 HEAD 门槛失败。
+- 绿灯：补齐 readiness 文档后重新通过。
+
+阶段价值：
+
+这一阶段把 completion audit 从“证据字段齐全即可复查”推进到“证据必须属于当前代码状态”。后续正式收尾时，即使自动选择找到了缺口最少的记录，只要它来自旧 HEAD，audit 也会保持 `not_complete`，迫使我们重新采证或明确补证当前版本。

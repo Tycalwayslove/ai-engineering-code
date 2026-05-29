@@ -151,6 +151,14 @@ function readManualRecord(manualRecordPath) {
   return JSON.parse(fs.readFileSync(absolutePath, "utf8"));
 }
 
+function currentGitHeadSha() {
+  const result = spawnSync("git", ["rev-parse", "--short", "HEAD"], {
+    cwd: rootDir,
+    encoding: "utf8",
+  });
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
 function relativeToRoot(absolutePath) {
   return path.relative(rootDir, absolutePath) || ".";
 }
@@ -259,7 +267,60 @@ function resolveManualRecordPath(manualRecordPath, manualRecordRoot) {
   };
 }
 
+function readManifestForManualRecord(record, manualRecordPath) {
+  if (!manualRecordPath) {
+    return null;
+  }
+  const manifestJson = record?.packageEvidence?.manifestJson ?? "manifest.json";
+  const manifestPath = path.resolve(rootDir, path.dirname(manualRecordPath), manifestJson);
+  if (!fs.existsSync(manifestPath)) {
+    return null;
+  }
+  try {
+    return JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function buildManualEvidencePackageFreshness({
+  currentHeadSha,
+  manualRecordPath,
+  record,
+}) {
+  const manifest = readManifestForManualRecord(record, manualRecordPath);
+  const recordHeadSha = record?.headSha ?? manifest?.headSha ?? null;
+  const effectiveCurrentHeadSha = recordHeadSha
+    ? currentHeadSha ?? currentGitHeadSha()
+    : currentHeadSha ?? null;
+  let status = "unknown";
+  if (recordHeadSha && effectiveCurrentHeadSha) {
+    status = recordHeadSha === effectiveCurrentHeadSha ? "current" : "stale";
+  } else if (!recordHeadSha) {
+    status = "missing_record_head";
+  }
+
+  const manifestPath =
+    manifest && manualRecordPath
+      ? relativeToRoot(
+          path.resolve(
+            rootDir,
+            path.dirname(manualRecordPath),
+            record?.packageEvidence?.manifestJson ?? "manifest.json"
+          )
+        )
+      : null;
+  return {
+    status,
+    currentHeadSha: effectiveCurrentHeadSha,
+    manifestHeadSha: manifest?.headSha ?? null,
+    manifestPath,
+    recordHeadSha,
+  };
+}
+
 function buildManualEvidenceAudit({
+  currentHeadSha,
   manualEvidenceReportPath,
   manualRecordSelection,
   manualRecord,
@@ -285,6 +346,11 @@ function buildManualEvidenceAudit({
     requireComplete: true,
   });
   const report = buildManualEvidenceRecordReport(record, { recordPath });
+  const packageFreshness = buildManualEvidencePackageFreshness({
+    currentHeadSha,
+    manualRecordPath,
+    record,
+  });
   return {
     status: validation.failures.length === 0 ? "passed" : "failed",
     recordPath,
@@ -295,6 +361,7 @@ function buildManualEvidenceAudit({
     statusCounts: report.statusCounts,
     globalGaps: report.globalGaps,
     incompleteItemCount: report.incompleteItems.length,
+    packageFreshness,
     selection: manualRecordSelection ?? null,
     reportMarkdown: report.markdown,
   };
@@ -418,6 +485,13 @@ function markdownForAudit(audit) {
     `- missingEvidenceCount: ${
       audit.manualEvidence.missingEvidenceCount ?? "unknown"
     }`,
+    audit.manualEvidence.packageFreshness
+      ? `- packageFreshness: ${audit.manualEvidence.packageFreshness.status} (recordHeadSha=${
+          audit.manualEvidence.packageFreshness.recordHeadSha ?? "unknown"
+        }, currentHeadSha=${
+          audit.manualEvidence.packageFreshness.currentHeadSha ?? "unknown"
+        })`
+      : "- packageFreshness: unknown",
     ...manualRecordSelectionLines,
     ...(audit.manualEvidence.failures.length > 0
       ? ["", "### 人工证据缺口", "", ...audit.manualEvidence.failures.map((failure) => `- ${failure}`)]
@@ -457,6 +531,9 @@ function markdownForAudit(audit) {
     audit.manualEvidence.requireCompletePassed
       ? "- 人工证据记录 completion 校验通过。"
       : "- 人工证据记录尚未通过 completion 校验。",
+    audit.manualEvidence.packageFreshness?.status === "stale"
+      ? "- 人工证据记录来自旧 HEAD，不能证明当前代码状态。"
+      : "- 人工证据记录未发现旧 HEAD 阻塞。",
     audit.externalKnowledgeSync.finalDisclosureRequired
       ? "- 外部知识库未记录为已同步；最终回复必须明确说明“仓库已更新，外部知识库未同步”。"
       : "- 外部知识库已显式记录为已同步。",
@@ -484,6 +561,7 @@ export function buildV1CompletionAudit(options = {}) {
     ),
   }));
   const manualEvidence = buildManualEvidenceAudit({
+    currentHeadSha: options.currentHeadSha,
     manualEvidenceReportPath: options.manualEvidenceReportPath,
     manualRecordSelection: resolvedManualRecord.manualRecordSelection,
     manualRecord: options.manualRecord,
@@ -501,7 +579,11 @@ export function buildV1CompletionAudit(options = {}) {
     (command) => command.status === "passed"
   );
   const verdict =
-    automatedPassed && manualEvidence.requireCompletePassed ? "passed" : "not_complete";
+    automatedPassed &&
+    manualEvidence.requireCompletePassed &&
+    manualEvidence.packageFreshness?.status !== "stale"
+      ? "passed"
+      : "not_complete";
   const audit = {
     schemaVersion: 1,
     generatedAt: options.generatedAt ?? new Date().toISOString(),

@@ -51,6 +51,8 @@ for (const expected of [
   "pnpm collect:v1-completion-audit",
   "--manual-record best",
   "--manual-record-root",
+  "packageFreshness",
+  "旧 HEAD",
   "externalKnowledgeSync",
   "--external-knowledge-status",
   "git diff --check",
