@@ -174,6 +174,14 @@ pnpm validate:ios-simulator-smoke
 - `AI_CODE_IOS_SIMULATOR_KEEP_BOOTED=1`
 - `AI_CODE_IOS_SIMULATOR_KEEP_APP_RUNNING=1`
 
+如果要验证真实 Native 顶部导航和 Drawer 能切换 H5 七个页面，可以在本地 H5 页面可访问时运行：
+
+```bash
+pnpm validate:ios-navigation-ui-test
+```
+
+该命令通过 Xcode UI test 真实点击 `ai-code.native.header.timeline-button`、`ai-code.native.header.ledger-button`、`ai-code.native.header.calendar-button` 和 `ai-code.native.header.menu-button`，再点击 Drawer 中的 `timeline/calendar/expenses/reminders/ledger/settings/conversation` 七个 quick-switch 按钮；每次都在 H5 Bridge Debug 中断言对应 `source=native.header.*` 或 `source=native.drawer.quick-switch` 与 `view=<surface>`。它证明原生可点击导航、WKWebView Bridge 和 H5 surface 切换链路可自动防回归，但不替代人工验收中的页面截图、长列表滚动和真实业务数据复核。
+
 如果要验证真实 Native 键盘输入路径，可以在本地 H5 页面可访问时运行：
 
 ```bash

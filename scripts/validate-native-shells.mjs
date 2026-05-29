@@ -68,6 +68,8 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-voice-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-voice-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-attachment-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-attachment-ui-test.mjs");
+assertIncludes(packageJsonPath, packageJson, '"validate:ios-navigation-ui-test"');
+assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-navigation-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:v1-readiness"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-v1-readiness.mjs");
 
@@ -110,6 +112,15 @@ assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "Native
 assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "testNativeAttachmentButtonPresentsAttachmentChoices");
 assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "CODE_SIGNING_ALLOWED=NO");
 assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "Executed");
+
+const iosNavigationUiTestScriptPath = "scripts/validate-ios-navigation-ui-test.mjs";
+const iosNavigationUiTestScript = readRequired(iosNavigationUiTestScriptPath);
+assertIncludes(iosNavigationUiTestScriptPath, iosNavigationUiTestScript, "xcodebuild");
+assertIncludes(iosNavigationUiTestScriptPath, iosNavigationUiTestScript, "AIEngineeringCodeUITests");
+assertIncludes(iosNavigationUiTestScriptPath, iosNavigationUiTestScript, "NativeKeyboardInputUITests");
+assertIncludes(iosNavigationUiTestScriptPath, iosNavigationUiTestScript, "testNativeHeaderAndDrawerNavigateH5Surfaces");
+assertIncludes(iosNavigationUiTestScriptPath, iosNavigationUiTestScript, "CODE_SIGNING_ALLOWED=NO");
+assertIncludes(iosNavigationUiTestScriptPath, iosNavigationUiTestScript, "Executed");
 
 const iosAcceptanceEvidenceScriptPath = "scripts/collect-ios-acceptance-evidence.mjs";
 const iosAcceptanceEvidenceScript = readRequired(iosAcceptanceEvidenceScriptPath);
@@ -197,6 +208,13 @@ assertIncludes(iosShellPath, iosShell, "submitNativeAttachment");
 assertIncludes(iosShellPath, iosShell, "openKeyboardInput");
 assertIncludes(iosShellPath, iosShell, "textFieldFocus: $isComposerTextFocused");
 assertIncludes(iosShellPath, iosShell, ".focused(textFieldFocus)");
+assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.native.header.menu-button")');
+assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.native.header.timeline-button")');
+assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.native.header.ledger-button")');
+assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.native.header.calendar-button")');
+assertIncludes(iosShellPath, iosShell, "ai-code.native.drawer.expenses-button");
+assertIncludes(iosShellPath, iosShell, "ai-code.native.drawer.reminders-button");
+assertIncludes(iosShellPath, iosShell, "ai-code.native.drawer.settings-button");
 assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.composer.attachment-button")');
 assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.composer.keyboard-text-field")');
 assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.composer.submit-button")');
@@ -259,6 +277,10 @@ assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.attac
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "选择附件");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "选择照片");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "选择文件");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeHeaderAndDrawerNavigateH5Surfaces");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.native.header.timeline-button");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.native.drawer.settings-button");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "native.drawer.quick-switch");
 
 const iosInfoPlistPath = "apps/ios/AIEngineeringCode/Info.plist";
 const iosInfoPlist = readRequired(iosInfoPlistPath);

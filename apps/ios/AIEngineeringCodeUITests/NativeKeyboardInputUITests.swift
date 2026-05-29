@@ -40,6 +40,99 @@ final class NativeKeyboardInputUITests: XCTestCase {
         XCTAssertTrue(waitForStaticText(containing: "选择附件", in: app, timeout: 10), app.debugDescription)
     }
 
+    func testNativeHeaderAndDrawerNavigateH5Surfaces() throws {
+        let app = launchApp(conversationPrefix: "conversation_ui_navigation")
+
+        tapButton(withIdentifier: "ai-code.native.header.timeline-button", in: app)
+        assertNativeNavigation(
+            title: "Timepage",
+            surface: "timeline",
+            source: "native.header.timeline",
+            in: app
+        )
+        closeDrawer(in: app)
+
+        tapButton(withIdentifier: "ai-code.native.header.ledger-button", in: app)
+        assertNativeNavigation(
+            title: "执行记录",
+            surface: "ledger",
+            source: "native.header.ledger",
+            in: app
+        )
+        closeDrawer(in: app)
+
+        tapButton(withIdentifier: "ai-code.native.header.calendar-button", in: app)
+        assertNativeNavigation(
+            title: "完整日历",
+            surface: "calendar",
+            source: "native.header.calendar",
+            in: app
+        )
+        closeDrawer(in: app)
+
+        tapButton(withIdentifier: "ai-code.native.header.menu-button", in: app)
+        assertNativeNavigation(
+            title: "对话工作台",
+            surface: "conversation",
+            source: "native.header.menu",
+            in: app
+        )
+
+        for route in drawerRoutes {
+            tapButton(withIdentifier: route.identifier, in: app)
+            assertNativeNavigation(
+                title: route.title,
+                surface: route.surface,
+                source: "native.drawer.quick-switch",
+                in: app
+            )
+        }
+    }
+
+    private var drawerRoutes: [(identifier: String, title: String, surface: String)] {
+        [
+            ("ai-code.native.drawer.timeline-button", "Timepage", "timeline"),
+            ("ai-code.native.drawer.calendar-button", "完整日历", "calendar"),
+            ("ai-code.native.drawer.expenses-button", "费用草稿", "expenses"),
+            ("ai-code.native.drawer.reminders-button", "提醒列表", "reminders"),
+            ("ai-code.native.drawer.ledger-button", "执行记录", "ledger"),
+            ("ai-code.native.drawer.settings-button", "设置", "settings"),
+            ("ai-code.native.drawer.conversation-button", "对话工作台", "conversation"),
+        ]
+    }
+
+    private func assertNativeNavigation(
+        title: String,
+        surface: String,
+        source: String,
+        in app: XCUIApplication
+    ) {
+        XCTAssertTrue(
+            waitForStaticText(containing: title, in: app, timeout: 15),
+            app.debugDescription
+        )
+        XCTAssertTrue(
+            waitForStaticText(containing: "source=\(source)", in: app, timeout: 15),
+            app.debugDescription
+        )
+        XCTAssertTrue(
+            waitForStaticText(containing: "view=\(surface)", in: app, timeout: 15),
+            app.debugDescription
+        )
+    }
+
+    private func closeDrawer(in app: XCUIApplication) {
+        tapButton(withIdentifier: "ai-code.native.drawer.close-button", in: app)
+        XCTAssertTrue(
+            waitForStaticText(containing: "source=native.drawer.close", in: app, timeout: 10),
+            app.debugDescription
+        )
+        XCTAssertTrue(
+            waitForStaticText(containing: "view=conversation", in: app, timeout: 10),
+            app.debugDescription
+        )
+    }
+
     private func confirmReminderFact(
         _ inputText: String,
         source: String,
@@ -117,6 +210,15 @@ final class NativeKeyboardInputUITests: XCTestCase {
         let submitButton = app.buttons["ai-code.composer.submit-button"]
         XCTAssertTrue(submitButton.waitForExistence(timeout: 5), app.debugDescription)
         submitButton.tap()
+    }
+
+    private func tapButton(withIdentifier identifier: String, in app: XCUIApplication) {
+        let target = app.buttons[identifier]
+        XCTAssertTrue(target.waitForExistence(timeout: 20), app.debugDescription)
+        if !target.isHittable {
+            app.swipeDown()
+        }
+        target.tap()
     }
 
     private func waitForStaticText(

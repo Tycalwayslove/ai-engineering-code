@@ -209,6 +209,25 @@ private enum NativeDrawerPanel: String, CaseIterable, Identifiable {
             return "list.bullet.rectangle"
         }
     }
+
+    var accessibilityIdentifier: String {
+        switch self {
+        case .calendar:
+            return "ai-code.native.drawer.calendar-button"
+        case .conversation:
+            return "ai-code.native.drawer.conversation-button"
+        case .expenses:
+            return "ai-code.native.drawer.expenses-button"
+        case .ledger:
+            return "ai-code.native.drawer.ledger-button"
+        case .reminders:
+            return "ai-code.native.drawer.reminders-button"
+        case .settings:
+            return "ai-code.native.drawer.settings-button"
+        case .timeline:
+            return "ai-code.native.drawer.timeline-button"
+        }
+    }
 }
 
 private enum NativeShellTheme: String {
@@ -1179,6 +1198,8 @@ private struct NativeShellHeader: View {
                 theme: theme,
                 action: onMenu
             )
+            .accessibilityIdentifier("ai-code.native.header.menu-button")
+            .accessibilityLabel("打开对话菜单")
 
             VStack(spacing: 2) {
                 Text(activePanel?.title ?? "AI 日程执行")
@@ -1193,24 +1214,32 @@ private struct NativeShellHeader: View {
 
             HStack(spacing: 8) {
                 NativeIconButton(systemName: theme.toggleIcon, theme: theme, action: onThemeToggle)
+                    .accessibilityIdentifier("ai-code.native.header.theme-button")
+                    .accessibilityLabel("切换主题")
                 NativeIconButton(
                     isSelected: activePanel == .timeline,
                     systemName: "list.bullet.rectangle",
                     theme: theme,
                     action: onTimeline
                 )
+                .accessibilityIdentifier("ai-code.native.header.timeline-button")
+                .accessibilityLabel("打开 Timeline")
                 NativeIconButton(
                     isSelected: activePanel == .ledger,
                     systemName: "clock",
                     theme: theme,
                     action: onLedger
                 )
+                .accessibilityIdentifier("ai-code.native.header.ledger-button")
+                .accessibilityLabel("打开执行记录")
                 NativeIconButton(
                     isSelected: activePanel == .calendar,
                     systemName: "calendar",
                     theme: theme,
                     action: onCalendar
                 )
+                .accessibilityIdentifier("ai-code.native.header.calendar-button")
+                .accessibilityLabel("打开完整日历")
             }
         }
         .padding(.horizontal, 18)
@@ -1741,6 +1770,7 @@ private struct NativeDrawerOverlay: View {
                     }
                     .buttonStyle(.plain)
                     .contentShape(Circle())
+                    .accessibilityIdentifier("ai-code.native.drawer.close-button")
                     .accessibilityLabel("关闭抽屉")
                 }
 
@@ -1848,6 +1878,8 @@ private struct NativeDrawerSegmentedControl: View {
             .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(panel.accessibilityIdentifier)
+        .accessibilityLabel("切换到\(panel.menuTitle)")
     }
 }
 

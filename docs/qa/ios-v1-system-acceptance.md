@@ -61,6 +61,12 @@ pnpm collect:ios-system-evidence
 pnpm collect:ios-keyboard-evidence
 ```
 
+如果要自动验证真实 Native Header / Drawer 能切换 H5 七个页面，可以运行：
+
+```bash
+pnpm validate:ios-navigation-ui-test
+```
+
 如果要自动验证真实 Native 键盘输入框、系统键盘和发送按钮到 H5 Bridge Debug 的链路，可以运行：
 
 ```bash
@@ -97,6 +103,7 @@ pnpm collect:ios-attachment-evidence
 - `AI_CODE_IOS_ACCEPTANCE_SEED_CALENDAR_PERMISSION_DENIAL=1` 或 `--seed-calendar-permission-denial`：显式撤销目标 Simulator 的日历权限，创建一条 seed 日程，验证后端事实仍写入且 Native 日历同步按降级路径记录 `calendar.lastSyncStatus=failed`。采集器会在权限原本已授权时尝试恢复日历权限。
 - `AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_CLICK_BACKFLOW=1` 或 `--seed-notification-click-backflow`：显式创建一条“3 分钟后”的 seed 提醒，刷新 Native 诊断并轮询确认对应 `ai-code.reminder.{id}` 进入 pending local notification，再用同形态 `native.viewChanged` synthetic 事件验证 H5 能打开提醒页并高亮目标提醒。该证据只证明 Native pending notification 与 H5 回流处理两段链路，不替代真实系统通知点击。
 - `AI_CODE_IOS_ACCEPTANCE_SEED_NOTIFICATION_DELIVERY=1` 或 `--seed-notification-delivery`：显式创建一条“2 分钟后”的 seed 提醒，确认目标先进入 pending local notification，再等待到期和缓冲时间，轮询 Native delivered diagnostics，验证对应 `ai-code.reminder.{id}` 出现在 `notifications.deliveredReminderIds`。该证据只证明系统通知中心 delivered 诊断链路，不替代真实 banner、锁屏展示、声音、badge 或用户点击。
+- `pnpm validate:ios-navigation-ui-test`：运行 Xcode UI test，真实点击 Native Header 的 Timeline、执行记录、日历和菜单按钮，再点击 Drawer 中的对话、Timeline、日程、费用、提醒、执行记录和设置入口；每次都在 H5 Bridge Debug 中断言真实 `native.viewChanged` 来源和 `view=<surface>`。该命令只证明原生可点击导航、WKWebView Bridge 和 H5 surface 切换链路，不替代人工页面截图、长列表滚动和真实业务数据复核。
 - `pnpm validate:ios-keyboard-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.mode-toggle-button`、`ai-code.composer.keyboard-text-field`、系统键盘和 `ai-code.composer.submit-button`，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本；随后点击 H5 确认卡，断言确认完成后出现 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该命令会通过 UI test 专用启动参数跳过通知 / 日历权限请求，避免键盘路径被系统同步弹窗污染，并为每次运行注入独立 `AI_CODE_UI_TEST_CONVERSATION_ID`，避免旧会话数据干扰。
 - `pnpm validate:ios-voice-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.voice-button`，并在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时通过 UI test 专用 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 注入“明天上午十点提醒我带电脑”，随后断言 H5 Bridge Debug 出现 `source=native.composer.voice`，点击 H5 确认卡，并看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该命令只证明 Native 语音入口、H5 Bridge、确认卡和后端提醒读模型的工程闭环，不替代麦克风权限弹窗、真实录音和中文识别质量验收。
 - `pnpm validate:ios-attachment-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.attachment-button`，并断言系统菜单展示“选择附件”“选择照片”“选择文件”和“取消”。该命令只证明附件入口可点击和菜单选项可见，不替代真实 PhotosPicker、fileImporter、权限弹窗、安全作用域文件读取、Vision OCR 或 PDFKit 抽取质量验收。
@@ -158,6 +165,26 @@ node scripts/validate-ios-manual-evidence-record.mjs --record .tmp/ios-acceptanc
 - 重启前后的 `conversationId`。
 - `pnpm collect:ios-acceptance-evidence` 生成的 `acceptance-evidence.json` 中 `ios.conversationPersistence.beforeRelaunch`、`afterRelaunch` 和 `stableAcrossRelaunch`。
 - `/agent/conversations/{conversationId}/turns` 响应摘要。
+
+### 原生导航 / 页面切换
+
+验收步骤：
+
+1. 点击 Header 的 Timeline、执行记录、日历和菜单按钮。
+2. 打开 Drawer 后依次点击对话、Timeline、日程、费用、提醒、执行记录和设置入口。
+3. 每次切换后观察 H5 页面和 Bridge Debug。
+
+预期结果：
+
+- 原生 Header 和 Drawer 按钮都可点击。
+- H5 会切到对应页面，Bridge Debug 显示 `source=native.header.*` 或 `source=native.drawer.quick-switch`。
+- H5 页面展示当前会话的真实读模型，不回退到 demo fixtures。
+
+验收证据：
+
+- 每个页面切换后的截图或录屏片段。
+- Bridge Debug 中的 `view=timeline/calendar/expenses/reminders/ledger/settings/conversation`。
+- `pnpm validate:ios-navigation-ui-test` 可自动覆盖真实 Header / Drawer 点击和 H5 `native.viewChanged` 链路；人工验收仍需复核页面内容、长列表滚动和真实业务数据。
 
 ### 键盘输入
 

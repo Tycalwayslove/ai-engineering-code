@@ -4053,3 +4053,32 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把附件入口验收从“只靠人工确认纸夹能打开菜单”推进到“纸夹按钮与照片 / 文件菜单选项可由 Xcode UI test 自动防回归”。它不替代真实 PhotosPicker、fileImporter、权限弹窗、OCR 或 PDFKit 样本质量验收；这些仍保留在 iOS 人工验收记录中。
+
+## 阶段 148：iOS 原生导航 UI test 门禁
+
+问题背景：
+
+- 第一版要求用户能在原生 App 上直接点击使用每个功能页面，现有 H5 七页面截图主要来自 synthetic `native.viewChanged` 注入。
+- iOS Header / Drawer 已能发送 `native.viewChanged`，但此前缺少 Xcode UI test 证明真实原生按钮可以驱动 H5 页面切换。
+- 如果不补这条门禁，容易出现“按钮存在、截图存在，但真实用户点击无法切到对应 H5 surface”的回归。
+
+完成内容：
+
+- `HybridShellView` 为 Header 菜单、Timeline、执行记录、日历、主题按钮，以及 Drawer 七个 quick-switch 和关闭按钮补稳定 accessibility identifiers。
+- `NativeKeyboardInputUITests` 新增 `testNativeHeaderAndDrawerNavigateH5Surfaces`：
+  - 真实点击 Header 的 Timeline、执行记录、日历和菜单按钮。
+  - 打开 Drawer 后依次点击对话、Timeline、日程、费用、提醒、执行记录和设置入口。
+  - 每次都断言 Native Drawer 标题可见，并在 H5 Bridge Debug 中看到真实 `source=native.header.*` 或 `source=native.drawer.quick-switch` 与 `view=<surface>`。
+- 新增根命令 `pnpm validate:ios-navigation-ui-test`，封装 `xcodebuild test` 并检查实际执行至少 1 个 XCTest，避免 0-test 假阳性。
+- `validate:native-shells` 新增结构护栏，要求 package script、navigation UI test 脚本、XCTest 名称、Header / Drawer 可访问性标识和 drawer quick-switch 来源断言都存在。
+- `apps/ios/README.md`、iOS 系统能力验收清单、v1 readiness 审计和当前项目状态已更新覆盖范围与边界。
+
+验证结果：
+
+- 红灯：`pnpm validate:native-shells` 先因缺少 `validate:ios-navigation-ui-test`、脚本文件、Header / Drawer accessibility identifiers、XCTest 名称和 drawer 来源断言失败。
+- 绿灯：补齐实现后，`pnpm validate:native-shells` 通过。
+- live UI test：`pnpm validate:ios-navigation-ui-test` 在本机 iPhone 16 Pro Max Simulator 上执行 1 个 XCTest、0 个失败，覆盖真实 Native Header / Drawer 点击到 H5 七页面切换。
+
+阶段价值：
+
+这一阶段把“原生 App 每个功能入口可点击”的验收从 H5 synthetic 截图推进到真实 iOS UI test 门禁。它不替代人工页面截图、长列表滚动、真实业务数据和最终验收结论，但能防住原生导航按钮、WKWebView Bridge 和 H5 surface 切换之间的关键回归。

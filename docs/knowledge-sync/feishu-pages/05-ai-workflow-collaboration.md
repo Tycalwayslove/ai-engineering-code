@@ -366,3 +366,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 最终 completion audit 仍需要人工验收记录，把真实照片 / 文件 / PDF 样本、bridge marker、后端附件摘要和结论补齐后再运行 `--require-complete` 校验。
 
 这让附件入口验收从“菜单是否打开也靠人工观察”推进到“入口与菜单选项自动防回归，真实系统选择器和内容抽取质量由人工验收负责”。
+
+## iOS 原生导航 UI test 门禁
+
+2026-05-29 的补证推进新增了 `pnpm validate:ios-navigation-ui-test`。它通过 Xcode UI test 真实点击 Native Header 的 Timeline、执行记录、日历和菜单按钮，再点击 Drawer 中的对话、Timeline、日程、费用、提醒、执行记录和设置入口，并在 H5 Bridge Debug 中断言真实 `native.viewChanged` 来源和 `view=<surface>`。
+
+这项能力的协作边界是：
+
+- UI test 负责把“原生 Header / Drawer 按钮 + WKWebView Bridge + H5 七页面切换”变成可重复运行的工程门禁。
+- H5 synthetic 页面截图仍用于证据包辅助整理，但不能再被误当成真实原生点击链路的证明；真实点击链路由 navigation UI test 覆盖。
+- UI test 只断言页面切换和 Bridge 来源，不证明每个页面在真实业务数据下的视觉完整性、长列表滚动、系统权限弹窗或人工验收结论。
+- 最终 completion audit 仍需要人工验收记录，把页面截图、bridge marker、后端事实摘要和结论补齐后再运行 `--require-complete` 校验。
+
+这让“第一版原生 App 每个功能都能直接点击使用”的验收更接近真实用户路径：自动化负责防住原生导航链路回归，人工验收负责最终体验和系统能力留证。
