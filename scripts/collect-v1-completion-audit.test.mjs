@@ -73,6 +73,16 @@ test("v1 completion audit reports missing manual evidence and required commands"
       (command) => command.script === "validate:ios-manual-evidence-record"
     )
   );
+  assert.ok(
+    audit.automatedCommands.some(
+      (command) => command.script === "validate:ios-acceptance-evidence"
+    )
+  );
+  assert.ok(
+    audit.automatedCommands.some(
+      (command) => command.script === "validate:native-shells"
+    )
+  );
   assert.match(audit.markdown, /Goal 不能标记 complete/);
   assert.match(audit.markdown, /pnpm validate:ios-navigation-ui-test/);
   assert.match(audit.markdown, /人工证据记录缺失/);

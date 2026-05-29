@@ -4137,3 +4137,29 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“完成标准写在文档里”推进到“完成审计有固定机器产物”。它不会替代人工证据，也不会默认执行耗时门禁；它的价值是让最终收尾时的证据路径、命令状态和 complete 判定可复查、可归档。
+
+## 阶段 151：v1 completion audit 覆盖证据工具与 native-shells 护栏
+
+问题背景：
+
+- 阶段 150 已经新增 completion audit 统一归档入口，但初版自动化命令清单更偏产品主链路，尚未显式覆盖 iOS 自动证据包测试和 `validate:native-shells` 总护栏。
+- 最终 completion audit 如果漏掉 `validate:ios-acceptance-evidence`，可能无法发现证据包、人工 review 预填、HTTP retry 或权限判定逻辑回归。
+- 如果漏掉 `validate:native-shells`，可能无法发现原生壳关键入口、UI test 根命令或采证命令结构被误删。
+
+完成内容：
+
+- `collect-v1-completion-audit` 的 `requiredAutomatedCommands` 新增：
+  - `pnpm validate:ios-acceptance-evidence`
+  - `pnpm validate:native-shells`
+- `docs/qa/v1-readiness-audit.md` 的自动化证据表新增对应两行，并把它们加入下一步最终门禁清单。
+- `scripts/validate-v1-readiness.mjs` 增加对这两个命令的文本护栏。
+- `collect-v1-completion-audit.test.mjs` 先以失败测试暴露命令缺口，再补实现。
+
+验证结果：
+
+- 红灯：`node --test scripts/collect-v1-completion-audit.test.mjs` 先因缺少 `validate:ios-acceptance-evidence` 失败。
+- 绿灯：补齐 audit 命令清单后，同一测试通过。
+
+阶段价值：
+
+这一阶段让 completion audit 更接近真实收尾需要：不仅验证产品主链路，也验证“证据生成工具”和“原生壳结构护栏”本身仍可信，降低最终验收时工具链悄悄退化的风险。

@@ -24,8 +24,10 @@ Goal 不能标记 complete。
 | iOS 原生附件菜单 UI test | `pnpm validate:ios-attachment-ui-test` | XCTest 真实点击 Native 纸夹按钮，并断言“选择附件”“选择照片”“选择文件”和“取消”菜单可见 | 已有命令；只证明入口和菜单可见，不替代真实 PhotosPicker / fileImporter / OCR / PDFKit 验收 |
 | iOS 系统能力人工验收清单完整性 | `pnpm validate:ios-manual-acceptance` | 检查人工验收清单包含权限、系统能力、证据 marker 和 `manual-evidence-record.template.json` 记录模板说明 | 已通过文档级门禁，但不等于人工验收已经执行 |
 | iOS 系统能力人工证据记录 | `pnpm validate:ios-manual-evidence-record`；最终验收使用 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete --report <report-path>` | 校验人工证据记录结构；completion 模式要求每项 `passed` 且证据字段齐全；`--report` 生成补证缺口报告 | 已有命令，当前只能证明模板结构可校验；真实 completion 仍需人工补证文件 |
+| iOS 自动证据包与 review | `pnpm validate:ios-acceptance-evidence` | 校验自动证据包、人工记录 review 预填、HTTP retry、权限判定和采证命令形态 | 已有命令，需在最终 completion audit 前重新运行 |
 | 真实 LLM provider | `pnpm validate:llm-smoke` | DeepSeek / OpenAI provider 的 `chat`、`clarification`、`mixed`、只读查询和安全追问 | 已有命令，依赖 `.env.local` 中 provider key；最终 completion audit 前需重新运行或明确跳过原因 |
 | Postman / OpenAPI / SDK 契约 | `pnpm validate:contracts` 和 `pnpm validate:sdk-runtime` | OpenAPI、Postman、SDK 方法、直接动作必传 `conversationId`、Hybrid Bridge payload schema | 已有命令，需在最终 completion audit 前重新运行 |
+| 原生壳结构护栏 | `pnpm validate:native-shells` | 检查 iOS 原生壳、采证脚本、UI test 根命令和关键字符串仍存在 | 已有命令，需在最终 completion audit 前重新运行 |
 | 上下文与知识同步 | `pnpm validate:context-sync` | 当前项目状态、记忆索引、飞书源稿和同步声明 | 已有命令，需在阶段结束前重新运行 |
 | v1 completion audit 汇总 | `pnpm collect:v1-completion-audit`；正式收尾使用 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` | 生成单一 `v1-completion-audit.json` / `.md`，汇总自动化命令状态、人工证据记录 completion 校验和 goal 是否可 complete | 已有命令；默认不跑重型命令，只生成缺口审计；正式 completion audit 必须显式运行自动化命令并提供补证后的人工记录 |
 | 全局格式残留 | `git diff --check` | 空白错误和 patch 格式问题 | 已有命令，需在最终 completion audit 前重新运行 |
@@ -84,7 +86,7 @@ Goal 不能标记 complete。
 
 ## 下一步建议
 
-1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-navigation-ui-test`、`pnpm validate:ios-keyboard-ui-test`、`pnpm validate:ios-voice-ui-test`、`pnpm validate:ios-attachment-ui-test`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:ios-manual-evidence-record`、`pnpm validate:context-sync` 和 `git diff --check`；正式归档时用 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` 统一沉淀结果。
+1. 先运行可自动化的最终门禁：`pnpm validate:contracts`、`pnpm validate:product-smoke`、`pnpm validate:product-smoke:postgres`、`pnpm validate:h5-click-smoke`、`pnpm validate:ios-simulator-smoke`、`pnpm validate:ios-navigation-ui-test`、`pnpm validate:ios-keyboard-ui-test`、`pnpm validate:ios-voice-ui-test`、`pnpm validate:ios-attachment-ui-test`、`pnpm validate:ios-manual-acceptance`、`pnpm validate:ios-manual-evidence-record`、`pnpm validate:ios-acceptance-evidence`、`pnpm validate:native-shells`、`pnpm validate:context-sync` 和 `git diff --check`；正式归档时用 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` 统一沉淀结果。
 2. 如果 `.env.local` 有可用 key，再运行 `pnpm validate:llm-smoke`。
 3. 需要集中补自动辅助材料时，运行 `pnpm collect:ios-system-evidence`，一次性启用当前支持的系统辅助证据；该命令会在 Calendar 写入类辅助证据前预授权 Simulator 日历权限，并在权限拒绝场景里单独撤销权限验证降级路径。键盘输入的 H5 / 后端辅助证据可单独运行 `pnpm collect:ios-keyboard-evidence`，照片 / 文件 / PDF 附件的 H5 / 后端辅助证据可单独运行 `pnpm collect:ios-attachment-evidence`。这些命令可能等待通知投递或写入 seed 事项，且仍不能替代人工证据。
 4. 按 `docs/qa/ios-v1-system-acceptance.md` 做一次真实模拟器或真机验收，把证据沉淀到仓库或外部知识库。

@@ -405,3 +405,16 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 - 它不会同步飞书或 Obsidian；外部知识库是否同步仍以实际同步命令为准。
 
 这让 goal 模式的最终判断更稳：不是靠“我记得这些命令跑过”，而是用单一审计产物把命令、人工证据和完成结论绑定在一起。
+
+## v1 completion audit 命令覆盖补强
+
+2026-05-29 的收尾治理继续补强了 `pnpm collect:v1-completion-audit` 的命令清单，把 `pnpm validate:ios-acceptance-evidence` 和 `pnpm validate:native-shells` 纳入正式 completion audit。
+
+这项能力的协作边界是：
+
+- `validate:ios-acceptance-evidence` 用来证明自动证据包、人工 review 预填、HTTP retry 和权限判定等采证工具仍可用。
+- `validate:native-shells` 用来证明原生壳关键入口、UI test 根命令、采证根命令和结构护栏没有被误删。
+- readiness 文档和 `validate:v1-readiness` 会同时守住这两个命令，避免完成审计入口和文档门槛再次漂移。
+- 这仍不代表 goal complete；它只让最终审计的自动化证据范围更完整。
+
+这让收尾流程更抗回归：最终不是只验证 App 功能本身，也验证用于证明 App 功能的证据工具链仍然可靠。

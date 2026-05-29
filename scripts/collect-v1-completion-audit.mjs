@@ -61,6 +61,10 @@ export const requiredAutomatedCommands = [
     proves: "iOS 人工证据记录模板结构可校验",
   },
   {
+    script: "validate:ios-acceptance-evidence",
+    proves: "iOS 自动证据包、人工记录 review 预填和 HTTP 重试等采证工具可用",
+  },
+  {
     script: "validate:llm-smoke",
     proves: "真实 LLM provider 的 chat、clarification、mixed、只读查询和安全追问可用",
   },
@@ -75,6 +79,10 @@ export const requiredAutomatedCommands = [
   {
     script: "validate:v1-readiness",
     proves: "v1 readiness 审计文档保留完成门槛和缺口声明",
+  },
+  {
+    script: "validate:native-shells",
+    proves: "原生壳、iOS 采证命令和 UI test 根命令结构护栏仍完整",
   },
   {
     script: "git diff --check",
