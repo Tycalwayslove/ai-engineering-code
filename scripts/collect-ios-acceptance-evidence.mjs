@@ -820,6 +820,27 @@ function emptyNotificationDeliverySeed({
   };
 }
 
+function emptyNotificationSyncBridgeEvidence({
+  conversationId,
+  enabled,
+  outputDir,
+  reminderId,
+}) {
+  return {
+    available: false,
+    bridgeOutboundLabel: null,
+    commands: {},
+    conversationId: conversationId ?? null,
+    enabled,
+    errors: [],
+    mode: "h5_outbound_bridge_capture",
+    reminderId: reminderId ?? null,
+    screenshotPath: path.join(outputDir, "notification-reminders-sync-bridge.png"),
+    supportingOnly: true,
+    targetReminderIncluded: null,
+  };
+}
+
 function emptyNativeKeyboardInputSeed({
   conversationId,
   enabled,
@@ -2663,6 +2684,7 @@ function buildEmptyH5SurfaceScreenshots({ conversationId, outputDir, error }) {
   return {
     available: false,
     baseUrl: h5NativeBaseUrl,
+    bridgeOutboundMessages: [],
     conversationId: conversationId ?? null,
     errorDiagnostics: {
       bodyTextPreview: null,
@@ -2683,6 +2705,61 @@ function buildEmptyH5SurfaceScreenshots({ conversationId, outputDir, error }) {
       ])
     ),
     errors: error ? [error] : [],
+  };
+}
+
+function summarizeH5BridgeOutboundMessages(messages) {
+  if (!Array.isArray(messages)) {
+    return [];
+  }
+  return messages.map((message) => {
+    const reminders = Array.isArray(message?.payload?.reminders)
+      ? message.payload.reminders
+      : [];
+    return {
+      reminderCount: reminders.length,
+      reminderIds: reminders
+        .map((reminder) => reminder?.id)
+        .filter((id) => typeof id === "string"),
+      type: typeof message?.type === "string" ? message.type : null,
+    };
+  });
+}
+
+function notificationSyncBridgeFromH5Surfaces({
+  h5SurfaceScreenshots,
+  result,
+  reminderId,
+}) {
+  const messages = Array.isArray(h5SurfaceScreenshots?.bridgeOutboundMessages)
+    ? h5SurfaceScreenshots.bridgeOutboundMessages
+    : [];
+  const syncMessage = messages.find(
+    (message) => message?.type === "notifications.reminders.sync"
+  );
+  if (!syncMessage) {
+    return null;
+  }
+
+  const reminderIds = Array.isArray(syncMessage.reminderIds)
+    ? syncMessage.reminderIds
+    : [];
+  const targetReminderIncluded = reminderId
+    ? reminderIds.includes(reminderId)
+    : null;
+  const capturedReminderId =
+    (targetReminderIncluded ? reminderId : null) ?? reminderIds[0] ?? null;
+  const screenshotPath =
+    h5SurfaceScreenshots?.surfaces?.reminders?.path ?? result.screenshotPath;
+
+  return {
+    ...result,
+    available: true,
+    bridgeOutboundLabel:
+      `notifications.reminders.sync · reminderId=${capturedReminderId ?? "unknown"} · reminders=${syncMessage.reminderCount ?? reminderIds.length} · targetIncluded=${String(targetReminderIncluded)}`,
+    reminderId: capturedReminderId,
+    screenshotPath,
+    targetReminderIncluded,
   };
 }
 
@@ -2792,6 +2869,7 @@ async function collectH5SurfaceScreenshots({ conversationId, dryRun, outputDir }
     await expect(surfaceRegion).toContainText("AI 时间管理 Agent", {
       timeout: 15000,
     });
+    await page.waitForTimeout(1000);
     await sendH5NativeMessage(page, "native.hostContext", {
       bridgeVersion: "ios-acceptance-evidence",
       h5URL: page.url(),
@@ -2817,10 +2895,24 @@ async function collectH5SurfaceScreenshots({ conversationId, dryRun, outputDir }
         path: screenshotPath,
       };
     }
+    const bridgeOutboundMessages = await page.evaluate(() =>
+      (window.__AI_NATIVE_MESSAGES__ ?? []).map((message) => ({
+        payload: {
+          reminders: Array.isArray(message?.payload?.reminders)
+            ? message.payload.reminders.map((reminder) => ({
+                id: reminder?.id,
+              }))
+            : [],
+        },
+        type: message?.type ?? null,
+      }))
+    );
 
     return {
       ...empty,
       available: Object.values(surfaces).some((surface) => surface.captured),
+      bridgeOutboundMessages:
+        summarizeH5BridgeOutboundMessages(bridgeOutboundMessages),
       surfaces,
     };
   } catch (error) {
@@ -2947,6 +3039,154 @@ async function collectNotificationClickBackflowScreenshot({
     return result;
   } catch (error) {
     result.errors.push(error instanceof Error ? error.message : String(error));
+    return result;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+async function collectNotificationSyncBridgeEvidence({
+  conversationId,
+  dryRun,
+  enabled,
+  h5SurfaceScreenshots,
+  outputDir,
+  reminderId,
+}) {
+  const result = emptyNotificationSyncBridgeEvidence({
+    conversationId,
+    enabled,
+    outputDir,
+    reminderId,
+  });
+
+  if (!enabled) {
+    return result;
+  }
+  const h5SurfaceBridge = notificationSyncBridgeFromH5Surfaces({
+    h5SurfaceScreenshots,
+    result,
+    reminderId,
+  });
+  if (h5SurfaceBridge) {
+    return h5SurfaceBridge;
+  }
+  if (dryRun) {
+    result.errors.push("dry-run does not capture H5 notification sync bridge");
+    return result;
+  }
+  if (!conversationId) {
+    result.errors.push("Native conversationId was not found; notification sync bridge skipped.");
+    return result;
+  }
+
+  let browser;
+  try {
+    const { chromium, expect } = await import("@playwright/test");
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { height: 844, width: 390 } });
+    await page.addInitScript(() => {
+      window.__AI_NATIVE_MESSAGES__ = [];
+      window.__AI_NATIVE_HOST__ = {
+        bridgeVersion: "ios-acceptance-evidence",
+        platform: "ios",
+      };
+      window.webkit = {
+        messageHandlers: {
+          NativeBridge: {
+            postMessage(message) {
+              window.__AI_NATIVE_MESSAGES__.push(message);
+            },
+          },
+        },
+      };
+    });
+
+    const targetUrl = `${h5NativeBaseUrl}/?native=ios&bridgeDebug=1&conversationId=${encodeURIComponent(
+      conversationId
+    )}`;
+    result.commands.h5Open = {
+      command: `Playwright ${targetUrl}`,
+      status: 0,
+      stdout: "",
+      stderr: "",
+    };
+    await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+    const surfaceRegion = page.getByLabel("后端元素渲染区");
+    await expect(surfaceRegion).toContainText("AI 时间管理 Agent", {
+      timeout: 15000,
+    });
+    await sendH5NativeMessage(page, "native.hostContext", {
+      bridgeVersion: "ios-acceptance-evidence",
+      h5URL: page.url(),
+      platform: "ios",
+    });
+
+    let message = null;
+    let bridgeDebugText = "";
+    const deadline = Date.now() + 30000;
+    while (!message && Date.now() < deadline) {
+      const state = await page.evaluate(() => {
+        const messages = window.__AI_NATIVE_MESSAGES__ ?? [];
+        return {
+          bodyText: document.body?.innerText ?? "",
+          message:
+            messages.find((candidate) =>
+              candidate?.type === "notifications.reminders.sync"
+            ) ?? null,
+        };
+      });
+      message = state.message;
+      bridgeDebugText = state.bodyText;
+      if (message || bridgeDebugText.includes("out=notifications.reminders.sync")) {
+        break;
+      }
+      await page.waitForTimeout(1000);
+    }
+    if (!message && !bridgeDebugText.includes("out=notifications.reminders.sync")) {
+      throw new Error("notifications.reminders.sync bridge marker was not observed");
+    }
+    const reminders = Array.isArray(message?.payload?.reminders)
+      ? message.payload.reminders
+      : [];
+    result.targetReminderIncluded = reminderId
+      ? reminders.some((reminder) => reminder?.id === reminderId)
+      : null;
+    const capturedReminderId =
+      (result.targetReminderIncluded ? reminderId : null) ??
+      reminders.find((reminder) => typeof reminder?.id === "string")?.id ??
+      null;
+
+    await page.screenshot({ fullPage: true, path: result.screenshotPath });
+    result.available = true;
+    result.reminderId = capturedReminderId;
+    result.bridgeOutboundLabel =
+      `notifications.reminders.sync · reminderId=${capturedReminderId ?? "unknown"} · reminders=${reminders.length} · targetIncluded=${String(result.targetReminderIncluded)}`;
+    result.commands.h5Open.stdout = JSON.stringify({
+      bridgeOutboundLabel: result.bridgeOutboundLabel,
+    });
+    return result;
+  } catch (error) {
+    const h5SurfaceFallback = notificationSyncBridgeFromH5Surfaces({
+      h5SurfaceScreenshots,
+      result,
+      reminderId,
+    });
+    if (h5SurfaceFallback) {
+      h5SurfaceFallback.errors.push(
+        `standalone H5 notification sync capture failed; reused h5SurfaceScreenshots: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      return h5SurfaceFallback;
+    }
+    result.errors.push(error instanceof Error ? error.message : String(error));
+    if (result.commands.h5Open) {
+      result.commands.h5Open.status = 1;
+      result.commands.h5Open.stderr = result.errors.join("\n");
+    }
     return result;
   } finally {
     if (browser) {
@@ -4122,6 +4362,20 @@ function writeSummary(evidence, outputDir) {
       ? evidence.notificationDelivery.errors.map((error) => `- error：${error}`)
       : []),
     "",
+    "## 通知同步 Bridge 辅助证据",
+    "",
+    `- 仅在显式开启通知投递诊断时采集：${evidence.notificationSyncBridge.enabled ? "已开启" : "未开启"}`,
+    `- 可用：${evidence.notificationSyncBridge.available ? "是" : "否"}`,
+    `- 不替代真实系统通知展示或点击：${evidence.notificationSyncBridge.supportingOnly ? "是" : "否"}`,
+    `- mode：${evidence.notificationSyncBridge.mode}`,
+    `- conversationId：${evidence.notificationSyncBridge.conversationId || "未采集"}`,
+    `- reminderId：${evidence.notificationSyncBridge.reminderId || "未采集"}`,
+    `- bridgeOutboundLabel：${evidence.notificationSyncBridge.bridgeOutboundLabel || "未采集"}`,
+    `- 截图：${evidence.notificationSyncBridge.screenshotPath}`,
+    ...(evidence.notificationSyncBridge.errors.length > 0
+      ? evidence.notificationSyncBridge.errors.map((error) => `- error：${error}`)
+      : []),
+    "",
     "## 原生键盘输入辅助证据",
     "",
     `- 仅在显式开启时写入并采集：${evidence.nativeKeyboardInput.enabled ? "已开启" : "未开启"}`,
@@ -4532,6 +4786,14 @@ async function main() {
     dryRun: args.dryRun,
     outputDir,
   });
+  const notificationSyncBridge = await collectNotificationSyncBridgeEvidence({
+    conversationId: currentNativeConversationId,
+    dryRun: args.dryRun,
+    enabled: args.seedNotificationDelivery,
+    h5SurfaceScreenshots,
+    outputDir,
+    reminderId: notificationDelivery.reminderId,
+  });
   const checklist = collectChecklistShape();
 
   const evidence = {
@@ -4555,6 +4817,7 @@ async function main() {
       ...(args.seedNotificationDelivery
         ? ["notification_delivery_diagnostics"]
         : []),
+      ...(args.seedNotificationDelivery ? ["notification_sync_bridge"] : []),
       ...(args.seedKeyboardInput ? ["native_keyboard_input"] : []),
       ...(args.seedAttachmentInputs ? ["native_attachment_inputs"] : []),
       ...(keyboardUiTest.available ? ["ios_keyboard_ui_test_artifact"] : []),
@@ -4603,6 +4866,10 @@ async function main() {
     notificationDelivery: {
       ...notificationDelivery,
       commands: compactCommands(notificationDelivery.commands),
+    },
+    notificationSyncBridge: {
+      ...notificationSyncBridge,
+      commands: compactCommands(notificationSyncBridge.commands),
     },
     nativeKeyboardInput: {
       ...nativeKeyboardInput,

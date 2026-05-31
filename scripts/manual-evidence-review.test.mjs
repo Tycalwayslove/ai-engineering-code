@@ -400,6 +400,13 @@ test("manual evidence review keeps partial notification evidence when system del
       deliveredNotificationFound: false,
       errors: ["pending local notification not found before delivery wait"],
     },
+    notificationSyncBridge: {
+      available: true,
+      bridgeOutboundLabel:
+        "notifications.reminders.sync · reminderId=reminder_delivery",
+      reminderId: "reminder_delivery",
+      screenshotPath: "/tmp/notification-reminders-sync-bridge.png",
+    },
     notificationClickBackflow: {
       available: false,
       bridgeInboundLabel:
@@ -419,8 +426,9 @@ test("manual evidence review keeps partial notification evidence when system del
   assert.equal(localNotificationItem.status, "pending");
   assert.match(localNotificationItem.evidence.screenshots.join("\n"), /提醒确认卡/);
   assert.match(localNotificationItem.evidence.screenshots.join("\n"), /H5 提醒页 scheduled 结果/);
+  assert.match(localNotificationItem.evidence.screenshots.join("\n"), /notification-reminders-sync-bridge/);
   assert.match(localNotificationItem.evidence.apiSummaries.join("\n"), /reminder_delivery/);
-  assert.doesNotMatch(localNotificationItem.evidence.bridgeMarkers.join("\n"), /notifications\.reminders\.sync/);
+  assert.match(localNotificationItem.evidence.bridgeMarkers.join("\n"), /notifications\.reminders\.sync/);
   assert.equal(backflowItem.status, "pending");
   assert.match(backflowItem.evidence.screenshots.join("\n"), /通知点击后 H5 reminders 视图/);
   assert.match(backflowItem.evidence.screenshots.join("\n"), /高亮提醒行/);

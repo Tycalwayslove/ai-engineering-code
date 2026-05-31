@@ -210,6 +210,23 @@ function evidenceSuggestionsForItem(item, evidence) {
           `notifications.reminders.sync: ${notificationDelivery.notificationIdentifier ?? "available"}`
         );
       }
+      const notificationSyncBridge = evidence?.notificationSyncBridge;
+      if (notificationSyncBridge?.available) {
+        if (notificationSyncBridge.screenshotPath) {
+          addUnique(
+            suggestions.screenshots,
+            `notifications.reminders.sync Bridge 截图: ${notificationSyncBridge.screenshotPath}`
+          );
+        }
+        if (notificationSyncBridge.bridgeOutboundLabel) {
+          addUnique(
+            suggestions.bridgeMarkers,
+            notificationSyncBridge.bridgeOutboundLabel
+          );
+        } else {
+          addUnique(suggestions.bridgeMarkers, "notifications.reminders.sync");
+        }
+      }
       break;
     }
     case "notification_click_backflow": {

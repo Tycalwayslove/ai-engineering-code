@@ -169,6 +169,9 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(evidence.notificationDelivery.enabled, false);
   assert.equal(evidence.notificationDelivery.available, false);
   assert.equal(evidence.notificationDelivery.supportingOnly, true);
+  assert.equal(evidence.notificationSyncBridge.enabled, false);
+  assert.equal(evidence.notificationSyncBridge.available, false);
+  assert.equal(evidence.notificationSyncBridge.supportingOnly, true);
   assert.equal(evidence.navigationUiTest.available, false);
   assert.match(
     evidence.navigationUiTest.metadataPath,
@@ -523,6 +526,13 @@ test("collect iOS acceptance evidence can opt into notification click backflow s
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: path.join(
+          outputDir,
+          "missing-attachment-ui-test.json"
+        ),
+      },
     }
   );
 
@@ -570,6 +580,13 @@ test("collect iOS acceptance evidence can opt into native keyboard input support
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: path.join(
+          outputDir,
+          "missing-attachment-ui-test.json"
+        ),
+      },
     }
   );
 
@@ -690,6 +707,13 @@ test("collect iOS acceptance evidence can opt into native attachment inputs supp
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: path.join(
+          outputDir,
+          "missing-attachment-ui-test.json"
+        ),
+      },
     }
   );
 
@@ -780,6 +804,14 @@ test("collect iOS acceptance evidence can opt into notification delivery diagnos
   assert.equal(evidence.notificationDelivery.notificationIdentifier, null);
   assert.equal(evidence.notificationDelivery.pendingNotificationFound, false);
   assert.equal(evidence.notificationDelivery.deliveredNotificationFound, false);
+  assert.equal(evidence.notificationSyncBridge.enabled, true);
+  assert.equal(evidence.notificationSyncBridge.available, false);
+  assert.equal(evidence.notificationSyncBridge.mode, "h5_outbound_bridge_capture");
+  assert.match(
+    evidence.notificationSyncBridge.screenshotPath,
+    /notification-reminders-sync-bridge\.png$/
+  );
+  assert.equal(evidence.notificationSyncBridge.supportingOnly, true);
   assert.match(evidence.notificationDelivery.seedInput, /^2分钟后提醒我/);
   assert.equal(evidence.notificationDelivery.seedNow.endsWith("+08:00"), true);
   assert.equal(
@@ -800,8 +832,27 @@ test("collect iOS acceptance evidence can opt into notification delivery diagnos
   assert.ok(
     evidence.automatedEvidence.includes("notification_delivery_diagnostics")
   );
+  assert.ok(evidence.automatedEvidence.includes("notification_sync_bridge"));
   assert.match(summary, /通知投递诊断辅助证据/);
+  assert.match(summary, /通知同步 Bridge 辅助证据/);
   assert.match(summary, /不替代真实系统通知展示或点击/);
+});
+
+test("notification sync bridge can reuse H5 surface outbound messages", () => {
+  const source = fs.readFileSync(scriptPath, "utf8");
+
+  assert.match(source, /bridgeOutboundMessages/);
+  assert.match(source, /function notificationSyncBridgeFromH5Surfaces/);
+  assert.match(
+    source,
+    /message\?\.\s*type === "notifications\.reminders\.sync"/
+  );
+  assert.match(source, /h5SurfaceScreenshots,\s*\n\s*outputDir/);
+  assert.match(source, /supportingOnly: true/);
+  assert.doesNotMatch(
+    source,
+    /notificationSyncBridge[\s\S]{0,240}systemArtifacts/
+  );
 });
 
 test("collect iOS acceptance evidence can opt into calendar permission denial seed", () => {
