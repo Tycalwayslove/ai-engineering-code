@@ -560,3 +560,14 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - `screenshots` 仍只保留“`H5 日程取消动作`”，因为现有自动采证是直接 POST 取消，不证明用户真的在 H5 行内点击取消。
 - `systemArtifacts` 仍保留“`iOS 系统日历事件消失截图`”，来自 Calendar App 取消后辅助截图。
 - 该修正只减少错误分类造成的补证噪音，不会把 `system_calendar_cleanup` 自动标为 `passed`，也不会改变 completion audit 必须绑定人工通过记录的规则。
+
+## 会话持久 ID 重启截图
+
+2026-05-31 的补证治理把会话持久 ID 的自动辅助材料从 plist / API 摘要扩展到重启前后截图。`collect:ios-acceptance-evidence` 在读取 Native `ai-code.native.conversationId` 后，会先保存 `conversation-before-relaunch.png`，再执行 `simctl terminate` / `simctl launch`，等待 App 重新加载后保存 `conversation-after-relaunch.png`，最后再次读取 preferences 并比对 `beforeRelaunch` 和 `afterRelaunch`。
+
+当前边界是：
+
+- 这两张图会进入 `manual-evidence-record.review.json` 的 `conversation_persistence.evidence.screenshots`。
+- review 文案会带上具体 `conversation_ios_*` 值，便于人工把截图、UserDefaults 和 `/agent/conversations/{conversationId}/turns` 摘要对齐复核。
+- 该证据仍是候选证据；`conversation_persistence.status` 必须保持 `pending`，直到人工确认截图、API 摘要和 bridge marker 后再改为 `passed`。
+- 如果截图未显示足够上下文，人工仍可以补录屏或额外截图；completion audit 只负责暴露缺口，不替代人工判断截图质量。

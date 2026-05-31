@@ -2775,11 +2775,22 @@ function prepareCalendarAccessForSystemEvidence({
   return result;
 }
 
-function collectConversationPersistence({ dryRun, simulatorUdid, postRelaunchDelayMs }) {
+function collectConversationPersistence({
+  dryRun,
+  outputDir,
+  simulatorUdid,
+  postRelaunchDelayMs,
+}) {
   const commands = {};
   const result = {
     afterRelaunch: null,
+    afterRelaunchScreenshotPath: outputDir
+      ? path.join(outputDir, "conversation-after-relaunch.png")
+      : null,
     beforeRelaunch: null,
+    beforeRelaunchScreenshotPath: outputDir
+      ? path.join(outputDir, "conversation-before-relaunch.png")
+      : null,
     dataContainer: null,
     expectedPrefix: nativeConversationIdPrefix,
     preferencesPlist: null,
@@ -2813,6 +2824,17 @@ function collectConversationPersistence({ dryRun, simulatorUdid, postRelaunchDel
       preferencesPlist,
       { dryRun }
     );
+    commands.screenshotBeforeRelaunch = run(
+      "xcrun",
+      [
+        "simctl",
+        "io",
+        simulatorUdid ?? "booted",
+        "screenshot",
+        result.beforeRelaunchScreenshotPath ?? "conversation-before-relaunch.png",
+      ],
+      { dryRun }
+    );
     commands.relaunchTerminate = run(
       "xcrun",
       ["simctl", "terminate", simulatorUdid ?? "booted", bundleId],
@@ -2821,6 +2843,17 @@ function collectConversationPersistence({ dryRun, simulatorUdid, postRelaunchDel
     commands.relaunchLaunch = run(
       "xcrun",
       ["simctl", "launch", simulatorUdid ?? "booted", bundleId],
+      { dryRun }
+    );
+    commands.screenshotAfterRelaunch = run(
+      "xcrun",
+      [
+        "simctl",
+        "io",
+        simulatorUdid ?? "booted",
+        "screenshot",
+        result.afterRelaunchScreenshotPath ?? "conversation-after-relaunch.png",
+      ],
       { dryRun }
     );
     commands.readAfterRelaunch = readConversationIdFromPreferences(
@@ -2834,6 +2867,17 @@ function collectConversationPersistence({ dryRun, simulatorUdid, postRelaunchDel
     dryRun,
   });
   result.beforeRelaunch = extractConversationId(commands.readBeforeRelaunch);
+  commands.screenshotBeforeRelaunch = run(
+    "xcrun",
+    [
+      "simctl",
+      "io",
+      simulatorUdid ?? "booted",
+      "screenshot",
+      result.beforeRelaunchScreenshotPath ?? "conversation-before-relaunch.png",
+    ],
+    { dryRun }
+  );
 
   commands.relaunchTerminate = run(
     "xcrun",
@@ -2848,6 +2892,17 @@ function collectConversationPersistence({ dryRun, simulatorUdid, postRelaunchDel
   if (!dryRun) {
     sleep(Math.max(1000, postRelaunchDelayMs ?? 1000));
   }
+  commands.screenshotAfterRelaunch = run(
+    "xcrun",
+    [
+      "simctl",
+      "io",
+      simulatorUdid ?? "booted",
+      "screenshot",
+      result.afterRelaunchScreenshotPath ?? "conversation-after-relaunch.png",
+    ],
+    { dryRun }
+  );
 
   commands.readAfterRelaunch = readConversationIdFromPreferences(preferencesPlist, {
     dryRun,
@@ -2952,6 +3007,7 @@ function collectBuildAndLaunch({
 
   const conversationPersistence = collectConversationPersistence({
     dryRun,
+    outputDir,
     postRelaunchDelayMs: screenshotDelayMs,
     simulatorUdid,
   });

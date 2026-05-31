@@ -71,6 +71,18 @@ function evidenceSuggestionsForItem(item, evidence) {
           `conversationId=conversation_ios_*: ${persistence.beforeRelaunch}`
         );
       }
+      if (persistence.beforeRelaunch && persistence.beforeRelaunchScreenshotPath) {
+        addUnique(
+          suggestions.screenshots,
+          `重启前 conversationId: ${persistence.beforeRelaunch}, screenshot: ${persistence.beforeRelaunchScreenshotPath}`
+        );
+      }
+      if (persistence.afterRelaunch && persistence.afterRelaunchScreenshotPath) {
+        addUnique(
+          suggestions.screenshots,
+          `重启后 conversationId: ${persistence.afterRelaunch}, screenshot: ${persistence.afterRelaunchScreenshotPath}`
+        );
+      }
       if (persistence.stableAcrossRelaunch === true) {
         addUnique(
           suggestions.apiSummaries,

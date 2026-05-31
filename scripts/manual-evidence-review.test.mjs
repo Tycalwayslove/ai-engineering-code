@@ -25,6 +25,13 @@ test("manual evidence review fills objective evidence without passing items", ()
   const record = {
     acceptanceVerdict: "not_evaluated",
     items: [
+      item("conversation_persistence", "会话持久 ID", {
+        screenshots: ["重启前 conversationId", "重启后 conversationId"],
+        recordings: [],
+        apiSummaries: ["/agent/conversations/{conversationId}/turns"],
+        bridgeMarkers: ["conversationId=conversation_ios_*"],
+        systemArtifacts: [],
+      }),
       item("system_calendar_write", "系统日历写入", {
         screenshots: ["H5 日历页 scheduled 结果"],
         recordings: [],
@@ -90,6 +97,15 @@ test("manual evidence review fills objective evidence without passing items", ()
     backendFactSnapshot: {
       conversationId: "conversation_ios_123",
       counts: { calendarEvents: 2 },
+    },
+    ios: {
+      conversationPersistence: {
+        afterRelaunch: "conversation_ios_123",
+        afterRelaunchScreenshotPath: "/tmp/conversation-after-relaunch.png",
+        beforeRelaunch: "conversation_ios_123",
+        beforeRelaunchScreenshotPath: "/tmp/conversation-before-relaunch.png",
+        stableAcrossRelaunch: true,
+      },
     },
     calendarPermissionDenialSeed: {
       available: true,
@@ -161,6 +177,7 @@ test("manual evidence review fills objective evidence without passing items", ()
   };
 
   const review = buildManualEvidenceReview(record, evidence);
+  const persistenceItem = review.items.find((candidate) => candidate.id === "conversation_persistence");
   const calendarItem = review.items.find((candidate) => candidate.id === "system_calendar_write");
   const cleanupItem = review.items.find((candidate) => candidate.id === "system_calendar_cleanup");
   const degradationItem = review.items.find((candidate) => candidate.id === "system_sync_degradation");
@@ -172,9 +189,16 @@ test("manual evidence review fills objective evidence without passing items", ()
 
   assert.equal(review.generatedFromDraft, "manual-evidence-record.draft.json");
   assert.equal(review.acceptanceVerdict, "not_evaluated");
+  assert.equal(persistenceItem.status, "pending");
   assert.equal(calendarItem.status, "pending");
   assert.equal(cleanupItem.status, "pending");
   assert.equal(degradationItem.status, "pending");
+  assert.match(persistenceItem.evidence.screenshots.join("\n"), /重启前 conversationId: conversation_ios_123/);
+  assert.match(persistenceItem.evidence.screenshots.join("\n"), /conversation-before-relaunch/);
+  assert.match(persistenceItem.evidence.screenshots.join("\n"), /重启后 conversationId: conversation_ios_123/);
+  assert.match(persistenceItem.evidence.screenshots.join("\n"), /conversation-after-relaunch/);
+  assert.match(persistenceItem.evidence.apiSummaries.join("\n"), /turns/);
+  assert.match(persistenceItem.evidence.bridgeMarkers.join("\n"), /conversation_ios_123/);
   assert.match(calendarItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件截图/);
   assert.match(calendarItem.evidence.bridgeMarkers.join("\n"), /calendar\.events\.sync/);
   assert.match(cleanupItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件消失截图/);

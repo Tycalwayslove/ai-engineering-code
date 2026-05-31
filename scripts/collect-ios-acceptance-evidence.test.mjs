@@ -92,6 +92,22 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
     evidence.ios.conversationPersistence.expectedPrefix,
     "conversation_ios_"
   );
+  assert.match(
+    evidence.ios.conversationPersistence.beforeRelaunchScreenshotPath,
+    /conversation-before-relaunch\.png$/
+  );
+  assert.match(
+    evidence.ios.conversationPersistence.afterRelaunchScreenshotPath,
+    /conversation-after-relaunch\.png$/
+  );
+  assert.match(
+    evidence.ios.conversationPersistence.commands.screenshotBeforeRelaunch.command,
+    /xcrun simctl io .* screenshot .*conversation-before-relaunch\.png/
+  );
+  assert.match(
+    evidence.ios.conversationPersistence.commands.screenshotAfterRelaunch.command,
+    /xcrun simctl io .* screenshot .*conversation-after-relaunch\.png/
+  );
   assert.equal(evidence.ios.conversationPersistence.stableAcrossRelaunch, null);
   assert.deepEqual(evidence.ios.systemDiagnostics, {});
   assert.deepEqual(Object.keys(evidence.backendFactSnapshot.counts).sort(), [

@@ -4452,3 +4452,35 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段没有改变人工验收边界，但把 completion audit 的缺口分类拉回真实语义：后端 canceled 是 API 摘要，H5 取消动作才是截图缺口。后续补证时可以更快聚焦真实需要人工操作的材料。
+
+## 阶段 162：会话持久 ID 重启前后截图辅助采证
+
+问题背景：
+
+- `conversation_persistence` 已经通过 Native `UserDefaults` 读取到 `beforeRelaunch` 和 `afterRelaunch`，并能证明二者相同。
+- 但人工证据记录仍缺“重启前 conversationId”和“重启后 conversationId”截图，导致 completion audit 把该项保留为缺证据。
+- 采证器本来就在同一流程中执行 `simctl terminate` / `simctl launch`，可以在真实重启前后顺手保存 Simulator 截图，减少人工找时机截图的成本。
+
+完成内容：
+
+- `collectConversationPersistence()` 新增：
+  - `beforeRelaunchScreenshotPath`
+  - `afterRelaunchScreenshotPath`
+  - `screenshotBeforeRelaunch` 命令
+  - `screenshotAfterRelaunch` 命令
+- 真实采证时会写出：
+  - `conversation-before-relaunch.png`
+  - `conversation-after-relaunch.png`
+- dry-run 也会展示将执行的 `simctl io ... screenshot` 命令，便于测试和命令形状复查。
+- `manual-evidence-review` 会把这两张截图预填为：
+  - `重启前 conversationId: ...`
+  - `重启后 conversationId: ...`
+
+验证结果：
+
+- 红灯：新增测试后，`manual-evidence-review.test.mjs` 先因截图未映射失败，`collect-ios-acceptance-evidence.test.mjs` 先因截图路径和命令不存在失败。
+- 绿灯：实现采证字段、截图命令和 review 映射后，两组测试通过。
+
+阶段价值：
+
+这一阶段把会话持久 ID 从“只有 plist/API 文本证据”推进为“重启前后也有可归档截图”。它仍不自动把人工项标记为 `passed`，但能让人工复核人员直接看到当前 run 的重启前后截图路径和同一个 `conversation_ios_*` 值。
