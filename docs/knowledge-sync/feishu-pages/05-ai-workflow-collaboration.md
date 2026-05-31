@@ -690,3 +690,16 @@ AI_CODE_API_BASE_URL="http://${MAC_LAN_IP}:8000"
 ```
 
 采证前需要先确认 H5 / API 已监听到局域网地址，且 `curl "${AI_CODE_H5_NATIVE_BASE_URL}/?native=ios&bridgeDebug=1"` 能看到 H5 页面 marker。completion audit 仍以最新 HEAD 的证据包和人工 filled 记录为准。
+
+## 通知证据的部分可用规则
+
+2026-06-01 的局域网正式采证暴露了一个 notification 证据整理问题：系统 pending / delivered notification 没被 Native 诊断捕获时，`notificationDelivery.available=false` 和 `notificationClickBackflow.available=false` 是正确结论；但这不等于同一轮里所有 H5 / API / Bridge 证据都无效。
+
+当前协作约定：
+
+- `notificationDelivery.available=false` 时，如果后端已经生成并确认了提醒 `reminderId`，review 可以预填 `/reminders` 摘要和 H5 提醒页 scheduled 截图。
+- 只有观测到 `pendingNotificationFound=true`、`deliveredNotificationFound=true` 或整体 `notificationDelivery.available=true`，review 才能预填 `notifications.reminders.sync`。
+- `notificationClickBackflow.available=false` 时，如果 H5 synthetic `native.viewChanged` 已经打开 reminders、目标提醒已高亮、bridge label 包含 `source=native.notifications.reminders.opened`，review 可以预填这些 H5 回流候选证据。
+- 真实系统通知截图、通知权限弹窗和系统通知点击录屏仍必须由人工或系统级采证补齐，不能由 synthetic H5 回流代替。
+
+这个分层让 completion audit 更准确：系统层失败不会吞掉 H5 层已成立的证据，H5 层成立也不会冒充系统通知已投递或已点击。若局域网模式下持续无法观测 pending notification，下一步应修采证脚本的 Native notification sync 等待和诊断，而不是降低验收门槛。

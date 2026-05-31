@@ -4742,3 +4742,34 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把 H5 地址覆盖从“只看到构建地址”推进到“能区分默认地址和局域网地址候选截图”。后续正式采证时仍必须用局域网 `H5_DEV_SERVER_URL` / `AI_CODE_H5_NATIVE_BASE_URL` 重新生成当前 HEAD 证据包，completion audit 才能确认 `h5_address_override.missingEvidence` 是否收敛。
+
+## 阶段 171：通知辅助证据部分可用 review 映射
+
+问题背景：
+
+- HEAD `57c0cc0` 的局域网正式证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260601-57c0cc0` 中，`h5_address_override.missingEvidence=无`。
+- 但该包使用 `--reset-app` 后，Simulator 通知 pending / delivered 诊断没有抓到目标本地通知，`notificationDelivery.available=false`、`notificationClickBackflow.available=false`，导致 review 把部分已经存在的 H5 / API / Bridge 候选证据也丢掉。
+- 根因不是 H5 回流截图不存在：证据包里已有 `notification-click-backflow.png`、`h5StatusText=已从系统通知打开提醒`、`highlightedReminderFound=true` 和 `source=native.notifications.reminders.opened`，只是 `available=false` 包含了“系统 pending notification 未找到”这个更严格条件。
+
+完成内容：
+
+- `manual-evidence-review` 对 `local_notification` 改为分层预填：
+  - 只要 `notificationDelivery` 已生成 `reminderId`，就可预填 H5 提醒页 scheduled 截图和 `/reminders` 摘要。
+  - 只有 `notificationDelivery.available=true`、`pendingNotificationFound=true` 或 `deliveredNotificationFound=true` 时，才预填 `notifications.reminders.sync`。
+- `manual-evidence-review` 对 `notification_click_backflow` 改为保留部分有效证据：
+  - 只要有 `h5OpenedScreenshotPath`，就预填“通知点击后 H5 reminders 视图”。
+  - 只有 `highlightedReminderFound=true` 时，才预填“高亮提醒行”。
+  - 只要有 `bridgeInboundLabel` 或 `reminderId`，就预填 `source=native.notifications.reminders.opened` 和 `/reminders` 摘要。
+  - 系统通知点击录屏仍不自动生成，继续作为人工缺口。
+
+验证结果：
+
+- 红灯：新增 `manual evidence review keeps partial notification evidence when system delivery is missing` 后，测试先因缺少“H5 提醒页 scheduled 结果”失败。
+- 绿灯：补齐分层映射后，同一测试通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 20 项测试。
+- 静态检查：`node --check scripts/manual-evidence-review.mjs` 通过。
+- 对现有 `.tmp/ios-acceptance-evidence/current-head-final-20260601-57c0cc0` 做无写入复算，`missingEvidenceCount` 从 25 回到 19；真实系统通知权限、系统通知截图、`notifications.reminders.sync` 和系统通知点击录屏仍保留为缺口。
+
+阶段价值：
+
+这一阶段没有把系统通知失败伪装成成功，而是把“后端提醒事实 / H5 reminders 展示 / synthetic backflow UI 行为”和“真实系统通知 pending / delivered / 点击录屏”拆开记录。completion audit 的缺口因此更准确：自动可证明的部分不会丢，必须人工补的系统层材料也不会被吞掉。

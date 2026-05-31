@@ -314,3 +314,79 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(pdfItem.evidence.apiSummaries.join("\n"), /attachment_pdf/);
   assert.match(pdfItem.evidence.screenshots.join("\n"), /PDF 文本/);
 });
+
+test("manual evidence review keeps partial notification evidence when system delivery is missing", () => {
+  const record = {
+    acceptanceVerdict: "not_evaluated",
+    items: [
+      item("local_notification", "本地通知", {
+        screenshots: ["提醒确认卡", "H5 提醒页 scheduled 结果", "系统通知截图"],
+        recordings: [],
+        apiSummaries: ["/reminders?conversationId=..."],
+        bridgeMarkers: ["notifications.reminders.sync"],
+        systemArtifacts: ["iOS 通知权限弹窗截图或录屏"],
+      }),
+      item("notification_click_backflow", "通知点击回流", {
+        screenshots: ["通知点击后 H5 reminders 视图", "高亮提醒行"],
+        recordings: [],
+        apiSummaries: ["/reminders?conversationId=..."],
+        bridgeMarkers: ["source=native.notifications.reminders.opened"],
+        systemArtifacts: ["系统通知点击录屏"],
+      }),
+    ],
+  };
+  const evidence = {
+    backendFactSnapshot: {
+      conversationId: "conversation_ios_partial",
+      counts: { reminders: 3 },
+    },
+    h5SurfaceScreenshots: {
+      available: true,
+      surfaces: {
+        reminders: { captured: true, path: "/tmp/reminders.png" },
+      },
+    },
+    acceptanceFactSeed: {
+      confirmationScreenshots: {
+        reminder: {
+          available: true,
+          path: "/tmp/acceptance-reminder-confirmation-card.png",
+        },
+      },
+    },
+    notificationDelivery: {
+      available: false,
+      reminderId: "reminder_delivery",
+      notificationIdentifier: "ai-code.reminder.reminder_delivery",
+      pendingNotificationFound: false,
+      deliveredNotificationFound: false,
+      errors: ["pending local notification not found before delivery wait"],
+    },
+    notificationClickBackflow: {
+      available: false,
+      bridgeInboundLabel:
+        "native.viewChanged · source=native.notifications.reminders.opened · view=reminders · reminderId=reminder_backflow",
+      h5OpenedScreenshotPath: "/tmp/notification-click-backflow.png",
+      highlightedReminderFound: true,
+      h5StatusText: "已从系统通知打开提醒",
+      reminderId: "reminder_backflow",
+      errors: ["pending local notification not found"],
+    },
+  };
+
+  const review = buildManualEvidenceReview(record, evidence);
+  const localNotificationItem = review.items.find((candidate) => candidate.id === "local_notification");
+  const backflowItem = review.items.find((candidate) => candidate.id === "notification_click_backflow");
+
+  assert.equal(localNotificationItem.status, "pending");
+  assert.match(localNotificationItem.evidence.screenshots.join("\n"), /提醒确认卡/);
+  assert.match(localNotificationItem.evidence.screenshots.join("\n"), /H5 提醒页 scheduled 结果/);
+  assert.match(localNotificationItem.evidence.apiSummaries.join("\n"), /reminder_delivery/);
+  assert.doesNotMatch(localNotificationItem.evidence.bridgeMarkers.join("\n"), /notifications\.reminders\.sync/);
+  assert.equal(backflowItem.status, "pending");
+  assert.match(backflowItem.evidence.screenshots.join("\n"), /通知点击后 H5 reminders 视图/);
+  assert.match(backflowItem.evidence.screenshots.join("\n"), /高亮提醒行/);
+  assert.match(backflowItem.evidence.apiSummaries.join("\n"), /reminder_backflow/);
+  assert.match(backflowItem.evidence.bridgeMarkers.join("\n"), /source=native\.notifications\.reminders\.opened/);
+  assert.doesNotMatch(backflowItem.evidence.systemArtifacts.join("\n"), /系统通知点击录屏/);
+});

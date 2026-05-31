@@ -189,28 +189,62 @@ function evidenceSuggestionsForItem(item, evidence) {
           `提醒确认卡: ${reminderConfirmation.path}`
         );
       }
-      if (evidence?.notificationDelivery?.available) {
-        addUnique(suggestions.apiSummaries, `/reminders?conversationId=...: ${apiSummary(evidence, "reminders")}`);
+      const notificationDelivery = evidence?.notificationDelivery;
+      if (notificationDelivery?.available || notificationDelivery?.reminderId) {
         addUnique(
-          suggestions.bridgeMarkers,
-          `notifications.reminders.sync: ${evidence.notificationDelivery.notificationIdentifier ?? "available"}`
+          suggestions.apiSummaries,
+          `/reminders?conversationId=...: reminderId=${notificationDelivery.reminderId ?? "unknown"}, ${apiSummary(evidence, "reminders")}`
         );
         const remindersPath = pathForSurface(evidence, "reminders");
         if (remindersPath) {
           addUnique(suggestions.screenshots, `H5 提醒页 scheduled 结果: ${remindersPath}`);
         }
       }
+      if (
+        notificationDelivery?.available ||
+        notificationDelivery?.pendingNotificationFound ||
+        notificationDelivery?.deliveredNotificationFound
+      ) {
+        addUnique(
+          suggestions.bridgeMarkers,
+          `notifications.reminders.sync: ${notificationDelivery.notificationIdentifier ?? "available"}`
+        );
+      }
       break;
     }
     case "notification_click_backflow": {
-      if (evidence?.notificationClickBackflow?.available) {
-        const path = evidence.notificationClickBackflow.h5OpenedScreenshotPath;
-        addUnique(suggestions.screenshots, `通知点击后 H5 reminders 视图: ${path}`);
-        addUnique(suggestions.screenshots, `高亮提醒行: ${path}`);
+      const backflow = evidence?.notificationClickBackflow;
+      if (backflow) {
+        const path = backflow.h5OpenedScreenshotPath;
+        if (path) {
+          addUnique(suggestions.screenshots, `通知点击后 H5 reminders 视图: ${path}`);
+        }
+        if (path && backflow.highlightedReminderFound) {
+          addUnique(suggestions.screenshots, `高亮提醒行: ${path}`);
+        }
+        if (backflow.reminderId) {
+          addUnique(
+            suggestions.apiSummaries,
+            `/reminders?conversationId=...: reminderId=${backflow.reminderId}, ${apiSummary(evidence, "reminders")}`
+          );
+        }
+        if (backflow.bridgeInboundLabel) {
+          addUnique(
+            suggestions.bridgeMarkers,
+            `source=native.notifications.reminders.opened: ${backflow.bridgeInboundLabel}`
+          );
+        } else if (backflow.reminderId) {
+          addUnique(
+            suggestions.bridgeMarkers,
+            `source=native.notifications.reminders.opened: reminderId=${backflow.reminderId}`
+          );
+        }
+      }
+      if (backflow?.available) {
         addUnique(suggestions.apiSummaries, `/reminders?conversationId=...: ${apiSummary(evidence, "reminders")}`);
         addUnique(
           suggestions.bridgeMarkers,
-          `source=native.notifications.reminders.opened: reminderId=${evidence.notificationClickBackflow.reminderId}`
+          `source=native.notifications.reminders.opened: reminderId=${backflow.reminderId}`
         );
       }
       break;
