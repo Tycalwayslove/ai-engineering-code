@@ -44,7 +44,8 @@
     "validate:sdk-runtime": "node scripts/validate-sdk-runtime.mjs",
     "validate:native-shells": "node --test scripts/validate-native-shells.test.mjs && node scripts/validate-native-shells.mjs",
     "validate:v1-readiness": "node scripts/validate-v1-readiness.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare:ios-manual-evidence-record": "node --test scripts/fill-ios-manual-evidence-record.test.mjs && node scripts/fill-ios-manual-evidence-record.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",

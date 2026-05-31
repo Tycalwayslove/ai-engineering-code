@@ -848,3 +848,15 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 - filled 记录必须通过 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`。
 - 正式完成前必须再次运行 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path> ...`，并确认自动门禁、人工证据和外部同步状态都符合完成条件。
 - 外部知识库同步不能由源稿更新自动推断；未执行真实同步命令时，completion audit 和最终回复都必须保留 `not_synced` / “仓库已更新，外部知识库未同步”。
+
+## 人工验收 filled 记录签署规则
+
+2026-06-01 起，人工验收 filled 记录应优先通过 `pnpm prepare:ios-manual-evidence-record` 生成，而不是直接复制和批量替换 JSON：
+
+- 默认命令只生成草稿：`acceptanceVerdict` 必须保持 `not_evaluated`，所有 item 必须保持 `pending`，`operatorSignoff.mode` 必须是 `draft`。
+- 草稿可以作为人工复核工作台，帮助操作者逐项检查 review 记录中的截图、录屏、API 摘要、bridge marker 和系统 artifact。
+- 只有真实人工复核完成后，才允许使用 `--mark-passed --operator <name> --confirmed-at <iso8601>` 生成通过记录。
+- `--mark-passed` 不是跳过验收的快捷方式；它必须先通过 `validate-ios-manual-evidence-record --require-complete` 的证据完整性校验，缺任何 required evidence 都要失败。
+- 生成 passed filled 记录后，仍需再次运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <filled-path> --require-complete --report <report-path>`，再把该记录交给 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path>`。
+
+协作原则不变：AI 可以整理候选证据、生成草稿和运行校验，但不能代替操作者确认系统权限、系统 App、通知、语音、附件和业务事实是否真实通过。

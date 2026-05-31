@@ -5332,3 +5332,28 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把“自动化门禁是否稳定”从未证明推进到已证明：当前 HEAD 的 full audit 自动命令全部通过。v1 仍不能完成，是因为人工验收结论和外部同步尚未完成，而不是因为工程门禁或机器证据缺口。
+
+## 阶段 189：人工验收 filled 草稿入口
+
+背景：
+
+- HEAD `69af3fb` 的 full audit 已经证明 21 个自动化命令全部通过，`manualEvidence.missingEvidenceCount=0`。
+- 剩余阻塞不是机器缺证据，而是 14 个人工验收 item 仍为 `pending`，`acceptanceVerdict=not_evaluated`。
+- 直接手工编辑 JSON 容易漏掉顶层结论、item 状态、操作者说明或证据完整性校验，因此需要一个明确的 operator sign-off 入口。
+
+实现：
+
+- 新增 `scripts/fill-ios-manual-evidence-record.mjs` 和测试，根命令为 `pnpm prepare:ios-manual-evidence-record`。
+- 默认模式从 `manual-evidence-record.review.json` 生成 `manual-evidence-record.filled.json` 草稿，只补 `generatedFromReview`、`operatorSignoff.mode=draft` 和操作说明，不改变 `acceptanceVerdict=not_evaluated`，也不把 item 从 `pending` 改成 `passed`。
+- `--mark-passed` 模式必须显式传入 `--operator <name>` 和 `--confirmed-at <iso8601>`，并会先用 `--require-complete` 校验证据字段；缺证据时拒绝生成通过记录。
+- 通过记录会统一把 14 个 item 标记为 `passed`、清空 blockers，并追加人工复核备注，方便后续 completion audit 使用。
+
+验证：
+
+- `node --test scripts/fill-ios-manual-evidence-record.test.mjs` 通过。
+- `pnpm prepare:ios-manual-evidence-record` 通过，并在无参数时只输出用法。
+- 针对 `.tmp/ios-acceptance-evidence/current-head-final-20260601-69af3fb-lan/manual-evidence-record.review.json` 生成 filled 草稿后，普通结构校验通过；`--require-complete` 仍按预期失败，说明草稿不会被误判为人工验收通过。
+
+阶段价值：
+
+这一阶段把最后的人工作业从“手改 JSON”收拢成可审计的签署流程：默认先生成安全草稿，只有操作者显式签名和时间戳、且证据字段完整时，才允许生成 completion audit 可消费的 passed 记录。它不降低人工验收门槛，只减少人为漏填和误填。
