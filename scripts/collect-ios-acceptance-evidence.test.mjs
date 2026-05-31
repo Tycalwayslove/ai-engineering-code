@@ -74,7 +74,15 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(evidence.ios.commands.h5DevServerDocument.ok, true);
   assert.match(
     evidence.ios.commands.h5DevServerDocument.stdout,
-    /\[dry-run\] curl -fsS <h5-url>/
+    /\[dry-run\] curl -fsS --max-time \d+ <h5-url>/
+  );
+  assert.match(
+    evidence.serviceHealth.commands.h5.command,
+    /curl -fsS --max-time \d+ -o \/dev\/null -w %\{http_code\} http:\/\/127\.0\.0\.1:3000/
+  );
+  assert.match(
+    evidence.serviceHealth.commands.h5Document.command,
+    /curl -fsS --max-time \d+ http:\/\/127\.0\.0\.1:3000/
   );
   assert.equal(
     evidence.ios.conversationPersistence.storageKey,

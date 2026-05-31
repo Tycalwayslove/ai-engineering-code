@@ -51,6 +51,9 @@ const h5SurfaceLabels = {
 const apiBaseUrl = (
   process.env.AI_CODE_API_BASE_URL ?? "http://127.0.0.1:8000"
 ).replace(/\/+$/, "");
+const h5TargetCurlMaxTimeSeconds = Number(
+  process.env.AI_CODE_IOS_ACCEPTANCE_H5_CURL_MAX_TIME_SECONDS ?? "10"
+);
 function shanghaiSeedNow(date = new Date()) {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-CA", {
@@ -419,21 +422,26 @@ function collectGitState({ dryRun }) {
 function checkH5TargetDocument({ dryRun, url }) {
   const trimmedUrl = typeof url === "string" ? url.trim() : "";
   const isHttpUrl = /^https?:\/\//.test(trimmedUrl);
+  const curlDisplayUrl = isHttpUrl ? trimmedUrl : "<h5-url>";
+  const curlCommand = `curl -fsS --max-time ${h5TargetCurlMaxTimeSeconds} ${curlDisplayUrl}`;
   if (!trimmedUrl || !isHttpUrl || dryRun) {
     return {
       command: {
-        command: isHttpUrl ? `curl -fsS ${trimmedUrl}` : "curl -fsS <h5-url>",
+        command: curlCommand,
         status: dryRun ? 0 : 1,
-        stdout: dryRun
-          ? `[dry-run] curl -fsS ${isHttpUrl ? trimmedUrl : "<h5-url>"}`
-          : "",
+        stdout: dryRun ? `[dry-run] ${curlCommand}` : "",
         stderr: isHttpUrl ? "" : "H5 URL was not found.",
       },
       markerFound: false,
       url: isHttpUrl ? trimmedUrl : null,
     };
   }
-  const command = run("curl", ["-fsS", trimmedUrl]);
+  const command = run("curl", [
+    "-fsS",
+    "--max-time",
+    String(h5TargetCurlMaxTimeSeconds),
+    trimmedUrl,
+  ]);
   return {
     command,
     markerFound:
@@ -447,13 +455,24 @@ function checkH5TargetDocument({ dryRun, url }) {
 function collectServiceHealth({ dryRun }) {
   const api = run(
     "curl",
-    ["-fsS", "-o", "/dev/null", "-w", "%{http_code}", `${apiBaseUrl}/health`],
+    [
+      "-fsS",
+      "--max-time",
+      String(h5TargetCurlMaxTimeSeconds),
+      "-o",
+      "/dev/null",
+      "-w",
+      "%{http_code}",
+      `${apiBaseUrl}/health`,
+    ],
     { dryRun }
   );
   const h5 = run(
     "curl",
     [
       "-fsS",
+      "--max-time",
+      String(h5TargetCurlMaxTimeSeconds),
       "-o",
       "/dev/null",
       "-w",
