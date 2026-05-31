@@ -209,7 +209,7 @@ pnpm validate:ios-voice-ui-test
 pnpm validate:ios-voice-permission-ui-test
 ```
 
-该命令会先对 booted Simulator 中的 `com.aiengineeringcode.shell` 执行 `simctl privacy reset microphone/all`，再通过 Xcode UI test 真实点击 `ai-code.composer.voice-button`，从 SpringBoard 权限弹窗保存 `麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏` screenshot attachment。每次运行会固定写出 `.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.log`、`.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.xcresult` 和 `voice-permission-ui-test.json`，供 completion audit 作为 supporting-only 候选证据。它不替代真实语音识别质量或人工验收结论。
+该命令默认使用 `com.aiengineeringcode.shell.voicepermissionuitest.<run>` 形式的临时 bundle id 构建 App，避免 Speech / Microphone 权限已授权后不再弹窗的 Simulator 状态污染；同时仍会对本轮 bundle id 执行 `simctl privacy reset microphone/all`。随后 Xcode UI test 会真实点击 `ai-code.composer.voice-button`，从 SpringBoard 权限弹窗保存 `麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏` screenshot attachment。每次运行会固定写出 `.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.log`、`.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.xcresult` 和 `voice-permission-ui-test.json`，供 completion audit 作为 supporting-only 候选证据。它不替代真实语音识别质量或人工验收结论。
 
 如果要归档系统通知展示和点击回流候选证据，可以运行：
 

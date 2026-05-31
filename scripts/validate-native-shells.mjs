@@ -150,6 +150,9 @@ assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScrip
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "microphone");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "PRODUCT_BUNDLE_IDENTIFIER");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "com.aiengineeringcode.shell.voicepermissionuitest");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "voicePermissionRunId");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "baseBundleId");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "bundleId");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "testNativeVoicePermissionPromptCanBeCaptured");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "voice-permission-ui-test.json");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "ios-voice-permission-ui-test.log");

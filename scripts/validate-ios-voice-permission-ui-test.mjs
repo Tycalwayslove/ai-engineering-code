@@ -18,10 +18,14 @@ const derivedDataPath =
 const h5DevServerUrl =
   process.env.H5_DEV_SERVER_URL ??
   "http://127.0.0.1:3000/?native=ios&bridgeDebug=1";
-const bundleId =
-  process.env.AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_BUNDLE_ID ??
+const baseBundleId =
+  process.env.AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_BASE_BUNDLE_ID ??
   process.env.AI_CODE_IOS_BUNDLE_ID ??
   "com.aiengineeringcode.shell.voicepermissionuitest";
+const voicePermissionRunId = `run${process.pid}${Date.now().toString(36)}`;
+const bundleId =
+  process.env.AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_BUNDLE_ID ??
+  `${baseBundleId}.${voicePermissionRunId}`;
 const uiTestTarget =
   process.env.AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_TARGET ??
   "AIEngineeringCodeUITests";
@@ -167,6 +171,8 @@ function writeMetadata({ passed, error }) {
       {
         error: error ?? null,
         generatedAt: new Date().toISOString(),
+        baseBundleId,
+        bundleId,
         logPath: path.resolve(rootDir, logPath),
         passed,
         privacyCommands,
