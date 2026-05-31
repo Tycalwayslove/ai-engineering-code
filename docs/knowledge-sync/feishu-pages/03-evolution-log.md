@@ -5267,3 +5267,68 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把 v1 收口的机器可见证据缺口从 1 个降到 0 个：当前 HEAD 的 review 记录已经有所有 required evidence 的候选材料。真正剩余的发布门槛不再是采证脚本缺字段，而是人工验收结论、全量最终门禁和外部同步状态。
+
+## 阶段 187：语音权限 full audit 稳定化
+
+背景：
+
+- HEAD `692ce4d` 后，`pnpm validate:ios-voice-permission-ui-test` 单独运行曾通过，但 full completion audit 中该命令失败。
+- 审计 JSON 显示失败不是 Markdown 呈现问题，而是 XCTest `testNativeVoicePermissionPromptCanBeCaptured` 真正 exit code 65。
+- 进一步复现发现语音按钮进入 `正在听...`，说明权限不是被拒绝，而是 Speech / Microphone 已经授权，系统不会再次弹窗；`simctl privacy` 可列出的服务没有 Speech Recognition，单纯 reset `microphone/all` 不足以保证权限回到未决定状态。
+
+实现：
+
+- `validate:ios-voice-permission-ui-test` 默认改用 `com.aiengineeringcode.shell.voicepermissionuitest.<run>` 临时 bundle id 构建 App，让每次测试对 TCC 来说都是新 App。
+- 保留 `AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_BUNDLE_ID` 精确覆盖，并新增 `AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_BASE_BUNDLE_ID` 作为默认前缀。
+- metadata 新增 `baseBundleId` 和 `bundleId`，便于审计时确认本轮权限弹窗来自哪个测试 bundle。
+- `validate:native-shells` 新增 `voicePermissionRunId`、`baseBundleId` 和 `bundleId` 脚本护栏。
+- iOS README 更新为“临时 bundle id + 本轮 reset”的真实行为说明。
+
+验证：
+
+- 红灯：新增 native-shells 护栏后，`pnpm validate:native-shells` 先因缺少 `voicePermissionRunId` / `baseBundleId` 失败。
+- 绿灯：补齐 run-scoped bundle id 后，`pnpm validate:native-shells` 通过。
+- live UI test：`pnpm validate:ios-voice-permission-ui-test` 连续两次通过，日志中分别使用不同 `com.aiengineeringcode.shell.voicepermissionuitest.run...` bundle id，并保存 `麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏` attachment。
+
+阶段价值：
+
+这一阶段修复的是验收门禁稳定性，而不是降低验收门槛。语音权限弹窗仍必须真实出现并被 xcresult 归档；只是通过临时 bundle id 避免 Simulator 旧授权状态让测试误以为“没有弹窗”。
+
+## 阶段 188：HEAD 69af3fb full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-69af3fb-lan
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-69af3fb-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-69af3fb-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-69af3fb-lan`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-69af3fb-lan`。
+- `headSha=69af3fb`，`packageFreshness.status=current`，`recordHeadSha=69af3fb`。
+- `voicePermissionUiTest.available=true`，语音权限弹窗 UI test 已重新进入证据包。
+- 21 个自动化命令全部 `passed`。
+- `manualEvidence.missingEvidenceCount=0`，但 `manualEvidence.status=failed`、`incompleteItemCount=14`，14 个 item 全部仍为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+- 最终 `verdict=not_complete`。
+
+仍未完成：
+
+- 机器可见证据和自动门禁已经齐，但 review 记录不是人工 filled 记录，不能代表真实验收结论。
+- 下一步必须由人工逐项复核 14 个验收 item，生成 `manual-evidence-record.filled.json` 或等价记录，并把状态改为真实 `passed/failed/blocked`。
+- filled 记录通过 `--require-complete` 后，还要再次运行带 `--run-automated-commands` 的 completion audit。
+- 未真实执行飞书 / Obsidian 同步前，外部同步状态必须保持 `not_synced`。
+
+阶段价值：
+
+这一阶段把“自动化门禁是否稳定”从未证明推进到已证明：当前 HEAD 的 full audit 自动命令全部通过。v1 仍不能完成，是因为人工验收结论和外部同步尚未完成，而不是因为工程门禁或机器证据缺口。

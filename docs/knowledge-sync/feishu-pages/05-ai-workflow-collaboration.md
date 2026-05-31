@@ -823,3 +823,28 @@ HEAD `eee802b` 的 LAN 证据包把 `missingEvidenceCount` 降到 0 后，后续
 - 如果要继续推进 goal complete，必须进入人工复核或 operator sign-off：逐项检查 14 个 item 的截图、录屏、API 摘要、bridge marker 和系统 artifact，然后生成 `manual-evidence-record.filled.json`。
 - 只有 filled 记录通过 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`，并且 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` 通过，才可以考虑把 goal 标记 complete。
 - 若没有真实执行飞书 / Obsidian 同步，外部知识库必须继续记录为 `not_synced`，不能为了 completion 修改成 synced。
+
+## 语音权限 UI test 的 TCC 隔离规则
+
+2026-06-01 的 full audit 复查暴露了一个 Simulator TCC 细节：`simctl privacy reset microphone/all <bundleId>` 不能可靠证明 Speech Recognition 权限也回到“未决定”。当同一个 bundle id 先前已经被授权时，App 点击语音按钮会直接进入录音状态，系统不会再出现语音 / 麦克风权限弹窗，导致 `validate:ios-voice-permission-ui-test` 在 full audit 中失败。
+
+新的协作规则：
+
+- 权限弹窗 UI test 默认使用 run-scoped bundle id，例如 `com.aiengineeringcode.shell.voicepermissionuitest.run...`。
+- metadata 必须记录 `baseBundleId` 和实际 `bundleId`，方便审计判断权限弹窗来自本轮新 App。
+- `AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_BUNDLE_ID` 只作为显式覆盖使用；正式门禁默认不应固定复用一个容易被 TCC 污染的 bundle id。
+- `validate:native-shells` 要守住 run-scoped bundle id 逻辑，避免未来回退到固定 bundle id。
+
+这个规则不改变验收边界：语音权限弹窗仍必须真实触发并归档，不能用 mock transcript 或 synthetic bridge 代替。
+
+## full audit 自动门禁通过后的收尾规则
+
+HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全部 `passed`，并且当前 HEAD 证据包的 `missingEvidenceCount=0`。这意味着工程门禁和机器可见候选证据已齐，但它仍不是 v1 complete。
+
+后续收尾要按以下规则推进：
+
+- `manual-evidence-record.review.json` 即使证据字段齐全，也只是 review 候选材料。只要 14 个 item 仍是 `pending`，`manualEvidence.status` 就必须是 `failed`，`verdict` 必须是 `not_complete`。
+- 下一步不是继续补同类自动证据，而是人工复核并生成 filled 记录：逐项检查截图、录屏、API 摘要、bridge marker、系统 artifact 和操作者说明。
+- filled 记录必须通过 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`。
+- 正式完成前必须再次运行 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path> ...`，并确认自动门禁、人工证据和外部同步状态都符合完成条件。
+- 外部知识库同步不能由源稿更新自动推断；未执行真实同步命令时，completion audit 和最终回复都必须保留 `not_synced` / “仓库已更新，外部知识库未同步”。
