@@ -424,6 +424,16 @@ test("native keyboard evidence requires the backend fact to be visible in H5 rem
   assert.equal(visibleKeyboard.available, true);
 });
 
+test("native keyboard evidence confirms the seed-specific card", () => {
+  const source = fs.readFileSync(scriptPath, "utf8");
+
+  assert.match(source, /filter\(\{\s*hasText: seedRunId\s*\}\)/);
+  assert.doesNotMatch(
+    source,
+    /getByRole\("button", \{ name: "确认" \}\)\.last\(\)\.click/
+  );
+});
+
 test("collect iOS acceptance evidence can opt into native attachment inputs support", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-inputs-")

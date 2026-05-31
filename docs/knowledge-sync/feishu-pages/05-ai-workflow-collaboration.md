@@ -311,6 +311,7 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 
 - 自动脚本负责整理 H5 / 后端处理原生键盘来源输入的候选证据。
 - 采集器会在后端 `/reminders` 找到本轮 `reminderId` 后，把该 `reminderId` 随 `native.viewChanged` 传回 H5 reminders 视图，复用 H5 高亮 / 滚动逻辑把目标提醒展示出来再截图。
+- 在脏会话里可能残留旧确认卡，因此键盘辅助采集必须只点击包含当前 `seedRunId` 的确认卡，不能使用全局最后一个“确认”按钮。
 - `nativeKeyboardInput.backendBridgeAvailable` 只表示 `source=native.composer.keyboard` bridge marker、H5 确认卡和后端 `/reminders` 的 `reminderId` 已形成闭环；`nativeKeyboardInput.available` 仍要求 `h5ReminderVisible=true` 且无错误，避免把没有展示目标提醒的截图预填为通过候选。
 - 人工验收仍负责真实 Native 输入框获得焦点、系统键盘弹出、用户实际输入和点击发送的截图或录屏。
 - review 文件仍保持 `status=pending` 和 `acceptanceVerdict=not_evaluated`，不能把候选证据自动改成通过。

@@ -2412,10 +2412,15 @@ async function seedNativeKeyboardInput({
     await expect(surfaceRegion).toContainText(keyboard.seedInput, {
       timeout: 10000,
     });
-    await expect(surfaceRegion).toContainText("确认", { timeout: 20000 });
+    const seedConfirmationCard = surfaceRegion
+      .locator("article")
+      .filter({ hasText: seedRunId })
+      .filter({ has: page.getByRole("button", { name: "确认" }) })
+      .last();
+    await expect(seedConfirmationCard).toContainText("确认", { timeout: 20000 });
     keyboard.confirmationCardFound = true;
 
-    await page.getByRole("button", { name: "确认" }).last().click();
+    await seedConfirmationCard.getByRole("button", { name: "确认" }).click();
     await expect(page.locator("body")).toContainText(
       "已确认执行，数据库视图和执行记录已刷新",
       { timeout: 20000 }
