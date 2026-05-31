@@ -5416,3 +5416,29 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把最新代码 HEAD 的工程侧收尾重新证明为“自动化全绿、机器证据齐、证据包新鲜”。v1 仍不能完成的唯一产品验收阻塞已经收敛为人工 operator sign-off：必须由真实操作者逐项复核 14 个 item 后，再用 filled 记录标记 `passed` 并重跑 completion audit。AI 不能代替这一步。
+
+## 阶段 192：人工验收 Review Pack 入口
+
+背景：
+
+- HEAD `44574d1` 的 full audit 已经证明自动化命令全绿、机器证据缺口为 0，但 14 个人工验收 item 仍是 `pending`。
+- `manual-evidence-record.review.json` 是结构化 JSON，适合机器校验，但不适合操作者快速浏览每个 item 的证据、缺口和签署边界。
+- filled 草稿入口已经能生成签署文件，但签署前还需要一个只读复核包，避免操作者直接面对 JSON 漏看 `packageFreshness`、`acceptanceVerdict` 或 stale HEAD 风险。
+
+实现：
+
+- 新增 `scripts/generate-ios-manual-review-pack.mjs` 和测试，根命令为 `pnpm prepare:ios-manual-review-pack`。
+- 命令输入 `--record <manual-evidence-record.review.json>`，默认在同目录写出 `manual-evidence-review-pack.md`。
+- Review Pack 汇总 record 路径、输出路径、record HEAD、当前 HEAD、`packageFreshness`、`acceptanceVerdict`、manual flags、item 状态统计、每个 item 的缺少候选证据和已预填证据。
+- 当 record HEAD 与当前 HEAD 不一致时，pack 会标记 `packageFreshness: stale`，提醒不能把旧 HEAD 证据当成当前代码验收。
+- `validate:native-shells` 已新增护栏，确保根命令、脚本、测试、`packageFreshness` 和“本文件不代表验收通过”等边界文案不会被移除。
+
+验证：
+
+- `node --test scripts/generate-ios-manual-review-pack.test.mjs` 通过，3 个测试全部 pass。
+- `pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/current-head-final-20260601-44574d1-lan/manual-evidence-record.review.json` 通过，并生成 `.tmp/ios-acceptance-evidence/current-head-final-20260601-44574d1-lan/manual-evidence-review-pack.md`。
+- `pnpm validate:native-shells`、`pnpm validate:context-sync` 和 `git diff --check` 通过。
+
+阶段价值：
+
+这一阶段没有降低验收门槛，而是把最后的人工 operator sign-off 变得可读、可检查、可追踪。Review Pack 是签署前的复核工作台，不是通过证明；只有真实操作者生成 passed filled 记录，并通过 `--require-complete` 和 full completion audit，v1 goal 才能继续收口。

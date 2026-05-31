@@ -78,6 +78,20 @@ assertIncludes(packageJsonPath, packageJson, '"validate:v1-readiness"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-v1-readiness.mjs");
 assertIncludes(packageJsonPath, packageJson, '"collect:v1-completion-audit"');
 assertIncludes(packageJsonPath, packageJson, "scripts/collect-v1-completion-audit.mjs");
+assertIncludes(packageJsonPath, packageJson, '"prepare:ios-manual-review-pack"');
+assertIncludes(packageJsonPath, packageJson, "scripts/generate-ios-manual-review-pack.mjs");
+
+const iosManualReviewPackScriptPath = "scripts/generate-ios-manual-review-pack.mjs";
+const iosManualReviewPackScript = readRequired(iosManualReviewPackScriptPath);
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "buildManualReviewPack");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "packageFreshness");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "本文件不代表验收通过");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--mark-passed --operator");
+
+const iosManualReviewPackTestPath = "scripts/generate-ios-manual-review-pack.test.mjs";
+const iosManualReviewPackTest = readRequired(iosManualReviewPackTestPath);
+assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "manual review pack summarizes pending statuses");
+assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "packageFreshness: `stale`");
 
 const v1CompletionAuditScriptPath = "scripts/collect-v1-completion-audit.mjs";
 const v1CompletionAuditScript = readRequired(v1CompletionAuditScriptPath);

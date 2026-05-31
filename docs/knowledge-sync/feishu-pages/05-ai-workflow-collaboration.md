@@ -861,6 +861,18 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 
 协作原则不变：AI 可以整理候选证据、生成草稿和运行校验，但不能代替操作者确认系统权限、系统 App、通知、语音、附件和业务事实是否真实通过。
 
+## 人工验收 Review Pack 规则
+
+2026-06-01 起，人工验收签署前应优先运行 `pnpm prepare:ios-manual-review-pack -- --record <review-path>`，把 `manual-evidence-record.review.json` 转成 `manual-evidence-review-pack.md`：
+
+- Review Pack 只负责把操作者需要看的内容聚合到 Markdown：record 路径、输出路径、record HEAD、当前 HEAD、`packageFreshness`、`acceptanceVerdict`、manual flags、item 状态统计、每个 item 的缺少候选证据和已预填证据。
+- 如果 record HEAD 和当前 HEAD 不一致，pack 必须标记 `packageFreshness: stale`，并提醒不要把旧 HEAD 证据当作当前代码验收。
+- Pack 必须明确写出“本文件不代表验收通过”；`pending`、`not_evaluated` 或 stale 记录只能用于复核，不能进入 passed 结论。
+- Pack 可以给出后续命令，包括 `pnpm prepare:ios-manual-evidence-record -- --mark-passed --operator <name> --confirmed-at <iso8601>`、`validate-ios-manual-evidence-record --require-complete` 和 `collect:v1-completion-audit --run-automated-commands`。
+- native-shells 护栏要检查 review pack 入口，避免未来重构时把人工复核工作台从根命令或脚本中移除。
+
+这个入口解决的是“人工看什么、按什么顺序签署”的操作成本，不改变验收边界。AI 仍不能自行把 review 记录改成 passed，也不能用 Review Pack 替代操作者签名。
+
 ## 验收事实 seed 文案规则
 
 自动采证中的 seed 文案要优先选择结构化、单义、抗历史上下文污染的表达：

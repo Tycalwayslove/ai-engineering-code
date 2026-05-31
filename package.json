@@ -45,7 +45,8 @@
     "validate:native-shells": "node --test scripts/validate-native-shells.test.mjs && node scripts/validate-native-shells.mjs",
     "validate:v1-readiness": "node scripts/validate-v1-readiness.mjs",
     "format": "prettier --write .",
-    "prepare:ios-manual-evidence-record": "node --test scripts/fill-ios-manual-evidence-record.test.mjs && node scripts/fill-ios-manual-evidence-record.mjs"
+    "prepare:ios-manual-evidence-record": "node --test scripts/fill-ios-manual-evidence-record.test.mjs && node scripts/fill-ios-manual-evidence-record.mjs",
+    "prepare:ios-manual-review-pack": "node --test scripts/generate-ios-manual-review-pack.test.mjs && node scripts/generate-ios-manual-review-pack.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",

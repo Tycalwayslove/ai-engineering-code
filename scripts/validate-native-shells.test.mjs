@@ -18,6 +18,8 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
     "node --test scripts/validate-native-shells.test.mjs && node scripts/validate-native-shells.mjs"
   );
   assert.match(validator, /"collect:v1-completion-audit"/);
+  assert.match(validator, /"prepare:ios-manual-review-pack"/);
+  assert.match(validator, /scripts\/generate-ios-manual-review-pack\.mjs/);
   assert.match(validator, /scripts\/collect-v1-completion-audit\.mjs/);
   assert.match(validator, /const v1CompletionAuditTestPath/);
   assert.match(validator, /readRequired\(v1CompletionAuditTestPath\)/);
