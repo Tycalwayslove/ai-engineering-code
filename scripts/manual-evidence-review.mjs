@@ -308,6 +308,58 @@ function evidenceSuggestionsForItem(item, evidence) {
     case "photo_attachment":
     case "file_attachment":
     case "pdf_text_extraction": {
+      const attachmentUiTest = evidence?.attachmentUiTest;
+      if (attachmentUiTest?.available) {
+        const xcresult = attachmentUiTest.resultBundlePath ?? "未采集";
+        const log = attachmentUiTest.logPath ?? "未采集";
+        const screenshots = attachmentUiTest.screenshotAttachments ?? {};
+        if (item.id === "photo_attachment") {
+          const photoFlow =
+            screenshots.photoPickerFlow ?? screenshots.attachmentMenu;
+          if (photoFlow) {
+            addUnique(
+              suggestions.screenshots,
+              `PhotosPicker 选择流程: ${photoFlow} (${xcresult})`
+            );
+            addUnique(
+              suggestions.systemArtifacts,
+              `PhotosPicker 权限与选择器截图: ${photoFlow} (${xcresult})`
+            );
+          }
+        }
+        if (item.id === "file_attachment") {
+          const fileFlow =
+            screenshots.fileImporterFlow ?? screenshots.attachmentMenu;
+          if (fileFlow) {
+            addUnique(
+              suggestions.screenshots,
+              `fileImporter 选择流程: ${fileFlow} (${xcresult})`
+            );
+            addUnique(
+              suggestions.systemArtifacts,
+              `Files 选择器截图: ${fileFlow} (${xcresult})`
+            );
+          }
+        }
+        if (item.id === "pdf_text_extraction") {
+          const pdfFlow =
+            screenshots.pdfPickerFlow ??
+            screenshots.fileImporterFlow ??
+            screenshots.attachmentMenu;
+          if (pdfFlow) {
+            addUnique(
+              suggestions.screenshots,
+              `PDF 选择流程: ${pdfFlow} (${xcresult})`
+            );
+          }
+        }
+        if (attachmentUiTest.logPath || attachmentUiTest.resultBundlePath) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `pnpm validate:ios-attachment-ui-test 输出或 xcresult: log=${log}, xcresult=${xcresult}`
+          );
+        }
+      }
       const sample = evidence?.nativeAttachmentInputs?.samples?.find(
         (candidate) => candidate.itemId === item.id
       );

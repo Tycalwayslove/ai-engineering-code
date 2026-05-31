@@ -213,6 +213,17 @@ test("manual evidence review fills objective evidence without passing items", ()
         headerTimeline: "Header Timeline 切换截图",
       },
     },
+    attachmentUiTest: {
+      available: true,
+      logPath: "/tmp/ios-attachment-ui-test.log",
+      resultBundlePath: "/tmp/ios-attachment-ui-test.xcresult",
+      screenshotAttachments: {
+        attachmentMenu: "附件菜单",
+        fileImporterFlow: "fileImporter 选择流程",
+        pdfPickerFlow: "PDF 选择流程",
+        photoPickerFlow: "PhotosPicker 选择流程",
+      },
+    },
     nativeAttachmentInputs: {
       available: true,
       screenshotPath: "/tmp/native-attachment-inputs.png",
@@ -320,16 +331,22 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(navigationItem.evidence.systemArtifacts.join("\n"), /ios-navigation-ui-test\.xcresult/);
   assert.match(navigationItem.evidence.systemArtifacts.join("\n"), /输出或 xcresult/);
   assert.match(photoItem.evidence.screenshots.join("\n"), /native-attachment-inputs/);
+  assert.match(photoItem.evidence.screenshots.join("\n"), /PhotosPicker 选择流程/);
   assert.match(photoItem.evidence.screenshots.join("\n"), /费用确认卡或金额追问/);
   assert.match(photoItem.evidence.screenshots.join("\n"), /native-attachment-photo-expense-follow-up/);
+  assert.match(photoItem.evidence.systemArtifacts.join("\n"), /PhotosPicker 权限与选择器截图/);
+  assert.match(photoItem.evidence.systemArtifacts.join("\n"), /ios-attachment-ui-test\.xcresult/);
   assert.match(photoItem.evidence.apiSummaries.join("\n"), /attachment_photo/);
   assert.match(photoItem.evidence.apiSummaries.join("\n"), /\/expenses\?conversationId=.*expense_photo/);
   assert.match(photoItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.attachment\.photo/);
   assert.match(photoItem.evidence.bridgeMarkers.join("\n"), /attachmentKind=image/);
+  assert.match(fileItem.evidence.screenshots.join("\n"), /fileImporter 选择流程/);
+  assert.match(fileItem.evidence.systemArtifacts.join("\n"), /Files 选择器截图/);
   assert.match(fileItem.evidence.apiSummaries.join("\n"), /attachment_file/);
   assert.match(fileItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.attachment\.file/);
   assert.match(pdfItem.evidence.apiSummaries.join("\n"), /attachment_pdf/);
   assert.match(pdfItem.evidence.screenshots.join("\n"), /PDF 文本/);
+  assert.match(pdfItem.evidence.screenshots.join("\n"), /PDF 选择流程/);
   assert.match(pdfItem.evidence.screenshots.join("\n"), /后续追问或确认卡/);
   assert.match(pdfItem.evidence.screenshots.join("\n"), /native-attachment-pdf-schedule-follow-up/);
   assert.match(pdfItem.evidence.systemArtifacts.join("\n"), /PDF 样本文本摘要截图/);

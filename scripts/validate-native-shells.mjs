@@ -141,6 +141,10 @@ assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "Native
 assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "testNativeAttachmentButtonPresentsAttachmentChoices");
 assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "CODE_SIGNING_ALLOWED=NO");
 assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "Executed");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "-resultBundlePath");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "attachment-ui-test.json");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "ios-attachment-ui-test.log");
+assertIncludes(iosAttachmentUiTestScriptPath, iosAttachmentUiTestScript, "ios-attachment-ui-test.xcresult");
 
 const iosNavigationUiTestScriptPath = "scripts/validate-ios-navigation-ui-test.mjs";
 const iosNavigationUiTestScript = readRequired(iosNavigationUiTestScriptPath);

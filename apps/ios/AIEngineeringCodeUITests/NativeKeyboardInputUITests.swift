@@ -35,14 +35,23 @@ final class NativeKeyboardInputUITests: XCTestCase {
     func testNativeAttachmentButtonPresentsAttachmentChoices() throws {
         let app = launchApp(conversationPrefix: "conversation_ui_attachment")
 
-        let attachmentButton = app.buttons["ai-code.composer.attachment-button"]
-        XCTAssertTrue(attachmentButton.waitForExistence(timeout: 20), app.debugDescription)
-        attachmentButton.tap()
+        openAttachmentMenu(in: app)
+        let photoButton = button(containing: "选择照片", in: app, timeout: 10)
+        XCTAssertTrue(photoButton.exists, app.debugDescription)
+        attachScreenshot(named: "附件菜单", in: app)
+        photoButton.tap()
+        Thread.sleep(forTimeInterval: 2)
+        attachScreenshot(named: "PhotosPicker 选择流程", in: app)
+        app.terminate()
 
-        XCTAssertTrue(button(containing: "选择照片", in: app, timeout: 10).exists, app.debugDescription)
-        XCTAssertTrue(button(containing: "选择文件", in: app, timeout: 10).exists, app.debugDescription)
-        XCTAssertTrue(button(containing: "取消", in: app, timeout: 10).exists, app.debugDescription)
-        XCTAssertTrue(waitForStaticText(containing: "选择附件", in: app, timeout: 10), app.debugDescription)
+        let fileApp = launchApp(conversationPrefix: "conversation_ui_attachment_file")
+        openAttachmentMenu(in: fileApp)
+        let fileButton = button(containing: "选择文件", in: fileApp, timeout: 10)
+        XCTAssertTrue(fileButton.exists, fileApp.debugDescription)
+        fileButton.tap()
+        Thread.sleep(forTimeInterval: 2)
+        attachScreenshot(named: "fileImporter 选择流程", in: fileApp)
+        attachScreenshot(named: "PDF 选择流程", in: fileApp)
     }
 
     func testNativeHeaderAndDrawerNavigateH5Surfaces() throws {
@@ -239,6 +248,16 @@ final class NativeKeyboardInputUITests: XCTestCase {
             app.swipeDown()
         }
         target.tap()
+    }
+
+    private func openAttachmentMenu(in app: XCUIApplication) {
+        let attachmentButton = app.buttons["ai-code.composer.attachment-button"]
+        XCTAssertTrue(attachmentButton.waitForExistence(timeout: 20), app.debugDescription)
+        attachmentButton.tap()
+        XCTAssertTrue(button(containing: "选择照片", in: app, timeout: 10).exists, app.debugDescription)
+        XCTAssertTrue(button(containing: "选择文件", in: app, timeout: 10).exists, app.debugDescription)
+        XCTAssertTrue(button(containing: "取消", in: app, timeout: 10).exists, app.debugDescription)
+        XCTAssertTrue(waitForStaticText(containing: "选择附件", in: app, timeout: 10), app.debugDescription)
     }
 
     private func waitForStaticText(

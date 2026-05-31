@@ -427,6 +427,85 @@ test("collect iOS acceptance evidence reads voice UI test metadata", () => {
   assert.match(voiceReviewItem.evidence.systemArtifacts.join("\n"), /ios-voice-ui-test\.xcresult/);
 });
 
+test("collect iOS acceptance evidence reads attachment UI test metadata", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-ui-")
+  );
+  const artifactDir = path.join(outputDir, "attachment-artifacts");
+  const logPath = path.join(artifactDir, "ios-attachment-ui-test.log");
+  const metadataPath = path.join(artifactDir, "attachment-ui-test.json");
+  const resultBundlePath = path.join(artifactDir, "ios-attachment-ui-test.xcresult");
+  fs.mkdirSync(resultBundlePath, { recursive: true });
+  fs.writeFileSync(logPath, "attachment ui test log");
+  fs.writeFileSync(
+    metadataPath,
+    `${JSON.stringify({
+      generatedAt: "2026-06-01T00:00:00.000Z",
+      logPath,
+      passed: true,
+      resultBundlePath,
+      screenshotAttachments: {
+        attachmentMenu: "附件菜单",
+        fileImporterFlow: "fileImporter 选择流程",
+        pdfPickerFlow: "PDF 选择流程",
+        photoPickerFlow: "PhotosPicker 选择流程",
+      },
+      sourceMarkers: [
+        "source=native.composer.attachment.photo",
+        "source=native.composer.attachment.file",
+      ],
+    })}\n`
+  );
+
+  const result = spawnSync(
+    "node",
+    [scriptPath, "--dry-run", "--output-dir", outputDir],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: metadataPath,
+      },
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manifest.json"), "utf8")
+  );
+  const review = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manual-evidence-record.review.json"), "utf8")
+  );
+  const photoReviewItem = review.items.find((item) => item.id === "photo_attachment");
+  const fileReviewItem = review.items.find((item) => item.id === "file_attachment");
+  const pdfReviewItem = review.items.find((item) => item.id === "pdf_text_extraction");
+
+  assert.equal(evidence.attachmentUiTest.available, true);
+  assert.equal(evidence.attachmentUiTest.logPath, logPath);
+  assert.equal(evidence.attachmentUiTest.resultBundlePath, resultBundlePath);
+  assert.equal(
+    evidence.attachmentUiTest.screenshotAttachments.photoPickerFlow,
+    "PhotosPicker 选择流程"
+  );
+  assert.ok(evidence.automatedEvidence.includes("ios_attachment_ui_test_artifact"));
+  assert.ok(
+    manifest.items
+      .find((item) => item.item === "照片附件")
+      .supportingEvidenceSignals.includes("ios_attachment_ui_test_artifact")
+  );
+  assert.match(photoReviewItem.evidence.screenshots.join("\n"), /PhotosPicker 选择流程/);
+  assert.match(photoReviewItem.evidence.systemArtifacts.join("\n"), /PhotosPicker 权限与选择器截图/);
+  assert.match(photoReviewItem.evidence.systemArtifacts.join("\n"), /ios-attachment-ui-test\.xcresult/);
+  assert.match(fileReviewItem.evidence.screenshots.join("\n"), /fileImporter 选择流程/);
+  assert.match(fileReviewItem.evidence.systemArtifacts.join("\n"), /Files 选择器截图/);
+  assert.match(pdfReviewItem.evidence.screenshots.join("\n"), /PDF 选择流程/);
+});
+
 test("collect iOS acceptance evidence can opt into notification click backflow support", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-notification-click-")
