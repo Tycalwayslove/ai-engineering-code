@@ -4710,3 +4710,10 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把键盘输入从“真实 UI test 已能跑通”推进到“真实输入框文本可被证据包引用”。它仍不自动把键盘输入验收改为 `passed`，但能减少人工整理截图和 completion audit 缺口。
+
+补充审计：
+
+- 提交 `71aa8fe test(ios): 归档原生键盘证据` 后，重新生成 `.tmp/ios-acceptance-evidence/current-head-final-20260601-71aa8fe`。
+- 对应 audit `.tmp/v1-completion-audit/current-best-final-20260601-71aa8fe` 显示 `missingEvidenceCount=19`、`verdict=not_complete`。
+- `keyboard_input.missingEvidence=无`，review 中包含“输入框文本” xcresult attachment、H5 确认卡和提醒页截图、`/reminders` 摘要以及 `source=native.composer.keyboard`。
+- 所有人工项仍为 `pending`，不能把 goal 标记为 complete。
