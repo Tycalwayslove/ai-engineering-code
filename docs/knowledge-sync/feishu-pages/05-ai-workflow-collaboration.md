@@ -884,7 +884,7 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 
 ## 自动化全绿后的停线边界
 
-HEAD `44574d1` 的 full audit 给出一个清晰边界：自动化命令全部 `passed`、机器证据缺口为 0、证据包 HEAD 新鲜，但 v1 仍是 `not_complete`。
+HEAD `0e25651` 的 full audit 给出一个清晰边界：自动化命令全部 `passed`、机器证据缺口为 0、证据包 HEAD 新鲜，但 v1 仍是 `not_complete`。
 
 后续协作必须遵守：
 

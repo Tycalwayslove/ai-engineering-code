@@ -5442,3 +5442,38 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段没有降低验收门槛，而是把最后的人工 operator sign-off 变得可读、可检查、可追踪。Review Pack 是签署前的复核工作台，不是通过证明；只有真实操作者生成 passed filled 记录，并通过 `--require-complete` 和 full completion audit，v1 goal 才能继续收口。
+
+## 阶段 193：HEAD 0e25651 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-0e25651-lan
+
+pnpm prepare:ios-manual-review-pack -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-0e25651-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-0e25651-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-0e25651-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0e25651-lan`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0e25651-lan/manual-evidence-review-pack.md`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-0e25651-lan`。
+- `manifest.headSha=0e25651`，`manual-evidence-record.review.json.headSha=0e25651`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=0e25651`，`currentHeadSha=0e25651`。
+- 21 个自动化命令全部 `passed`，包括 contracts、product smoke、Postgres smoke、H5 click smoke、iOS build / simulator smoke、6 条 iOS UI test、manual acceptance / manual evidence record / acceptance evidence、LLM smoke、SDK / context / readiness / native-shells 和 `git diff --check`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把新增 Review Pack 入口后的最新 HEAD 重新拉回 current evidence / current audit 状态。工程门禁和机器候选证据已经再次证明齐全，剩余阻塞没有变化：必须由真实操作者逐项复核 14 个 item，生成 passed filled 记录并重跑 full completion audit；AI 仍不能代替人工签署。
