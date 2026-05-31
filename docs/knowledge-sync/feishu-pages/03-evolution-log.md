@@ -4641,3 +4641,42 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段不是新增用户能力，而是把 completion audit 的证据归档路径打磨得更贴近真实运行。导航证据现在能被 requiredEvidence 精确识别，附件采证能吸收异步写入延迟；两者仍然只生成人工 review 候选材料，不会自动把系统能力验收置为 `passed`。
+
+## 阶段 168：HEAD 5c2ffba 辅助证据包与 audit 刷新
+
+完成内容：
+
+- 在提交 `5c2ffba test(ios): 稳定导航与附件证据归档` 后，重新运行 `pnpm validate:ios-navigation-ui-test`，1 个 XCTest 通过，并刷新 `.tmp/ios-navigation-ui-test/ios-navigation-ui-test.log`、`.tmp/ios-navigation-ui-test/ios-navigation-ui-test.xcresult` 和 metadata。
+- 运行正式证据包：
+
+```bash
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-5c2ffba
+```
+
+- 运行 completion audit：
+
+```bash
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-5c2ffba --external-knowledge-status not_synced
+```
+
+结果摘要：
+
+- 正式证据包绑定 HEAD `5c2ffba`。
+- `navigationUiTest.available=true`。
+- `nativeAttachmentInputs.available=true`，照片、文件、PDF 三类 seed 均有后端 attachment ID。
+- `calendarCleanupSeed.available=true`，并包含 `calendar-cleanup-h5-cancel-action.png`。
+- completion audit 自动选择当前 HEAD 的 `manual-evidence-record.review.json`，`missingEvidenceCount=20`、`verdict=not_complete`。
+- `navigation_surfaces`、`conversation_persistence`、`system_calendar_write`、`system_calendar_cleanup`、`backend_fact_confirmation` 和 `system_sync_degradation` 的 `missingEvidence=无`，但状态仍为 `pending`。
+
+当前剩余缺口：
+
+- 全局 `acceptanceVerdict` 仍需人工改为 `passed`。
+- H5 地址覆盖仍缺“局域网地址 App 启动截图”。
+- 键盘输入仍缺“输入框文本”截图。
+- 语音输入仍缺权限弹窗、识别文本、H5 确认卡、`/reminders` 摘要、`source=native.composer.voice` 和系统权限截图。
+- 附件输入仍缺真实 PhotosPicker / Files / PDF 选择流程、费用确认或追问、`/expenses` 摘要和系统选择器截图。
+- 本地通知和通知点击回流仍缺系统通知截图 / 点击录屏等系统级人工材料。
+
+阶段价值：
+
+这一阶段把最新 HEAD 的自动候选证据状态钉住：工程辅助证据已经明显收敛，但 completion audit 仍正确阻止 goal 被标为完成。后续重点不再是补自动脚本花活，而是补真实系统交互截图 / 录屏并生成人工 filled 记录。

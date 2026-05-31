@@ -641,3 +641,18 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - 重试只用于吸收本地 H5 / API / DB 之间的短暂延迟，不得掩盖真实业务失败。
 - 查询范围可以适度放宽，例如从 `limit=20` 调整到 `limit=50`，但最终仍必须按本轮 seed 的 `attachmentId` 精确匹配。
 - 自动化只能减少人工整理成本；系统能力是否通过仍以人工 filled 记录、截图质量和 completion audit 为准。
+
+## completion audit 后的状态记录
+
+2026-06-01 的 HEAD `5c2ffba` 证据包刷新确认了当前协作边界：
+
+- 自动辅助证据可以把 `missingEvidence` 收敛到更少、更准确的人工缺口；本轮从上一包 33 个缺口降到 20 个。
+- `missingEvidence=无` 不代表该项完成。只要人工记录里 item `status` 仍是 `pending`，completion audit 就必须保持 `not_complete`。
+- 证据包、manual review 和 audit 必须绑定当前 HEAD。若为了记录阶段结果再提交文档，就需要重新生成证据包或在最终说明中明确当前证据对应的 commit。
+- 外部知识库同步状态必须显式记录。若只更新仓库源稿、没有真实执行飞书或 Obsidian 同步，最终回复必须说明“仓库已更新，外部知识库未同步”。
+
+后续执行顺序建议：
+
+1. 先补真实系统交互截图 / 录屏和 API 摘要。
+2. 再复制 `manual-evidence-record.review.json` 为 filled 记录，并由人工把可通过项改为 `passed`。
+3. 最后用该 filled 记录跑 `collect:v1-completion-audit`，不要用自动 review 记录冒充人工完成记录。

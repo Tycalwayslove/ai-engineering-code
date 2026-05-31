@@ -5,7 +5,7 @@
 - domain: working
 - area: active-context
 - status: current
-- last_updated: 2026-05-31
+- last_updated: 2026-06-01
 - sourcePath: `ai-factory/memory/working/active-context/current-project-state.md`
 
 ## 新窗口必读摘要
@@ -174,6 +174,7 @@
 - 2026-05-31 live 采证暴露长期会话中 seed 日程可能被 H5 日程页 `slice(-6)` 隐藏，且 `native.hostContext` 初始刷新可能和带目标 eventId 的 `native.viewChanged` 竞态。已增强 H5 calendar focus：`native.viewChanged` 支持 `eventId` / `calendarEventId`，日程列表会把 `focusedCalendarEventId` 置入最近列表并高亮；采证器会最多 3 次发送带 `eventId` 的 calendar focus 后再点击取消。脏工作区 live 验证包 `.tmp/ios-acceptance-evidence/worktree-h5-calendar-focus-retry-20260531` 显示 `calendarCleanupSeed.available=true`、`h5CancelActionScreenshot.available=true`，audit 缺口降到 25；提交后仍需用最新 HEAD 重跑正式证据包和 audit。
 - 2026-05-31 已补齐原生导航 / 页面切换 UI test 证据归档：`validate:ios-navigation-ui-test` 现在固定写出 `.tmp/ios-navigation-ui-test/ios-navigation-ui-test.log`、`.tmp/ios-navigation-ui-test/ios-navigation-ui-test.xcresult` 和 `navigation-ui-test.json` metadata；iOS UI test 会在 Header Timeline 和 Drawer 设置切换后保留 XCTest screenshot attachment。`collect-ios-acceptance-evidence` 会读取该 metadata 并把 `navigationUiTest` 写入证据包，`manual-evidence-review` 会预填 Header / Drawer 截图、`source=native.header.timeline`、`source=native.drawer.quick-switch` 和 UI test log / xcresult。已运行 `pnpm validate:ios-navigation-ui-test`，1 个 XCTest 通过，review 预检中 `navigation_surfaces.missingEvidence=无`，但状态仍 pending，需人工复核。
 - 2026-06-01 已稳定原生导航和附件输入辅助证据归档：`manual-evidence-review` 现在用“`pnpm validate:ios-navigation-ui-test 输出或 xcresult`”完整短语归档 log / xcresult，匹配 `navigation_surfaces.requiredEvidence.systemArtifacts`；`seedNativeAttachmentInputs` 查询后端附件时改为 `limit=50` 且最多 5 次重试，吸收 H5 upload / 后端附件读模型的短暂延迟，避免 PDF seed 偶发未入库导致整包辅助采证降级。该改动仍只减少候选证据缺口，不替代人工验收。
+- 2026-06-01 已用 HEAD `5c2ffba` 重跑正式辅助证据包和 completion audit：`pnpm validate:ios-navigation-ui-test` 通过 1 个 XCTest；`.tmp/ios-acceptance-evidence/current-head-final-20260601-5c2ffba` 显示 `navigationUiTest.available=true`、`nativeAttachmentInputs.available=true`、`calendarCleanupSeed.available=true`、`h5CancelActionScreenshot.available=true`；`.tmp/v1-completion-audit/current-best-final-20260601-5c2ffba` 选择了当前 HEAD review 记录，`missingEvidenceCount=20`、`verdict=not_complete`。`navigation_surfaces`、`conversation_persistence`、`system_calendar_write`、`system_calendar_cleanup`、`backend_fact_confirmation` 和 `system_sync_degradation` 的 `missingEvidence=无`，但所有人工项状态仍 pending，仍需真实人工 filled 记录后才能完成 goal。
 - 2026-05-29 已为 iOS 自动证据包新增系统辅助证据批量开关：`collect:ios-acceptance-evidence` 支持 `--seed-supported-system-evidence` / `AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE=1`，一次性启用验收事实种子、系统 Calendar App 截图、系统日历取消清理、日历权限拒绝降级、通知点击回流和通知 delivered 诊断。该开关只减少采证参数成本，仍保持 `manualAcceptanceRequired=true` 和人工验收完成门槛。
 - 2026-05-29 已新增系统辅助证据采集根命令：`pnpm collect:ios-system-evidence` 等价于 `collect:ios-acceptance-evidence --seed-supported-system-evidence`，用于 completion audit 前集中补齐当前可自动化的 iOS 系统辅助材料；采集器已兼容 `pnpm ... -- --dry-run --output-dir ...` 传入的单独 `--` 分隔符，并已纳入 `validate:native-shells` 根命令护栏。
 - 2026-05-29 已增强 iOS 自动采证稳定性：采集器的后端 HTTP 调用现在通过 `fetchWithRetry()` 对 `ECONNRESET`、`ECONNREFUSED`、`EPIPE`、`ETIMEDOUT` 和 `UND_ERR_SOCKET` 做有限重试，避免本地 API 偶发连接重置直接中断整包采集；同时修复通知点击回流轮询里 `const refresh` 被重新赋值导致 live 路径崩溃的问题。`pnpm validate:ios-acceptance-evidence` 当前 14 个测试通过；live 证据包 `.tmp/ios-acceptance-evidence/system-live-fixed-20260529-152913/` 显示 H5 / App 目标识别、验收事实种子、系统 Calendar App 截图、日历权限拒绝降级、通知点击回流和通知 delivered 诊断可用，且补证缺口报告已写入 `manual-evidence-gaps.md`。同一证据包里 `calendarCleanupSeed.available=false`，原因是本轮 seed 日程取消前未被 Native EventKit 诊断看到；因此系统日历取消清理仍需继续人工补证或单独排查 Simulator 权限 / EventKit 同步状态，不能视为完成验收。
@@ -1341,6 +1342,7 @@ pnpm validate:h5-runtime
 - 本次“H5 calendar focus 稳定化”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“原生导航 UI test 证据归档”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“导航与附件证据归档稳定化”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
+- 本次“HEAD 5c2ffba 辅助证据包与 audit 刷新”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 飞书同步不是自动的；需要先更新 `docs/knowledge-sync/feishu-pages/` 源稿，再用 `lark-cli docs +update --api-version v2` 同步对应页面。
 - 如果新窗口没有执行 Obsidian 或飞书写入，就不能声称外部知识库已经更新。
 
