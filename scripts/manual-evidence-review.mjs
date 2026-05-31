@@ -292,6 +292,7 @@ function evidenceSuggestionsForItem(item, evidence) {
     }
     case "voice_input": {
       const voiceUiTest = evidence?.voiceUiTest;
+      const voicePermissionUiTest = evidence?.voicePermissionUiTest;
       if (voiceUiTest?.available) {
         if (voiceUiTest.screenshotAttachments?.recognizedText) {
           addUnique(
@@ -317,6 +318,26 @@ function evidenceSuggestionsForItem(item, evidence) {
           addUnique(
             suggestions.systemArtifacts,
             `pnpm validate:ios-voice-ui-test 输出或 xcresult: log=${voiceUiTest.logPath ?? "未采集"}, xcresult=${voiceUiTest.resultBundlePath ?? "未采集"}`
+          );
+        }
+      }
+      if (voicePermissionUiTest?.available) {
+        if (voicePermissionUiTest.screenshotAttachments?.permissionPrompt) {
+          addUnique(
+            suggestions.screenshots,
+            `麦克风 / 语音识别权限弹窗: ${voicePermissionUiTest.screenshotAttachments.permissionPrompt} (${voicePermissionUiTest.resultBundlePath})`
+          );
+        }
+        if (
+          voicePermissionUiTest.systemArtifacts?.includes(
+            "iOS 权限弹窗截图或录屏"
+          ) ||
+          voicePermissionUiTest.logPath ||
+          voicePermissionUiTest.resultBundlePath
+        ) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `iOS 权限弹窗截图或录屏: log=${voicePermissionUiTest.logPath ?? "未采集"}, xcresult=${voicePermissionUiTest.resultBundlePath ?? "未采集"}`
           );
         }
       }

@@ -66,6 +66,8 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-keyboard-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-keyboard-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-voice-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-voice-ui-test.mjs");
+assertIncludes(packageJsonPath, packageJson, '"validate:ios-voice-permission-ui-test"');
+assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-voice-permission-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-attachment-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-attachment-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-navigation-ui-test"');
@@ -132,6 +134,21 @@ assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "-resultBundlePat
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "voice-ui-test.json");
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "ios-voice-ui-test.log");
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "ios-voice-ui-test.xcresult");
+
+const iosVoicePermissionUiTestScriptPath =
+  "scripts/validate-ios-voice-permission-ui-test.mjs";
+const iosVoicePermissionUiTestScript = readRequired(
+  iosVoicePermissionUiTestScriptPath
+);
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "xcodebuild");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "simctl");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "privacy");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "reset");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "microphone");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "testNativeVoicePermissionPromptCanBeCaptured");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "voice-permission-ui-test.json");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "ios-voice-permission-ui-test.log");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "ios-voice-permission-ui-test.xcresult");
 
 const iosAttachmentUiTestScriptPath = "scripts/validate-ios-attachment-ui-test.mjs";
 const iosAttachmentUiTestScript = readRequired(iosAttachmentUiTestScriptPath);

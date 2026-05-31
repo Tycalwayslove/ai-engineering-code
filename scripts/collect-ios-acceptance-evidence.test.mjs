@@ -430,6 +430,89 @@ test("collect iOS acceptance evidence reads voice UI test metadata", () => {
   assert.match(voiceReviewItem.evidence.systemArtifacts.join("\n"), /ios-voice-ui-test\.xcresult/);
 });
 
+test("collect iOS acceptance evidence reads voice permission UI test metadata", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-voice-permission-ui-")
+  );
+  const artifactDir = path.join(outputDir, "voice-permission-artifacts");
+  const logPath = path.join(artifactDir, "ios-voice-permission-ui-test.log");
+  const metadataPath = path.join(artifactDir, "voice-permission-ui-test.json");
+  const resultBundlePath = path.join(
+    artifactDir,
+    "ios-voice-permission-ui-test.xcresult"
+  );
+  fs.mkdirSync(resultBundlePath, { recursive: true });
+  fs.writeFileSync(logPath, "voice permission ui test log");
+  fs.writeFileSync(
+    metadataPath,
+    `${JSON.stringify({
+      generatedAt: "2026-06-01T00:00:00.000Z",
+      logPath,
+      passed: true,
+      resultBundlePath,
+      screenshotAttachments: {
+        permissionPrompt: "麦克风 / 语音识别权限弹窗",
+      },
+      systemArtifacts: ["iOS 权限弹窗截图或录屏"],
+    })}\n`
+  );
+
+  const result = spawnSync(
+    "node",
+    [scriptPath, "--dry-run", "--output-dir", outputDir],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_METADATA_PATH: metadataPath,
+      },
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manifest.json"), "utf8")
+  );
+  const review = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manual-evidence-record.review.json"), "utf8")
+  );
+  const voiceReviewItem = review.items.find((item) => item.id === "voice_input");
+
+  assert.equal(evidence.voicePermissionUiTest.available, true);
+  assert.equal(evidence.voicePermissionUiTest.logPath, logPath);
+  assert.equal(evidence.voicePermissionUiTest.resultBundlePath, resultBundlePath);
+  assert.equal(
+    evidence.voicePermissionUiTest.screenshotAttachments.permissionPrompt,
+    "麦克风 / 语音识别权限弹窗"
+  );
+  assert.ok(
+    evidence.automatedEvidence.includes("ios_voice_permission_ui_test_artifact")
+  );
+  assert.ok(
+    manifest.items
+      .find((item) => item.item === "语音输入")
+      .supportingEvidenceSignals.includes("ios_voice_permission_ui_test_artifact")
+  );
+  assert.equal(voiceReviewItem.status, "pending");
+  assert.match(
+    voiceReviewItem.evidence.screenshots.join("\n"),
+    /麦克风 \/ 语音识别权限弹窗/
+  );
+  assert.match(
+    voiceReviewItem.evidence.systemArtifacts.join("\n"),
+    /iOS 权限弹窗截图或录屏/
+  );
+  assert.match(
+    voiceReviewItem.evidence.systemArtifacts.join("\n"),
+    /ios-voice-permission-ui-test\.xcresult/
+  );
+});
+
 test("collect iOS acceptance evidence reads attachment UI test metadata", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-ui-")
@@ -1259,6 +1342,10 @@ test("package exposes iOS acceptance evidence collection command", () => {
   assert.equal(
     packageJson.scripts["collect:ios-system-evidence"],
     "node scripts/collect-ios-acceptance-evidence.mjs --seed-supported-system-evidence"
+  );
+  assert.equal(
+    packageJson.scripts["validate:ios-voice-permission-ui-test"],
+    "node scripts/validate-ios-voice-permission-ui-test.mjs"
   );
   assert.equal(
     packageJson.scripts["validate:ios-acceptance-evidence"],

@@ -37,6 +37,14 @@ const keyboardUiTestMetadataPath =
 const voiceUiTestMetadataPath =
   process.env.AI_CODE_IOS_VOICE_UI_TEST_METADATA_PATH ??
   path.join(rootDir, ".tmp", "ios-voice-ui-test", "voice-ui-test.json");
+const voicePermissionUiTestMetadataPath =
+  process.env.AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_METADATA_PATH ??
+  path.join(
+    rootDir,
+    ".tmp",
+    "ios-voice-permission-ui-test",
+    "voice-permission-ui-test.json"
+  );
 const attachmentUiTestMetadataPath =
   process.env.AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH ??
   path.join(rootDir, ".tmp", "ios-attachment-ui-test", "attachment-ui-test.json");
@@ -1227,6 +1235,56 @@ function collectVoiceUiTestEvidence() {
       Boolean(result.resultBundlePath && fs.existsSync(result.resultBundlePath));
     if (!result.available) {
       result.errors.push("voice UI test metadata is present but not usable");
+    }
+  } catch (error) {
+    result.errors.push(error instanceof Error ? error.message : String(error));
+  }
+  return result;
+}
+
+function collectVoicePermissionUiTestEvidence() {
+  const result = {
+    available: false,
+    errors: [],
+    logPath: null,
+    metadataPath: voicePermissionUiTestMetadataPath,
+    resultBundlePath: null,
+    screenshotAttachments: {},
+    source: "validate:ios-voice-permission-ui-test",
+    supportingOnly: true,
+    systemArtifacts: [],
+  };
+  if (!fs.existsSync(voicePermissionUiTestMetadataPath)) {
+    result.errors.push("voice permission UI test metadata was not found");
+    return result;
+  }
+
+  try {
+    const metadata = JSON.parse(
+      fs.readFileSync(voicePermissionUiTestMetadataPath, "utf8")
+    );
+    result.logPath =
+      typeof metadata.logPath === "string" ? metadata.logPath : null;
+    result.resultBundlePath =
+      typeof metadata.resultBundlePath === "string"
+        ? metadata.resultBundlePath
+        : null;
+    result.screenshotAttachments =
+      metadata.screenshotAttachments &&
+      typeof metadata.screenshotAttachments === "object"
+        ? metadata.screenshotAttachments
+        : {};
+    result.systemArtifacts = Array.isArray(metadata.systemArtifacts)
+      ? metadata.systemArtifacts.filter((artifact) => typeof artifact === "string")
+      : [];
+    result.available =
+      metadata.passed === true &&
+      Boolean(result.logPath && fs.existsSync(result.logPath)) &&
+      Boolean(result.resultBundlePath && fs.existsSync(result.resultBundlePath));
+    if (!result.available) {
+      result.errors.push(
+        "voice permission UI test metadata is present but not usable"
+      );
     }
   } catch (error) {
     result.errors.push(error instanceof Error ? error.message : String(error));
@@ -4097,11 +4155,19 @@ function supportingSignalsForManualItem(item, evidence) {
   }
 
   if (item === "语音输入" && evidence.voiceUiTest?.available) {
-    return [
+    const signals = [
       "真实 Native 语音按钮到 H5 / 后端提醒事实由 pnpm validate:ios-voice-ui-test 验证",
       "ios_voice_ui_test_artifact",
       `source=${evidence.voiceUiTest.source}, supportingOnly=${String(evidence.voiceUiTest.supportingOnly)}`,
     ];
+    if (evidence.voicePermissionUiTest?.available) {
+      signals.push(
+        "语音权限弹窗由 pnpm validate:ios-voice-permission-ui-test 归档",
+        "ios_voice_permission_ui_test_artifact",
+        `source=${evidence.voicePermissionUiTest.source}, supportingOnly=${String(evidence.voicePermissionUiTest.supportingOnly)}`
+      );
+    }
+    return signals;
   }
 
   const attachmentItemIds = {
@@ -4775,6 +4841,7 @@ async function main() {
   });
   const keyboardUiTest = collectKeyboardUiTestEvidence();
   const voiceUiTest = collectVoiceUiTestEvidence();
+  const voicePermissionUiTest = collectVoicePermissionUiTestEvidence();
   const navigationUiTest = collectNavigationUiTestEvidence();
   const attachmentUiTest = collectAttachmentUiTestEvidence();
   const backendFactSnapshot = collectBackendFactSnapshot({
@@ -4822,6 +4889,9 @@ async function main() {
       ...(args.seedAttachmentInputs ? ["native_attachment_inputs"] : []),
       ...(keyboardUiTest.available ? ["ios_keyboard_ui_test_artifact"] : []),
       ...(voiceUiTest.available ? ["ios_voice_ui_test_artifact"] : []),
+      ...(voicePermissionUiTest.available
+        ? ["ios_voice_permission_ui_test_artifact"]
+        : []),
       ...(navigationUiTest.available ? ["ios_navigation_ui_test_artifact"] : []),
       ...(attachmentUiTest.available ? ["ios_attachment_ui_test_artifact"] : []),
     ],
@@ -4881,6 +4951,7 @@ async function main() {
     },
     keyboardUiTest,
     voiceUiTest,
+    voicePermissionUiTest,
     navigationUiTest,
     attachmentUiTest,
     h5SurfaceScreenshots,

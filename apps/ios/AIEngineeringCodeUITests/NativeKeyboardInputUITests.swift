@@ -32,6 +32,38 @@ final class NativeKeyboardInputUITests: XCTestCase {
         confirmReminderFact(inputText, source: "source=native.composer.voice", in: app)
     }
 
+    func testNativeVoicePermissionPromptCanBeCaptured() throws {
+        let app = launchAppForPermissionPrompt(conversationPrefix: "conversation_ui_voice_permission")
+
+        let voiceButton = app.buttons["ai-code.composer.voice-button"]
+        XCTAssertTrue(voiceButton.waitForExistence(timeout: 20), app.debugDescription)
+        voiceButton.tap()
+
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let alert = springboard.alerts.firstMatch
+        XCTAssertTrue(
+            alert.waitForExistence(timeout: 15),
+            "\(app.debugDescription)\n\(springboard.debugDescription)"
+        )
+        attachScreenshot(named: "麦克风 / 语音识别权限弹窗", in: springboard)
+        attachScreenshot(named: "iOS 权限弹窗截图或录屏", in: springboard)
+
+        let allowButton = permissionAllowButton(in: springboard)
+        if allowButton.exists {
+            allowButton.tap()
+        }
+
+        Thread.sleep(forTimeInterval: 1)
+        let followUpAlert = springboard.alerts.firstMatch
+        if followUpAlert.exists {
+            attachScreenshot(named: "麦克风 / 语音识别权限弹窗", in: springboard)
+            let followUpAllowButton = permissionAllowButton(in: springboard)
+            if followUpAllowButton.exists {
+                followUpAllowButton.tap()
+            }
+        }
+    }
+
     func testNativeAttachmentButtonPresentsAttachmentChoices() throws {
         let app = launchApp(conversationPrefix: "conversation_ui_attachment")
 
@@ -220,6 +252,14 @@ final class NativeKeyboardInputUITests: XCTestCase {
         return app
     }
 
+    private func launchAppForPermissionPrompt(conversationPrefix: String) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchEnvironment["AI_CODE_UI_TEST_CONVERSATION_ID"] =
+            "\(conversationPrefix)_\(UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased())"
+        app.launch()
+        return app
+    }
+
     private func submitKeyboardReminder(_ inputText: String, in app: XCUIApplication) {
         let modeToggle = app.buttons["ai-code.composer.mode-toggle-button"]
         XCTAssertTrue(modeToggle.waitForExistence(timeout: 20), app.debugDescription)
@@ -281,5 +321,16 @@ final class NativeKeyboardInputUITests: XCTestCase {
             .firstMatch
         _ = button.waitForExistence(timeout: timeout)
         return button
+    }
+
+    private func permissionAllowButton(in springboard: XCUIApplication) -> XCUIElement {
+        for label in ["允许", "好", "OK", "Allow", "Continue"] {
+            let button = springboard.buttons[label]
+            if button.exists {
+                return button
+            }
+        }
+
+        return springboard.buttons.element(boundBy: max(springboard.buttons.count - 1, 0))
     }
 }

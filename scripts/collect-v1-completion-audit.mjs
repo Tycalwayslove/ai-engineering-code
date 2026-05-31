@@ -63,6 +63,10 @@ export const requiredAutomatedCommands = [
     proves: "Native 语音入口到 H5 确认卡和后端提醒事实闭环",
   },
   {
+    script: "validate:ios-voice-permission-ui-test",
+    proves: "真实 iOS 语音 / 麦克风权限弹窗可触发并归档为 xcresult",
+  },
+  {
     script: "validate:ios-attachment-ui-test",
     proves: "Native 纸夹入口和照片 / 文件菜单选项可见",
   },
