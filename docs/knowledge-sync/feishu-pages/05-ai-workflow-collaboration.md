@@ -813,3 +813,13 @@ HEAD `2018cc1` 的 audit 显示 `missingEvidenceCount=1`，说明系统通知 UI
 - 如果目标是接近 v1 complete，必须由人工复核 `manual-evidence-record.review.json`，把 14 个 item 从 `pending` 改成真实的 `passed/failed/blocked`，并补操作者说明。自动 review 记录只能预填证据，不能自己变成验收结论。
 - 正式收尾必须运行 `pnpm collect:v1-completion-audit -- --run-automated-commands ...`，否则 audit 中自动化命令仍是 `not_run`，不能作为 complete 证据。
 - 外部知识库同步仍需要真实执行飞书或 Obsidian 同步命令；只更新 `docs/knowledge-sync/feishu-pages/` 源稿时，最终回复仍必须说明“仓库已更新，外部知识库未同步”。
+
+## 机器证据缺口归零后的收尾规则
+
+HEAD `eee802b` 的 LAN 证据包把 `missingEvidenceCount` 降到 0 后，后续协作重心需要切换：
+
+- 不再把“补 required evidence 字段”当作主要开发目标；当前 review 记录已经有候选材料。
+- 不能把 `manual-evidence-record.review.json` 自动改成 `passed`。它是候选证据集合，不是人工验收结论。
+- 如果要继续推进 goal complete，必须进入人工复核或 operator sign-off：逐项检查 14 个 item 的截图、录屏、API 摘要、bridge marker 和系统 artifact，然后生成 `manual-evidence-record.filled.json`。
+- 只有 filled 记录通过 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete`，并且 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <path>` 通过，才可以考虑把 goal 标记 complete。
+- 若没有真实执行飞书 / Obsidian 同步，外部知识库必须继续记录为 `not_synced`，不能为了 completion 修改成 synced。

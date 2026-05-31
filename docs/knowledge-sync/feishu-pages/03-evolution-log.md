@@ -5234,3 +5234,36 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把 v1 收口的显式证据缺口从 3 个降到 1 个，通知系统链路的自动候选证据已齐：Bridge 同步、系统通知截图、点击录屏和 H5 回流截图都能归档。后续如果要继续向 complete 推进，应补局域网地址 App 启动截图，并由人工把 14 个验收 item 逐项复核为 `passed`，再运行带 `--run-automated-commands` 的正式 completion audit。
+
+## 阶段 186：HEAD eee802b LAN 证据 audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-eee802b-lan
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-eee802b-lan --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-eee802b-lan`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-eee802b-lan`。
+- `ios.h5DevServerUrl=http://192.168.1.238:3000/?native=ios&bridgeDebug=1`，`ios.h5DevServerTargetMarkerFound=true`。
+- `notificationUiTest.available=true`，`automatedEvidence` 包含 `ios_notification_ui_test_artifact`。
+- `packageFreshness.status=current`，`recordHeadSha=eee802b`，`currentHeadSha=eee802b`。
+- `missingEvidenceCount=0`，`verdict=not_complete`。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 本轮 audit 未使用 `--run-automated-commands`，自动化命令清单仍显示 `not_run`。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段把 v1 收口的机器可见证据缺口从 1 个降到 0 个：当前 HEAD 的 review 记录已经有所有 required evidence 的候选材料。真正剩余的发布门槛不再是采证脚本缺字段，而是人工验收结论、全量最终门禁和外部同步状态。
