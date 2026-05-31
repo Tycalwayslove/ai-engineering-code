@@ -319,6 +319,8 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 
 2026-05-31 的采证稳定性修复还给 service health 和 H5 document `curl` 增加了 `--max-time` 超时参数。它解决的是本地 H5 dev server 端口半开或页面请求无响应时，`collect:ios-acceptance-evidence` 可能无限挂起的问题；超时失败会进入证据包命令结果和后续缺口报告，而不是让 goal 收尾停在无输出进程里。
 
+同一轮也把费用验收事实 seed 从“报销”语义改成“新建费用草稿”语义。原因是在长期脏会话里，真实 LLM 可能根据已有费用草稿把“报销”理解为提交某条草稿，进而追问 `target_id`；自动采证需要稳定创建新的费用草稿，所以 seed 文案固定为“新建一条昨天打车费 58 元的费用草稿，备注 seed 验收”。
+
 ## iOS 附件输入辅助证据采集
 
 2026-05-29 的补证推进新增了 `pnpm collect:ios-attachment-evidence`。它通过 `--seed-attachment-inputs` 向当前 Native 会话注入同形态 `native.inputSubmitted` 附件消息，覆盖照片、文件和 PDF 三类来源，走 H5 `/attachments/upload`、附件摘要卡和 `/attachments` 读模型闭环，并把截图、后端 attachment id 和 source marker 预填进 `manual-evidence-record.review.json` 的 `photo_attachment`、`file_attachment`、`pdf_text_extraction` 项。
