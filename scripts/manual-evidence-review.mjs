@@ -336,6 +336,20 @@ function evidenceSuggestionsForItem(item, evidence) {
             );
           }
         }
+        if (item.id === "pdf_text_extraction") {
+          if (sample.scheduleFollowUp?.available) {
+            addUnique(
+              suggestions.screenshots,
+              `后续追问或确认卡: ${sample.scheduleFollowUp.screenshotPath}`
+            );
+          }
+          if (sample.textSummary) {
+            addUnique(
+              suggestions.systemArtifacts,
+              `PDF 样本文本摘要截图: ${sample.textSummary}`
+            );
+          }
+        }
         addUnique(
           suggestions.bridgeMarkers,
           `inputKind=attachment: source=${sample.source}, attachment=${sample.name}`

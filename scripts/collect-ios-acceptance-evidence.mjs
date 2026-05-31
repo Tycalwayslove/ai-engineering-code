@@ -901,6 +901,28 @@ function emptyAttachmentExpenseFollowUp({ outputDir }) {
   };
 }
 
+function emptyAttachmentScheduleFollowUp({ outputDir }) {
+  return {
+    available: false,
+    errors: [],
+    planId: null,
+    responseKind: null,
+    screenshotPath: path.join(
+      outputDir,
+      "native-attachment-pdf-schedule-follow-up.png"
+    ),
+  };
+}
+
+function attachmentReadableTextSummary(sample) {
+  const text = typeof sample.text === "string" ? sample.text : "";
+  const marker = "识别文本：";
+  const markerIndex = text.indexOf(marker);
+  const readableText =
+    markerIndex >= 0 ? text.slice(markerIndex + marker.length).trim() : text.trim();
+  return readableText.replace(/\s+/g, " ").slice(0, 160);
+}
+
 function evidenceAttachmentSample(sample, attachment, options = {}) {
   const result = {
     attachmentId: sample.attachmentId,
@@ -916,6 +938,12 @@ function evidenceAttachmentSample(sample, attachment, options = {}) {
     result.expenseFollowUp =
       options.expenseFollowUp ??
       emptyAttachmentExpenseFollowUp({ outputDir: options.outputDir ?? "." });
+  }
+  if (sample.itemId === "pdf_text_extraction") {
+    result.scheduleFollowUp =
+      options.scheduleFollowUp ??
+      emptyAttachmentScheduleFollowUp({ outputDir: options.outputDir ?? "." });
+    result.textSummary = attachmentReadableTextSummary(sample);
   }
   return result;
 }
@@ -988,6 +1016,44 @@ async function capturePhotoExpenseFollowUp({
       await page.screenshot({ fullPage: true, path: screenshotPath });
     }
     result.available = fs.existsSync(screenshotPath) && result.errors.length === 0;
+    return result;
+  } catch (error) {
+    result.errors.push(error instanceof Error ? error.message : String(error));
+    return result;
+  }
+}
+
+async function capturePdfScheduleFollowUp({
+  page,
+  pdfSample,
+  screenshotPath,
+}) {
+  const result = {
+    ...emptyAttachmentScheduleFollowUp({ outputDir: path.dirname(screenshotPath) }),
+    screenshotPath,
+  };
+  try {
+    const { expect } = await import("@playwright/test");
+    const replyText = `把 ${pdfSample.attachmentName} 作为日程材料处理`;
+    await page.getByRole("button", { name: replyText }).first().click();
+    const confirmationCard = page
+      .locator("[data-plan-id]")
+      .filter({ has: page.getByRole("button", { name: "确认" }) })
+      .last();
+    try {
+      await expect(confirmationCard).toContainText("确认", { timeout: 30000 });
+      result.responseKind = "confirmation_required";
+      result.planId = await confirmationCard.getAttribute("data-plan-id");
+      await confirmationCard.scrollIntoViewIfNeeded();
+    } catch {
+      await expect(page.locator("body")).toContainText("补充", {
+        timeout: 15000,
+      });
+      result.responseKind = "clarification_request";
+    }
+    await page.waitForTimeout(500);
+    await page.screenshot({ fullPage: true, path: screenshotPath });
+    result.available = fs.existsSync(screenshotPath);
     return result;
   } catch (error) {
     result.errors.push(error instanceof Error ? error.message : String(error));
@@ -3023,12 +3089,14 @@ async function seedNativeAttachmentInputs({
   }
 
   const samples = buildNativeAttachmentSamples(seedRunId);
-  const photoSample = samples.find((sample) => sample.itemId === "photo_attachment");
   let photoExpenseFollowUp = emptyAttachmentExpenseFollowUp({ outputDir });
+  let pdfScheduleFollowUp = emptyAttachmentScheduleFollowUp({ outputDir });
   const sampleEvidence = (sample, attachment) =>
     evidenceAttachmentSample(sample, attachment, {
       expenseFollowUp:
         sample.itemId === "photo_attachment" ? photoExpenseFollowUp : undefined,
+      scheduleFollowUp:
+        sample.itemId === "pdf_text_extraction" ? pdfScheduleFollowUp : undefined,
       outputDir,
     });
   let browser;
@@ -3087,6 +3155,31 @@ async function seedNativeAttachmentInputs({
       await expect(page.locator("body")).toContainText("已接收附件", {
         timeout: 15000,
       });
+      if (sample.itemId === "photo_attachment") {
+        photoExpenseFollowUp = await capturePhotoExpenseFollowUp({
+          conversationId,
+          page,
+          photoSample: sample,
+          screenshotPath: photoExpenseFollowUp.screenshotPath,
+        });
+        attachmentInputs.commands.photoExpenseFollowUp = {
+          command: `Playwright ${url} + quick reply '${sample.attachmentName}' expense follow-up`,
+          ok: photoExpenseFollowUp.available,
+          status: photoExpenseFollowUp.available ? 0 : 1,
+        };
+      }
+      if (sample.itemId === "pdf_text_extraction") {
+        pdfScheduleFollowUp = await capturePdfScheduleFollowUp({
+          page,
+          pdfSample: sample,
+          screenshotPath: pdfScheduleFollowUp.screenshotPath,
+        });
+        attachmentInputs.commands.pdfScheduleFollowUp = {
+          command: `Playwright ${url} + quick reply '${sample.attachmentName}' schedule follow-up`,
+          ok: pdfScheduleFollowUp.available,
+          status: pdfScheduleFollowUp.available ? 0 : 1,
+        };
+      }
     }
 
     const attachmentsUrl = `${apiBaseUrl}/attachments?conversationId=${encodeURIComponent(
@@ -3129,37 +3222,6 @@ async function seedNativeAttachmentInputs({
           .map((sample) => sample.attachmentId)
           .join(", ")}`
       );
-    }
-
-    if (photoSample && missing.length === 0) {
-      photoExpenseFollowUp = await capturePhotoExpenseFollowUp({
-        conversationId,
-        page,
-        photoSample,
-        screenshotPath: photoExpenseFollowUp.screenshotPath,
-      });
-      const attachments = await getJson(attachmentsUrl);
-      const attachmentList = Array.isArray(attachments.payload)
-        ? attachments.payload
-        : Array.isArray(attachments.payload?.attachments)
-          ? attachments.payload.attachments
-          : [];
-      attachmentInputs.commands.queryAttachmentsAfterPhotoExpenseFollowUp = {
-        command: `GET ${attachmentsUrl}`,
-        ok: attachments.ok,
-        status: attachments.status,
-      };
-      attachmentInputs.samples = samples.map((sample) => {
-        const attachment = attachmentList.find(
-          (candidate) => candidate.attachmentId === sample.attachmentId
-        );
-        return sampleEvidence(sample, attachment);
-      });
-      attachmentInputs.commands.photoExpenseFollowUp = {
-        command: `Playwright ${url} + quick reply '${photoSample.attachmentName}' expense follow-up`,
-        ok: photoExpenseFollowUp.available,
-        status: photoExpenseFollowUp.available ? 0 : 1,
-      };
     }
 
     await page.screenshot({

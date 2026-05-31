@@ -239,9 +239,16 @@ test("manual evidence review fills objective evidence without passing items", ()
         },
         {
           attachmentId: "attachment_pdf",
+          backendAttachmentId: "backend_attachment_pdf",
           itemId: "pdf_text_extraction",
           name: "agenda.pdf",
+          scheduleFollowUp: {
+            available: true,
+            responseKind: "clarification_request",
+            screenshotPath: "/tmp/native-attachment-pdf-schedule-follow-up.png",
+          },
           source: "native.composer.attachment.file",
+          textSummary: "PDF 日程材料 明天上午十点项目会",
         },
       ],
     },
@@ -323,6 +330,10 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(fileItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.attachment\.file/);
   assert.match(pdfItem.evidence.apiSummaries.join("\n"), /attachment_pdf/);
   assert.match(pdfItem.evidence.screenshots.join("\n"), /PDF 文本/);
+  assert.match(pdfItem.evidence.screenshots.join("\n"), /后续追问或确认卡/);
+  assert.match(pdfItem.evidence.screenshots.join("\n"), /native-attachment-pdf-schedule-follow-up/);
+  assert.match(pdfItem.evidence.systemArtifacts.join("\n"), /PDF 样本文本摘要截图/);
+  assert.match(pdfItem.evidence.systemArtifacts.join("\n"), /PDF 日程材料/);
 });
 
 test("manual evidence review keeps partial notification evidence when system delivery is missing", () => {
