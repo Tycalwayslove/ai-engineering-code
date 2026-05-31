@@ -114,16 +114,10 @@ function evidenceSuggestionsForItem(item, evidence) {
           suggestions.bridgeMarkers,
           "source=native.drawer.quick-switch: validate:ios-navigation-ui-test"
         );
-        if (navigationUiTest.logPath) {
+        if (navigationUiTest.logPath || navigationUiTest.resultBundlePath) {
           addUnique(
             suggestions.systemArtifacts,
-            `pnpm validate:ios-navigation-ui-test 输出: ${navigationUiTest.logPath}`
-          );
-        }
-        if (navigationUiTest.resultBundlePath) {
-          addUnique(
-            suggestions.systemArtifacts,
-            `xcresult: ${navigationUiTest.resultBundlePath}`
+            `pnpm validate:ios-navigation-ui-test 输出或 xcresult: log=${navigationUiTest.logPath ?? "未采集"}, xcresult=${navigationUiTest.resultBundlePath ?? "未采集"}`
           );
         }
       }

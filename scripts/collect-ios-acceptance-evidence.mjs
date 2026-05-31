@@ -2898,27 +2898,38 @@ async function seedNativeAttachmentInputs({
 
     const attachmentsUrl = `${apiBaseUrl}/attachments?conversationId=${encodeURIComponent(
       conversationId
-    )}&limit=20`;
-    const attachments = await getJson(attachmentsUrl);
-    attachmentInputs.commands.queryAttachments = {
-      command: `GET ${attachmentsUrl}`,
-      ok: attachments.ok,
-      status: attachments.status,
-    };
-    const attachmentList = Array.isArray(attachments.payload)
-      ? attachments.payload
-      : Array.isArray(attachments.payload?.attachments)
-        ? attachments.payload.attachments
-        : [];
-    attachmentInputs.samples = samples.map((sample) => {
-      const attachment = attachmentList.find(
-        (candidate) => candidate.attachmentId === sample.attachmentId
+    )}&limit=50`;
+    let missing = samples;
+    for (
+      let attachmentQueryAttempt = 1;
+      attachmentQueryAttempt <= 5;
+      attachmentQueryAttempt += 1
+    ) {
+      const attachments = await getJson(attachmentsUrl);
+      attachmentInputs.commands[`queryAttachments${attachmentQueryAttempt}`] = {
+        command: `GET ${attachmentsUrl}`,
+        ok: attachments.ok,
+        status: attachments.status,
+      };
+      const attachmentList = Array.isArray(attachments.payload)
+        ? attachments.payload
+        : Array.isArray(attachments.payload?.attachments)
+          ? attachments.payload.attachments
+          : [];
+      attachmentInputs.samples = samples.map((sample) => {
+        const attachment = attachmentList.find(
+          (candidate) => candidate.attachmentId === sample.attachmentId
+        );
+        return evidenceAttachmentSample(sample, attachment);
+      });
+      missing = attachmentInputs.samples.filter(
+        (sample) => !sample.backendAttachmentId
       );
-      return evidenceAttachmentSample(sample, attachment);
-    });
-    const missing = attachmentInputs.samples.filter(
-      (sample) => !sample.backendAttachmentId
-    );
+      if (missing.length === 0) {
+        break;
+      }
+      await page.waitForTimeout(1000);
+    }
     if (missing.length > 0) {
       attachmentInputs.errors.push(
         `attachment input seeds were not found after submission: ${missing

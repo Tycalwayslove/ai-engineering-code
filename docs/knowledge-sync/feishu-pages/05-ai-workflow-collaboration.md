@@ -628,3 +628,16 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - XCTest 中关键业务断言点应添加 `.keepAlways` screenshot attachment，名称使用人工验收清单里的中文证据名。
 
 这个模式后续可复用到键盘输入、语音输入、附件选择器和 H5 地址覆盖等项目：UI test 证明 Native 操作路径存在，review 记录承接证据，人工最终判断截图 / 录屏 / 系统权限材料是否足够。
+
+## 证据文案与异步读模型稳定化
+
+2026-06-01 的导航与附件采证修复补充了两条协作规则：
+
+1. 自动预填的证据文案必须包含人工模板里的关键短语。比如 `navigation_surfaces.requiredEvidence.systemArtifacts` 要求“`pnpm validate:ios-navigation-ui-test 输出或 xcresult`”，review 记录就应保留完整短语，而不是拆成“输出”和“xcresult”两条近似文案。completion audit 按 requiredEvidence 做证据匹配，近似可读不等于可验证。
+2. 采证脚本读取后端异步写入结果时，应给短暂读模型延迟留出有限重试窗口。附件输入 seed 现在最多查询 5 次 `/attachments?conversationId=...&limit=50`，每次都重新映射三类 seed 的后端附件 ID；只有全部命中才认为候选证据可用。
+
+这两条规则的边界也要保持清楚：
+
+- 重试只用于吸收本地 H5 / API / DB 之间的短暂延迟，不得掩盖真实业务失败。
+- 查询范围可以适度放宽，例如从 `limit=20` 调整到 `limit=50`，但最终仍必须按本轮 seed 的 `attachmentId` 精确匹配。
+- 自动化只能减少人工整理成本；系统能力是否通过仍以人工 filled 记录、截图质量和 completion audit 为准。

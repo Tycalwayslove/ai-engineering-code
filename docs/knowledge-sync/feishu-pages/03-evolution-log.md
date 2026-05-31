@@ -4615,3 +4615,29 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“真实 Native Header / Drawer 点击验证”从终端瞬时输出变成可归档、可被 completion audit 绑定的证据。它仍不自动把导航验收改成 `passed`，但人工复核时可以直接看到 UI test log、xcresult 和两个关键截图 attachment 名称。
+
+## 阶段 167：导航与附件证据归档稳定化
+
+问题背景：
+
+- `navigation_surfaces` 的人工模板要求 system artifact 中出现“`pnpm validate:ios-navigation-ui-test 输出或 xcresult`”，而上一阶段自动预填把 log 与 xcresult 拆成两条文案，导致 audit 仍可能把该项判为缺证据。
+- `nativeAttachmentInputs` 在 live 长会话采证中出现过照片 / 文件 seed 已写入、PDF seed 查询未命中的情况。根因更像 H5 upload、后端附件读模型刷新和采证查询之间的短暂竞态，而不是业务路径本身不可用。
+
+完成内容：
+
+- `manual-evidence-review` 把导航 UI test 产物合并为一条 system artifact：`pnpm validate:ios-navigation-ui-test 输出或 xcresult: log=..., xcresult=...`，直接匹配人工模板要求。
+- `seedNativeAttachmentInputs` 查询 `/attachments` 时把 `limit` 从 20 提升到 50，降低长期会话历史附件挤出本轮 seed 的概率。
+- 附件 seed 查询增加最多 5 次重试，每次重新读取后端附件列表并重建 `nativeAttachmentInputs.samples`，只有三类 seed 全部找到才结束。
+- `commands` 会记录每次 `queryAttachments{n}`，便于后续从证据包里复核是哪一次查询拿到了完整结果。
+
+验证结果：
+
+- 红灯：新增测试后，`node --test --test-name-pattern "native attachment inputs|manual evidence" scripts/collect-ios-acceptance-evidence.test.mjs scripts/manual-evidence-review.test.mjs` 先因缺少 `attachmentQueryAttempt <= 5` 和“输出或 xcresult”文案失败。
+- 绿灯：补齐重试与合并文案后，同一测试通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 19 项测试。
+- 回归：`pnpm validate:context-sync`、`pnpm validate:native-shells` 通过。
+- 静态检查：`node --check scripts/validate-ios-navigation-ui-test.mjs && node --check scripts/collect-ios-acceptance-evidence.mjs && node --check scripts/manual-evidence-review.mjs && git diff --check` 通过。
+
+阶段价值：
+
+这一阶段不是新增用户能力，而是把 completion audit 的证据归档路径打磨得更贴近真实运行。导航证据现在能被 requiredEvidence 精确识别，附件采证能吸收异步写入延迟；两者仍然只生成人工 review 候选材料，不会自动把系统能力验收置为 `passed`。

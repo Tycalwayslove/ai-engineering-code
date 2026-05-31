@@ -540,6 +540,7 @@ test("collect iOS acceptance evidence can opt into native attachment inputs supp
   assert.equal(evidence.nativeAttachmentInputs.available, false);
   assert.equal(evidence.nativeAttachmentInputs.supportingOnly, true);
   assert.equal(evidence.nativeAttachmentInputs.mode, "h5_synthetic_native_attachment_inputs");
+  assert.match(fs.readFileSync(scriptPath, "utf8"), /attachmentQueryAttempt <= 5/);
   assert.deepEqual(
     evidence.nativeAttachmentInputs.samples.map((sample) => sample.itemId),
     ["photo_attachment", "file_attachment", "pdf_text_extraction"]
