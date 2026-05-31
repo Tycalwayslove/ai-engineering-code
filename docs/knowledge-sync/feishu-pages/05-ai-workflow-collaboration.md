@@ -900,3 +900,32 @@ HEAD `ca74628` 的 full audit 再次确认 HTML Review Pack 增强没有降低�
 - AI 可以继续帮助生成 filled 草稿、运行 `--require-complete`、整理 audit 产物和解释缺口，但不能自行把 item 标为 `passed`。
 - 如果操作者已经真实复核，可以使用 `pnpm prepare:ios-manual-evidence-record -- --record <review> --output <filled> --mark-passed --operator <name> --confirmed-at <iso8601>` 生成签署记录；随后必须运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <filled> --require-complete --report <report>` 和 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled>`。
 - 未执行飞书 / Obsidian 真实同步前，外部同步状态必须继续是 `not_synced`，最终回复继续披露“仓库已更新，外部知识库未同步”。
+
+## iOS 权限专项 UI test 隔离规则
+
+权限专项测试要验证目标系统权限弹窗，而不是被其他系统能力同步抢占：
+
+- 语音 / 麦克风权限测试可以设置 `AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS=1` 和 `AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS=1`，隔离日历同步和通知同步触发的无关系统弹窗。
+- 通知系统测试可以设置 `AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS=1`，避免日历权限弹窗抢在通知授权或通知 banner 前出现。
+- 这些 env 只用于 UI test 隔离，不代表产品运行时关闭系统能力；正式 App 手动验收仍要覆盖日历、通知、语音和附件的真实系统权限路径。
+- `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS` 仍是更粗粒度的测试开关；新增分域开关优先用于专项测试，避免把目标权限链路也一并关闭。
+- native-shells 护栏必须检查这些 env 是否仍存在于 iOS shell 和 UI test 中，防止未来重构让 full audit 重新受到无关权限弹窗污染。
+
+## 近未来本地通知调度规则
+
+通知调度要保留秒级信息：
+
+- `UNCalendarNotificationTrigger` 的 date components 必须包含 `.second`，不能只保留到分钟。
+- “1 分钟后提醒我...”这类采证或测试用例常常落在当前分钟边界附近；如果秒被截断，触发时间可能变成当前或过去分钟，导致系统通知不出现或不稳定。
+- 通知 UI test 的职责是验证真实系统通知 banner、系统通知截图和点击回流；不能通过延长等待或放宽断言掩盖调度时间被截断的问题。
+
+## aad07e7 full audit 后的协作边界
+
+HEAD `aad07e7` 的 full audit 显示 21 个自动化命令全部 `passed`，`validate:ios-voice-permission-ui-test` 和 `validate:ios-notification-ui-test` 已在 full audit 内恢复通过，当前 HEAD 证据包 `missingEvidenceCount=0` 且 `packageFreshness.status=current`。
+
+后续协作边界：
+
+- 不再把当前 v1 阻塞归因于代码门禁失败；当前阻塞是人工验收签署尚未完成。
+- Review Pack 的“必需证据”展示只能帮助操作者核对材料，不能把 review 记录自动升级为 filled / passed。
+- 如果继续推进 completion，下一步应让真实操作者打开 `.tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan/manual-evidence-review-pack.html` 逐项复核，再生成 filled 记录。
+- 未执行飞书 / Obsidian 真实同步前，外部同步仍必须保持 `not_synced`，最终回复继续披露“仓库已更新，外部知识库未同步”。

@@ -5599,3 +5599,91 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 HTML Review Pack 这次脚本增强后的最新 HEAD 重新拉回 current evidence / current audit 状态。工程门禁、iOS 自动化和候选证据全部齐备；剩余边界没有变化，必须由真实操作者逐项复核并签署 filled 记录后，goal 才能进入 complete 判定。
+
+## 阶段 198：Review Pack 必需证据展示
+
+背景：
+
+- HTML Review Pack 已经能把候选证据路径变成可点击链接，但操作者仍需要对照验收清单判断“这一项到底必须看什么”。
+- 如果只展示已预填证据，容易让 review 记录看起来像已经完成验收；这会模糊“候选材料”和“人工签署结论”的边界。
+
+实现：
+
+- `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html` 现在每个 item 都展示“必需证据”和“候选证据”。
+- 必需证据会按类别汇总，例如截图、录屏、API 摘要、系统证据、后端事实和操作者备注。
+- HTML 版继续把截图、录屏、日志、JSON、xcresult 等候选证据渲染为可点击路径。
+- native-shells 护栏新增 `requiredEvidenceSummary` 检查，避免后续重构移除必需证据展示。
+
+验证：
+
+- `node --test scripts/generate-ios-manual-review-pack.test.mjs` 通过。
+- `pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan/manual-evidence-record.review.json` 通过。
+- `pnpm validate:native-shells` 通过。
+- `pnpm validate:context-sync` 通过。
+- `pnpm validate:v1-readiness` 通过。
+- `git diff --check` 通过。
+
+阶段价值：
+
+这一阶段让人工复核工作台从“打开证据列表”提升为“按必需证据逐项核对”。它不自动改变任何 item 的 `pending` 状态，也不允许 AI 代替操作者签署 `passed`。
+
+## 阶段 199：iOS 权限与通知 UI 门禁稳定化
+
+背景：
+
+- HEAD `4ee284f` 的 full audit 中，`validate:ios-voice-permission-ui-test` 和 `validate:ios-notification-ui-test` 失败。
+- 语音权限测试被日历 / 通知同步触发的无关系统权限弹窗抢占；通知测试中，“1 分钟后”提醒使用只到分钟的 `UNCalendarNotificationTrigger` 组件，可能被截断到当前或过去分钟，导致通知不稳定。
+
+实现：
+
+- iOS Native Runtime 新增 `AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS` 和 `AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS`，权限专项 UI test 可以只关闭无关系统权限请求。
+- `testNativeVoicePermissionPromptCanBeCaptured` 启动时隔离日历和通知权限请求，确保捕获语音 / 麦克风权限弹窗。
+- `testNativeNotificationDeliveryAndClickCanBeCaptured` 启动时隔离日历权限请求，保留通知权限和通知调度链路。
+- 本地通知调度的 date components 从 `[.year, .month, .day, .hour, .minute]` 扩展为 `[.year, .month, .day, .hour, .minute, .second]`，避免近未来提醒被截断。
+- native-shells 护栏检查两个 UI test env 和 `.second`，防止门禁稳定性回退。
+
+验证：
+
+- `node --test scripts/validate-native-shells.test.mjs` 先红后绿。
+- `pnpm validate:native-shells` 通过。
+- `pnpm validate:ios-voice-permission-ui-test` 通过，XCTest 归档真实语音 / 麦克风权限弹窗。
+- `pnpm validate:ios-notification-ui-test` 通过，XCTest 归档系统通知截图和通知点击后 App 回流。
+- `git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把 full audit 中的两个自动化失败项收敛为稳定门禁问题，而不是放宽验收要求。权限专项测试仍验证真实系统弹窗，通知专项测试仍验证真实系统通知展示和点击回流，只是隔离了与当前测试目标无关的权限弹窗噪声。
+
+## 阶段 200：HEAD aad07e7 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan
+
+pnpm prepare:ios-manual-review-pack -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-aad07e7-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-aad07e7-lan`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=aad07e7`，`currentHeadSha=aad07e7`。
+- 21 个自动化命令全部 `passed`，包括 `validate:ios-voice-permission-ui-test` 和 `validate:ios-notification-ui-test`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 iOS 权限与通知门禁修复后的最新 HEAD 重新拉回 current evidence / current audit 状态。工程门禁已经全绿，机器可见候选证据缺口为 0；剩余阻塞仍是人工复核签署，而不是代码或自动化失败。
