@@ -328,6 +328,9 @@ function toSummaryTone(value: unknown): "primary" | "success" | "warning" | "inf
 
 export function calendarEventsToBackendElements(
   events: CalendarEvent[],
+  options: {
+    focusedCalendarEventId?: string;
+  } = {},
 ): BackendRenderedElement[] {
   return [
     {
@@ -342,7 +345,10 @@ export function calendarEventsToBackendElements(
                 tone: "info",
               },
             ]
-          : events.slice(-6).map((event) => ({
+          : selectRecentItemsWithFocus(
+              events,
+              options.focusedCalendarEventId,
+            ).map((event) => ({
               actions:
                 event.status === "scheduled"
                   ? [
@@ -362,6 +368,8 @@ export function calendarEventsToBackendElements(
                       },
                     ]
                   : undefined,
+              highlighted:
+                event.id === options.focusedCalendarEventId ? true : undefined,
               id: event.id,
               label: event.title,
               meta: `${formatDateTime(event.startAt)} -> ${formatTime(event.endAt)}｜${event.timezone}`,

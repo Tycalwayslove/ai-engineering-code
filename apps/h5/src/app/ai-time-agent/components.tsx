@@ -515,6 +515,9 @@ export function getNativeInboundDebugLabel(message: NativeBridgeEnvelope) {
   );
   const view = getOptionalPayloadString(message.payload, "view");
   const reminderId = getOptionalPayloadString(message.payload, "reminderId");
+  const calendarEventId =
+    getOptionalPayloadString(message.payload, "eventId") ??
+    getOptionalPayloadString(message.payload, "calendarEventId");
   const receivedType = getOptionalPayloadString(
     message.payload,
     "receivedType",
@@ -534,6 +537,9 @@ export function getNativeInboundDebugLabel(message: NativeBridgeEnvelope) {
   }
   if (reminderId) {
     parts.push(`reminderId=${reminderId}`);
+  }
+  if (calendarEventId) {
+    parts.push(`eventId=${calendarEventId}`);
   }
   if (receivedType) {
     parts.push(`ack=${receivedType}`);
@@ -757,6 +763,14 @@ function getReminderIdFromNativeMessage(message: NativeBridgeEnvelope) {
 
   return typeof reminderId === "string" && reminderId.trim().length > 0
     ? reminderId.trim()
+    : undefined;
+}
+
+function getCalendarEventIdFromNativeMessage(message: NativeBridgeEnvelope) {
+  const eventId = message.payload?.eventId ?? message.payload?.calendarEventId;
+
+  return typeof eventId === "string" && eventId.trim().length > 0
+    ? eventId.trim()
     : undefined;
 }
 
@@ -1242,6 +1256,9 @@ export function AgentWorkbench() {
   const [focusedReminderId, setFocusedReminderId] = useState<
     string | undefined
   >();
+  const [focusedCalendarEventId, setFocusedCalendarEventId] = useState<
+    string | undefined
+  >();
   const [hostContext, setHostContext] = useState<NativeHostContext>();
   const [nativePlatform, setNativePlatform] = useState<"ios" | undefined>();
   const [summaryEditDraft, setSummaryEditDraft] = useState<
@@ -1276,7 +1293,10 @@ export function AgentWorkbench() {
   }, [activeSurface, elements.length]);
 
   useEffect(() => {
-    if (activeSurface !== "reminders" || !focusedReminderId) {
+    if (
+      (activeSurface !== "reminders" || !focusedReminderId) &&
+      (activeSurface !== "calendar" || !focusedCalendarEventId)
+    ) {
       return;
     }
 
@@ -1286,7 +1306,7 @@ export function AgentWorkbench() {
         behavior: "smooth",
         block: "center",
       });
-  }, [activeSurface, elements.length, focusedReminderId]);
+  }, [activeSurface, elements.length, focusedCalendarEventId, focusedReminderId]);
 
   useEffect(() => {
     return () => {
@@ -1306,6 +1326,7 @@ export function AgentWorkbench() {
 
   async function refreshBackendSnapshots(
     options: {
+      focusedCalendarEventId?: string;
       focusedReminderId?: string;
       syncConversationTurns?: boolean;
       syncNativeCalendarEvents?: boolean;
@@ -1354,6 +1375,8 @@ export function AgentWorkbench() {
       ]);
     const nextFocusedReminderId =
       options.focusedReminderId ?? focusedReminderId;
+    const nextFocusedCalendarEventId =
+      options.focusedCalendarEventId ?? focusedCalendarEventId;
     const shouldSyncConversationTurns =
       options.syncConversationTurns ?? !hasSubmittedInSessionRef.current;
     const historyElements = shouldSyncConversationTurns
@@ -1368,7 +1391,9 @@ export function AgentWorkbench() {
     );
     setElementsBySurface((current) => ({
       ...current,
-      calendar: calendarEventsToBackendElements(calendarEvents),
+      calendar: calendarEventsToBackendElements(calendarEvents, {
+        focusedCalendarEventId: nextFocusedCalendarEventId,
+      }),
       conversation: conversationWithAttachmentElements(
         conversationWithPendingConfirmationElements(
           conversationWithHistoryElements(current.conversation, historyElements),
@@ -1946,6 +1971,7 @@ export function AgentWorkbench() {
 
       if (nextSurface) {
         const reminderId = getReminderIdFromNativeMessage(message);
+        const calendarEventId = getCalendarEventIdFromNativeMessage(message);
         if (reminderId) {
           setFocusedReminderId(reminderId);
           void refreshBackendSnapshots({
@@ -1959,11 +1985,26 @@ export function AgentWorkbench() {
             );
           });
         }
+        if (calendarEventId) {
+          setFocusedCalendarEventId(calendarEventId);
+          void refreshBackendSnapshots({
+            focusedCalendarEventId: calendarEventId,
+            syncNativeCalendarEvents: false,
+            syncNativeReminders: false,
+          }).catch((error: unknown) => {
+            console.warn(
+              "[AIH5Bridge] calendar event focus refresh failed",
+              error,
+            );
+          });
+        }
         setActiveSurface(nextSurface);
         setExecutionStatus({
           description:
             nextSurface === "reminders" && reminderId
               ? "已从系统通知打开提醒"
+              : nextSurface === "calendar" && calendarEventId
+                ? "已打开目标日程"
               : `已切换到${surfaceLabels[nextSurface]}`,
           status: nextSurface === "conversation" ? "idle" : "completed",
         });

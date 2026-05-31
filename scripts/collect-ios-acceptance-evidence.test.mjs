@@ -16,6 +16,15 @@ const h5ComponentsPath = path.join(
   "ai-time-agent",
   "components.tsx"
 );
+const h5BackendApiPath = path.join(
+  rootDir,
+  "apps",
+  "h5",
+  "src",
+  "app",
+  "ai-time-agent",
+  "backendApi.ts"
+);
 const packageJson = JSON.parse(
   fs.readFileSync(path.join(rootDir, "package.json"), "utf8")
 );
@@ -472,11 +481,17 @@ test("acceptance confirmation screenshots target the exact pending plan card", (
 test("calendar cleanup evidence clicks the exact H5 calendar cancel action", () => {
   const collectorSource = fs.readFileSync(scriptPath, "utf8");
   const h5Source = fs.readFileSync(h5ComponentsPath, "utf8");
+  const h5BackendApiSource = fs.readFileSync(h5BackendApiPath, "utf8");
 
   assert.ok(collectorSource.includes('locator(`[data-summary-item-id="${targetEventId}"]`)'));
   assert.ok(collectorSource.includes('[data-summary-action-type="calendar.cancel"]'));
+  assert.match(collectorSource, /eventId:\s*targetEventId/);
+  assert.match(collectorSource, /calendarFocusAttempt <= 3/);
+  assert.match(h5Source, /focusedCalendarEventId/);
   assert.match(h5Source, /data-summary-item-id=\{item\.id\}/);
   assert.match(h5Source, /data-summary-action-type=\{action\.type\}/);
+  assert.match(h5BackendApiSource, /focusedCalendarEventId/);
+  assert.match(h5BackendApiSource, /selectRecentItemsWithFocus\(\s*events,\s*options\.focusedCalendarEventId/);
 });
 
 test("collect iOS acceptance evidence can opt into native attachment inputs support", () => {

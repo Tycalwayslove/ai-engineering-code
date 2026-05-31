@@ -1605,14 +1605,31 @@ async function cancelCalendarEventThroughH5({
       h5URL: page.url(),
       platform: "ios",
     });
-    await sendH5NativeMessage(page, "native.viewChanged", {
-      source: "ios-acceptance-calendar-cleanup",
-      view: "calendar",
-    });
-    await expect(surfaceRegion).toContainText("日程", { timeout: 10000 });
-
     const targetEventRow = surfaceRegion.locator(`[data-summary-item-id="${targetEventId}"]`);
-    await expect(targetEventRow).toContainText("取消", { timeout: 20000 });
+    let calendarFocusError = null;
+    for (
+      let calendarFocusAttempt = 1;
+      calendarFocusAttempt <= 3;
+      calendarFocusAttempt += 1
+    ) {
+      await sendH5NativeMessage(page, "native.viewChanged", {
+        eventId: targetEventId,
+        source: "ios-acceptance-calendar-cleanup",
+        view: "calendar",
+      });
+      try {
+        await expect(surfaceRegion).toContainText("日程", { timeout: 10000 });
+        await expect(targetEventRow).toContainText("取消", { timeout: 10000 });
+        calendarFocusError = null;
+        break;
+      } catch (error) {
+        calendarFocusError = error;
+        await page.waitForTimeout(1000);
+      }
+    }
+    if (calendarFocusError) {
+      throw calendarFocusError;
+    }
     if (targetEventTitle) {
       await expect(targetEventRow).toContainText(targetEventTitle, {
         timeout: 10000,

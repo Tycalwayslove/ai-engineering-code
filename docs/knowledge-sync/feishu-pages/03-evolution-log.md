@@ -4552,3 +4552,31 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把“日程取消结果可证”推进到“用户可见 H5 行内取消动作也可证”。它仍只生成 review 候选证据，不自动把 `system_calendar_cleanup` 改为 `passed`；人工仍需复核截图质量、系统 Calendar App 消失结果和最终验收结论。
+
+## 阶段 165：H5 calendar focus 稳定化
+
+问题背景：
+
+- 当前长期会话中可能残留大量历史日程，H5 日程页为了保持紧凑只展示最近 6 条。
+- `calendarCleanupSeed` 的 seed 日程虽然已写入后端并同步到系统日历，但可能不在最近 6 条中，导致采证器按 `data-summary-item-id` 找不到目标行。
+- H5 初始化时 `native.hostContext` 会触发一次无焦点的快照刷新；紧接着发送带目标的 `native.viewChanged` 时，两次刷新可能竞态，目标行短暂出现后又被无焦点列表覆盖。
+
+完成内容：
+
+- H5 `native.viewChanged` 支持读取 `eventId` / `calendarEventId`。
+- `calendarEventsToBackendElements()` 增加 `focusedCalendarEventId` 选项，复用 `selectRecentItemsWithFocus()` 把目标日程置入可见列表并标记 `highlighted`。
+- calendar surface 复用 `data-highlighted-summary-item` 滚动逻辑，让目标行进入截图视野。
+- `calendarCleanupSeed` 的 H5 cancel helper 会最多 3 次发送带 `eventId` 的 calendar focus 消息，等待目标行出现后再点击 `calendar.cancel`。
+
+验证结果：
+
+- 红灯：新增 source test 后，`node --test --test-name-pattern "calendar cleanup evidence" scripts/collect-ios-acceptance-evidence.test.mjs` 先因缺少 calendar focus retry 失败。
+- 绿灯：补齐 H5 focused calendar event 和采证重试后，同一测试通过。
+- 回归：`node --test scripts/collect-ios-acceptance-evidence.test.mjs` 通过 18 项测试。
+- 回归：`pnpm --filter @ai-code/h5 typecheck` 通过。
+- live 验证：`.tmp/ios-acceptance-evidence/worktree-h5-calendar-focus-retry-20260531` 中 `calendarCleanupSeed.available=true`、`h5CancelActionScreenshot.available=true`，`system_calendar_cleanup` 已预填 H5 取消动作截图、后端 canceled 状态和系统 Calendar App 消失截图。
+- audit 预检：`.tmp/v1-completion-audit/worktree-h5-calendar-focus-retry-20260531` 显示 `missingEvidenceCount=25`、`verdict=not_complete`。该包来自脏工作区，只作为修复验证；提交后仍需按最新 HEAD 重跑正式证据包。
+
+阶段价值：
+
+这一阶段把 H5 行内动作采证从“依赖目标刚好在最近 6 条”改为“可按 Native 目标 ID 聚焦业务对象”。这不仅修复系统日历取消清理，也为后续从 Native 通知、日历详情或深链接打开特定日程提供了稳定 UI 路径。

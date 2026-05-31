@@ -602,3 +602,17 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - 采证脚本可以把截图预填到 `manual-evidence-record.review.json`，但不得把 item 状态自动改成 `passed`。
 
 这条规则后续也适用于费用提交 / 取消、提醒完成 / 取消、编辑保存等可点击业务动作。证据分层仍保持不变：H5 点击截图证明用户界面动作，API summary 证明后端事实状态，Native / 系统 App 截图证明系统集成结果。
+
+## Native 目标聚焦与采证重试
+
+2026-05-31 的 H5 calendar focus 修复补充了另一条协作规则：当 Native 或采证脚本要证明某个具体业务对象的可见动作时，`native.viewChanged` 不应只传 `view`，还应传目标对象 ID。
+
+当前约定：
+
+- 日程目标使用 `eventId` 或 `calendarEventId`。
+- 提醒目标继续使用 `reminderId`。
+- H5 surface 应把目标对象置入可见列表并设置 `highlighted`，即使它不在默认最近列表里。
+- 自动采证允许对目标 focus 做有限重试，用于吸收 H5 初始快照刷新、后端读模型刷新和 Native bridge 消息到达顺序的竞态。
+- 重试只能用于稳定采证，不得绕过真实 UI 动作；最终仍要点击 H5 行内按钮并读取后端 / 系统结果。
+
+这个规则把“页面切换”和“目标定位”分开：`view` 决定用户进入哪个 surface，`eventId` / `reminderId` 决定该 surface 应该展示并滚动到哪个业务对象。
