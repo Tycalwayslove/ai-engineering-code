@@ -92,6 +92,41 @@ function evidenceSuggestionsForItem(item, evidence) {
       break;
     }
     case "navigation_surfaces": {
+      const navigationUiTest = evidence?.navigationUiTest;
+      if (navigationUiTest?.available) {
+        if (navigationUiTest.screenshotAttachments?.headerTimeline) {
+          addUnique(
+            suggestions.screenshots,
+            `Header Timeline 切换截图: ${navigationUiTest.screenshotAttachments.headerTimeline} (${navigationUiTest.resultBundlePath})`
+          );
+        }
+        if (navigationUiTest.screenshotAttachments?.drawerSettings) {
+          addUnique(
+            suggestions.screenshots,
+            `Drawer 设置切换截图: ${navigationUiTest.screenshotAttachments.drawerSettings} (${navigationUiTest.resultBundlePath})`
+          );
+        }
+        addUnique(
+          suggestions.bridgeMarkers,
+          "source=native.header.timeline: validate:ios-navigation-ui-test"
+        );
+        addUnique(
+          suggestions.bridgeMarkers,
+          "source=native.drawer.quick-switch: validate:ios-navigation-ui-test"
+        );
+        if (navigationUiTest.logPath) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `pnpm validate:ios-navigation-ui-test 输出: ${navigationUiTest.logPath}`
+          );
+        }
+        if (navigationUiTest.resultBundlePath) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `xcresult: ${navigationUiTest.resultBundlePath}`
+          );
+        }
+      }
       const surfaces = [
         ["对话页", "conversation"],
         ["Timeline 页面", "timeline"],

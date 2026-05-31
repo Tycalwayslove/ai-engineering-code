@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
 const rootDir = process.cwd();
@@ -29,6 +31,18 @@ const timeoutMs = Number.parseInt(
   process.env.AI_CODE_IOS_NAVIGATION_UI_TEST_TIMEOUT_MS ?? "900000",
   10
 );
+const artifactDir =
+  process.env.AI_CODE_IOS_NAVIGATION_UI_TEST_ARTIFACT_DIR ??
+  path.join(".tmp", "ios-navigation-ui-test");
+const logPath =
+  process.env.AI_CODE_IOS_NAVIGATION_UI_TEST_LOG_PATH ??
+  path.join(artifactDir, "ios-navigation-ui-test.log");
+const metadataPath =
+  process.env.AI_CODE_IOS_NAVIGATION_UI_TEST_METADATA_PATH ??
+  path.join(artifactDir, "navigation-ui-test.json");
+const resultBundlePath =
+  process.env.AI_CODE_IOS_NAVIGATION_UI_TEST_RESULT_BUNDLE_PATH ??
+  path.join(artifactDir, "ios-navigation-ui-test.xcresult");
 
 function quoteArg(arg) {
   if (/^[A-Za-z0-9_./:=?&,+-]+$/.test(arg)) {
@@ -65,6 +79,8 @@ if (version.status !== 0) {
 process.stdout.write(version.stdout ?? "");
 
 const onlyTesting = `${uiTestTarget}/${uiTestClass}/${uiTestMethod}`;
+fs.mkdirSync(artifactDir, { recursive: true });
+fs.rmSync(resultBundlePath, { force: true, recursive: true });
 const testArgs = [
   "-project",
   projectPath,
@@ -76,6 +92,8 @@ const testArgs = [
   destination,
   "-derivedDataPath",
   derivedDataPath,
+  "-resultBundlePath",
+  resultBundlePath,
   `H5_DEV_SERVER_URL=${h5DevServerUrl}`,
   "CODE_SIGNING_ALLOWED=NO",
   "-only-testing:" + onlyTesting,
@@ -100,7 +118,48 @@ const result = spawnSync("xcodebuild", testArgs, {
 process.stdout.write(result.stdout ?? "");
 process.stderr.write(result.stderr ?? "");
 
+const combinedLog = [
+  version.stdout ?? "",
+  [
+    "Running iOS navigation UI test:",
+    "xcodebuild",
+    ...testArgs.map(quoteArg),
+  ].join(" "),
+  result.stdout ?? "",
+  result.stderr ?? "",
+].join("\n");
+fs.writeFileSync(logPath, combinedLog);
+
+function writeMetadata({ passed, error }) {
+  fs.writeFileSync(
+    metadataPath,
+    `${JSON.stringify(
+      {
+        error: error ?? null,
+        generatedAt: new Date().toISOString(),
+        logPath: path.resolve(rootDir, logPath),
+        passed,
+        resultBundlePath: path.resolve(rootDir, resultBundlePath),
+        screenshotAttachments: {
+          drawerSettings: "Drawer 设置切换截图",
+          headerTimeline: "Header Timeline 切换截图",
+        },
+        sourceMarkers: [
+          "source=native.header.timeline",
+          "source=native.drawer.quick-switch",
+        ],
+      },
+      null,
+      2
+    )}\n`
+  );
+}
+
 if (result.error?.code === "ETIMEDOUT") {
+  writeMetadata({
+    error: `timed out after ${timeoutMs}ms`,
+    passed: false,
+  });
   console.error(
     `iOS navigation UI test timed out after ${timeoutMs}ms. Set AI_CODE_IOS_NAVIGATION_UI_TEST_TIMEOUT_MS to override.`
   );
@@ -108,11 +167,16 @@ if (result.error?.code === "ETIMEDOUT") {
 }
 
 if (result.error) {
+  writeMetadata({ error: result.error.message, passed: false });
   console.error(`iOS navigation UI test failed: ${result.error.message}`);
   process.exit(1);
 }
 
 if (result.status !== 0) {
+  writeMetadata({
+    error: `exit code ${result.status ?? "unknown"}`,
+    passed: false,
+  });
   console.error(
     `iOS navigation UI test failed with exit code ${result.status ?? "unknown"}.`
   );
@@ -121,10 +185,15 @@ if (result.status !== 0) {
 
 const combinedOutput = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
 if (!/Executed\s+[1-9]\d*\s+tests?[, ]/.test(combinedOutput)) {
+  writeMetadata({
+    error: "xcodebuild completed without executing the selected XCTest",
+    passed: false,
+  });
   console.error(
     "iOS navigation UI test failed: xcodebuild completed without executing the selected XCTest."
   );
   process.exit(1);
 }
 
+writeMetadata({ passed: true });
 console.log("iOS navigation UI test passed.");

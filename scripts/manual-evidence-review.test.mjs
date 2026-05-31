@@ -68,11 +68,18 @@ test("manual evidence review fills objective evidence without passing items", ()
         systemArtifacts: [],
       }),
       item("navigation_surfaces", "原生导航 / 页面切换", {
-        screenshots: ["H5 七页面切换截图或录屏"],
+        screenshots: [
+          "Header Timeline 切换截图",
+          "Drawer 设置切换截图",
+          "H5 七页面切换截图或录屏",
+        ],
         recordings: [],
         apiSummaries: [],
-        bridgeMarkers: [],
-        systemArtifacts: [],
+        bridgeMarkers: [
+          "source=native.header.timeline",
+          "source=native.drawer.quick-switch",
+        ],
+        systemArtifacts: ["pnpm validate:ios-navigation-ui-test 输出或 xcresult"],
       }),
       item("photo_attachment", "照片附件", {
         screenshots: ["H5 附件摘要卡"],
@@ -177,6 +184,15 @@ test("manual evidence review fills objective evidence without passing items", ()
       reminderId: "reminder_1",
       screenshotPath: "/tmp/native-keyboard-input.png",
     },
+    navigationUiTest: {
+      available: true,
+      logPath: "/tmp/ios-navigation-ui-test.log",
+      resultBundlePath: "/tmp/ios-navigation-ui-test.xcresult",
+      screenshotAttachments: {
+        drawerSettings: "Drawer 设置切换截图",
+        headerTimeline: "Header Timeline 切换截图",
+      },
+    },
     nativeAttachmentInputs: {
       available: true,
       screenshotPath: "/tmp/native-attachment-inputs.png",
@@ -252,6 +268,12 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(navigationItem.evidence.screenshots.join("\n"), /H5 七页面切换截图或录屏/);
   assert.match(navigationItem.evidence.screenshots.join("\n"), /conversation/);
   assert.match(navigationItem.evidence.screenshots.join("\n"), /settings/);
+  assert.match(navigationItem.evidence.screenshots.join("\n"), /Header Timeline 切换截图/);
+  assert.match(navigationItem.evidence.screenshots.join("\n"), /Drawer 设置切换截图/);
+  assert.match(navigationItem.evidence.bridgeMarkers.join("\n"), /source=native\.header\.timeline/);
+  assert.match(navigationItem.evidence.bridgeMarkers.join("\n"), /source=native\.drawer\.quick-switch/);
+  assert.match(navigationItem.evidence.systemArtifacts.join("\n"), /ios-navigation-ui-test\.log/);
+  assert.match(navigationItem.evidence.systemArtifacts.join("\n"), /ios-navigation-ui-test\.xcresult/);
   assert.match(photoItem.evidence.screenshots.join("\n"), /native-attachment-inputs/);
   assert.match(photoItem.evidence.apiSummaries.join("\n"), /attachment_photo/);
   assert.match(photoItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.attachment\.photo/);

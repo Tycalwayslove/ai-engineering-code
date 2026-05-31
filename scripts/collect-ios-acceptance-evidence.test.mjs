@@ -40,6 +40,13 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_NAVIGATION_UI_TEST_METADATA_PATH: path.join(
+          outputDir,
+          "missing-navigation-ui-test.json"
+        ),
+      },
     }
   );
 
@@ -154,6 +161,11 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(evidence.notificationDelivery.enabled, false);
   assert.equal(evidence.notificationDelivery.available, false);
   assert.equal(evidence.notificationDelivery.supportingOnly, true);
+  assert.equal(evidence.navigationUiTest.available, false);
+  assert.match(
+    evidence.navigationUiTest.metadataPath,
+    /missing-navigation-ui-test\.json$/
+  );
   assert.equal(evidence.h5SurfaceScreenshots.available, false);
   assert.equal(evidence.h5SurfaceScreenshots.conversationId, null);
   assert.match(

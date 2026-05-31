@@ -616,3 +616,15 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - 重试只能用于稳定采证，不得绕过真实 UI 动作；最终仍要点击 H5 行内按钮并读取后端 / 系统结果。
 
 这个规则把“页面切换”和“目标定位”分开：`view` 决定用户进入哪个 surface，`eventId` / `reminderId` 决定该 surface 应该展示并滚动到哪个业务对象。
+
+## UI Test 证据归档约定
+
+2026-05-31 的原生导航补证把 UI test 从“只在终端证明通过”升级为“可被证据包引用的产物”。后续凡是用 XCTest 证明 Native 壳层能力，都应遵守同一约定：
+
+- 校验脚本固定写出 log 文件，便于人工复查完整 xcodebuild 输出。
+- 校验脚本固定写出 xcresult，保存 XCTest attachment、失败上下文和执行元数据。
+- 校验脚本写出 JSON metadata，至少包含 `passed`、`logPath`、`resultBundlePath` 和关键 attachment 名称。
+- `collect-ios-acceptance-evidence` 只读取 metadata 并预填 review 候选证据，不把 UI test 结果自动升级为人工验收通过。
+- XCTest 中关键业务断言点应添加 `.keepAlways` screenshot attachment，名称使用人工验收清单里的中文证据名。
+
+这个模式后续可复用到键盘输入、语音输入、附件选择器和 H5 地址覆盖等项目：UI test 证明 Native 操作路径存在，review 记录承接证据，人工最终判断截图 / 录屏 / 系统权限材料是否足够。

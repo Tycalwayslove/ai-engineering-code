@@ -28,6 +28,9 @@ const bundleId =
 const nativeConversationIdStorageKey = "ai-code.native.conversationId";
 const nativeConversationIdPrefix = "conversation_ios_";
 const nativeSystemDiagnosticsStorageKey = "ai-code.native.systemDiagnostics";
+const navigationUiTestMetadataPath =
+  process.env.AI_CODE_IOS_NAVIGATION_UI_TEST_METADATA_PATH ??
+  path.join(rootDir, ".tmp", "ios-navigation-ui-test", "navigation-ui-test.json");
 const h5NativeBaseUrl =
   process.env.AI_CODE_H5_NATIVE_BASE_URL ?? "http://127.0.0.1:3000";
 const h5Surfaces = [
@@ -912,6 +915,48 @@ function emptyNativeAttachmentInputsSeed({
     seedRunId,
     supportingOnly: true,
   };
+}
+
+function collectNavigationUiTestEvidence() {
+  const result = {
+    available: false,
+    errors: [],
+    logPath: null,
+    metadataPath: navigationUiTestMetadataPath,
+    resultBundlePath: null,
+    screenshotAttachments: {},
+    source: "validate:ios-navigation-ui-test",
+    supportingOnly: true,
+  };
+  if (!fs.existsSync(navigationUiTestMetadataPath)) {
+    result.errors.push("navigation UI test metadata was not found");
+    return result;
+  }
+
+  try {
+    const metadata = JSON.parse(fs.readFileSync(navigationUiTestMetadataPath, "utf8"));
+    result.logPath =
+      typeof metadata.logPath === "string" ? metadata.logPath : null;
+    result.resultBundlePath =
+      typeof metadata.resultBundlePath === "string"
+        ? metadata.resultBundlePath
+        : null;
+    result.screenshotAttachments =
+      metadata.screenshotAttachments &&
+      typeof metadata.screenshotAttachments === "object"
+        ? metadata.screenshotAttachments
+        : {};
+    result.available =
+      metadata.passed === true &&
+      Boolean(result.logPath && fs.existsSync(result.logPath)) &&
+      Boolean(result.resultBundlePath && fs.existsSync(result.resultBundlePath));
+    if (!result.available) {
+      result.errors.push("navigation UI test metadata is present but not usable");
+    }
+  } catch (error) {
+    result.errors.push(error instanceof Error ? error.message : String(error));
+  }
+  return result;
 }
 
 async function postJson(url, body) {
@@ -4112,6 +4157,7 @@ async function main() {
     enabled: args.seedAttachmentInputs,
     outputDir,
   });
+  const navigationUiTest = collectNavigationUiTestEvidence();
   const backendFactSnapshot = collectBackendFactSnapshot({
     conversationId: currentNativeConversationId,
     dryRun: args.dryRun,
@@ -4146,6 +4192,7 @@ async function main() {
         : []),
       ...(args.seedKeyboardInput ? ["native_keyboard_input"] : []),
       ...(args.seedAttachmentInputs ? ["native_attachment_inputs"] : []),
+      ...(navigationUiTest.available ? ["ios_navigation_ui_test_artifact"] : []),
     ],
     manualEvidenceStillRequired,
     manualEvidenceGuides,
@@ -4197,6 +4244,7 @@ async function main() {
       ...nativeAttachmentInputs,
       commands: compactCommands(nativeAttachmentInputs.commands),
     },
+    navigationUiTest,
     h5SurfaceScreenshots,
     ios: {
       appPath: ios.appPath,

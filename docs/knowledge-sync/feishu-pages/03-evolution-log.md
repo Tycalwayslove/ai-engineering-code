@@ -4580,3 +4580,38 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把 H5 行内动作采证从“依赖目标刚好在最近 6 条”改为“可按 Native 目标 ID 聚焦业务对象”。这不仅修复系统日历取消清理，也为后续从 Native 通知、日历详情或深链接打开特定日程提供了稳定 UI 路径。
+
+## 阶段 166：原生导航 UI test 证据归档
+
+问题背景：
+
+- `navigation_surfaces` 的真实 Header / Drawer 点击已经有 `pnpm validate:ios-navigation-ui-test` 负责验证。
+- 但该命令此前只把结果打印到终端，没有稳定落盘 log、xcresult metadata 和截图 attachment 名称，导致自动证据包无法把这条真实 UI test 结果预填进 `manual-evidence-record.review.json`。
+- completion audit 仍会提示缺 Header Timeline 截图、Drawer 设置截图、两个 source marker 和 UI test 输出或 xcresult。
+
+完成内容：
+
+- `validate-ios-navigation-ui-test.mjs` 新增稳定产物：
+  - `.tmp/ios-navigation-ui-test/ios-navigation-ui-test.log`
+  - `.tmp/ios-navigation-ui-test/ios-navigation-ui-test.xcresult`
+  - `.tmp/ios-navigation-ui-test/navigation-ui-test.json`
+- XCTest 在两个关键点保留 screenshot attachment：
+  - `Header Timeline 切换截图`
+  - `Drawer 设置切换截图`
+- `collect-ios-acceptance-evidence` 会读取 `navigation-ui-test.json`，写入 `navigationUiTest` 证据对象。
+- `manual-evidence-review` 会把 `navigationUiTest` 映射到：
+  - Header Timeline / Drawer 设置截图候选
+  - `source=native.header.timeline`
+  - `source=native.drawer.quick-switch`
+  - UI test log 和 xcresult system artifact
+
+验证结果：
+
+- 红灯：新增 `manual-evidence-review.test.mjs` 断言后，先因缺少 Header / Drawer 导航证据映射失败；新增 collect dry-run 断言后，先因缺少 `navigationUiTest` 字段失败。
+- 绿灯：补齐 UI test metadata、collect 读取和 review 映射后，`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 19 项测试。
+- 真实 UI test：`pnpm validate:ios-navigation-ui-test` 通过 1 个 XCTest，输出 log、xcresult 和 metadata。
+- 预检：dry-run 采证读取 metadata 后，`navigation_surfaces.missingEvidence=无`，但状态仍保持 `pending`。
+
+阶段价值：
+
+这一阶段把“真实 Native Header / Drawer 点击验证”从终端瞬时输出变成可归档、可被 completion audit 绑定的证据。它仍不自动把导航验收改成 `passed`，但人工复核时可以直接看到 UI test log、xcresult 和两个关键截图 attachment 名称。

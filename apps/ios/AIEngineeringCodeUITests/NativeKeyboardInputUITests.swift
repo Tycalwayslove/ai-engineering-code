@@ -50,6 +50,7 @@ final class NativeKeyboardInputUITests: XCTestCase {
             source: "native.header.timeline",
             in: app
         )
+        attachScreenshot(named: "Header Timeline 切换截图", in: app)
         closeDrawer(in: app)
 
         tapButton(withIdentifier: "ai-code.native.header.ledger-button", in: app)
@@ -86,6 +87,9 @@ final class NativeKeyboardInputUITests: XCTestCase {
                 source: "native.drawer.quick-switch",
                 in: app
             )
+            if route.surface == "settings" {
+                attachScreenshot(named: "Drawer 设置切换截图", in: app)
+            }
         }
     }
 
@@ -119,6 +123,13 @@ final class NativeKeyboardInputUITests: XCTestCase {
             waitForStaticText(containing: "view=\(surface)", in: app, timeout: 15),
             app.debugDescription
         )
+    }
+
+    private func attachScreenshot(named name: String, in app: XCUIApplication) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     private func closeDrawer(in app: XCUIApplication) {
