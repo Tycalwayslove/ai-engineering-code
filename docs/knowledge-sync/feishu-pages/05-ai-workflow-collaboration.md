@@ -866,13 +866,14 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 
 ## 人工验收 Review Pack 规则
 
-2026-06-01 起，人工验收签署前应优先运行 `pnpm prepare:ios-manual-review-pack -- --record <review-path>`，把 `manual-evidence-record.review.json` 转成 `manual-evidence-review-pack.md`：
+2026-06-01 起，人工验收签署前应优先运行 `pnpm prepare:ios-manual-review-pack -- --record <review-path>`，把 `manual-evidence-record.review.json` 转成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`：
 
-- Review Pack 只负责把操作者需要看的内容聚合到 Markdown：record 路径、输出路径、record HEAD、当前 HEAD、`packageFreshness`、`acceptanceVerdict`、manual flags、item 状态统计、每个 item 的缺少候选证据和已预填证据。
+- Review Pack 只负责把操作者需要看的内容聚合到 Markdown / HTML：record 路径、输出路径、record HEAD、当前 HEAD、`packageFreshness`、`acceptanceVerdict`、manual flags、item 状态统计、每个 item 的缺少候选证据和已预填证据。
+- HTML 版应把截图、录屏、日志、JSON、xcresult、Markdown 等候选证据路径渲染为可点击链接，方便操作者逐项打开材料复核。
 - 如果 record HEAD 和当前 HEAD 不一致，pack 必须标记 `packageFreshness: stale`，并提醒不要把旧 HEAD 证据当作当前代码验收。
 - Pack 必须明确写出“本文件不代表验收通过”；`pending`、`not_evaluated` 或 stale 记录只能用于复核，不能进入 passed 结论。
 - Pack 可以给出后续命令，包括 `pnpm prepare:ios-manual-evidence-record -- --mark-passed --operator <name> --confirmed-at <iso8601>`、`validate-ios-manual-evidence-record --require-complete` 和 `collect:v1-completion-audit --run-automated-commands`。
-- native-shells 护栏要检查 review pack 入口，避免未来重构时把人工复核工作台从根命令或脚本中移除。
+- native-shells 护栏要检查 review pack 入口、HTML 生成函数、HTML CLI 日志和 HTML 行为测试，避免未来重构时把人工复核工作台从根命令或脚本中移除。
 
 这个入口解决的是“人工看什么、按什么顺序签署”的操作成本，不改变验收边界。AI 仍不能自行把 review 记录改成 passed，也不能用 Review Pack 替代操作者签名。
 

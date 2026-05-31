@@ -84,13 +84,16 @@ assertIncludes(packageJsonPath, packageJson, "scripts/generate-ios-manual-review
 const iosManualReviewPackScriptPath = "scripts/generate-ios-manual-review-pack.mjs";
 const iosManualReviewPackScript = readRequired(iosManualReviewPackScriptPath);
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "buildManualReviewPack");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "buildManualReviewHtmlPack");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "packageFreshness");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "本文件不代表验收通过");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--mark-passed --operator");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual review HTML pack written");
 
 const iosManualReviewPackTestPath = "scripts/generate-ios-manual-review-pack.test.mjs";
 const iosManualReviewPackTest = readRequired(iosManualReviewPackTestPath);
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "manual review pack summarizes pending statuses");
+assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "HTML manual review pack renders evidence links");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "packageFreshness: `stale`");
 
 const v1CompletionAuditScriptPath = "scripts/collect-v1-completion-audit.mjs";

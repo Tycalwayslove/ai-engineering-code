@@ -5537,3 +5537,30 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 docs-only 新鲜度规则这次脚本变更后的最新 HEAD 重新拉回 current evidence / current audit 状态。新规则没有降低验收门槛：人工记录仍必须由真实操作者签署，外部知识库未同步也必须继续披露。
+
+## 阶段 196：人工验收 HTML Review Pack
+
+背景：
+
+- `manual-evidence-review-pack.md` 已能把 14 项人工验收候选证据聚合到一个 Markdown 文件，但操作者逐项打开截图、录屏、日志、JSON 和 xcresult 时仍需要手动复制路径。
+- 当前剩余阻塞已经不是机器缺证据，而是 `status=pending` 和 `acceptanceVerdict=not_evaluated`；因此下一步优化应降低人工复核成本，而不是放宽完成门槛。
+
+实现：
+
+- `pnpm prepare:ios-manual-review-pack -- --record <review-path>` 现在会同时生成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`。
+- HTML 版展示 record/current HEAD、`packageFreshness`、`acceptanceVerdict`、manual flags、statusCounts、逐项状态、缺少候选证据和已预填证据。
+- HTML 版会把截图、录屏、日志、JSON、xcresult、Markdown 等候选证据路径渲染成可点击链接，方便操作者逐项打开材料复核。
+- `validate:native-shells` 已增加护栏，检查 HTML 生成函数、CLI 输出日志和 HTML 行为测试，避免后续重构误删该入口。
+- Pack 仍明确写出“本文件不代表验收通过”；`pending`、`not_evaluated` 或 stale 记录只能用于复核，不能作为 passed 结论。
+
+验证：
+
+- `node --test scripts/generate-ios-manual-review-pack.test.mjs` 通过。
+- `pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/current-head-final-20260601-b9d4fc5-lan/manual-evidence-record.review.json` 通过，并写出 Markdown 与 HTML pack。
+- `pnpm validate:native-shells` 通过。
+- `pnpm validate:context-sync` 通过。
+- `git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把人工验收从“读 JSON / Markdown 找路径”推进到“打开 HTML 后逐项点证据复核”。它提升操作者签署效率，但不改变 completion 边界：AI 仍不能替代人工把 14 个 item 改成 `passed`。

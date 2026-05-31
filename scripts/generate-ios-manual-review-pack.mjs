@@ -20,6 +20,29 @@ function evidenceText(value) {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function evidencePath(value) {
+  const text = evidenceText(value);
+  const match = text.match(/(?:^|[\s:])((?:\/|\.\.?\/|[A-Za-z0-9_.-]+\/)[^\s,，)]+(?:\.png|\.jpg|\.jpeg|\.mp4|\.mov|\.json|\.log|\.xcresult|\.md|\.html))/i);
+  return match?.[1] ?? null;
+}
+
+function evidenceHtml(value) {
+  const text = evidenceText(value);
+  const linkedPath = evidencePath(value);
+  if (!linkedPath) {
+    return escapeHtml(text);
+  }
+  return `${escapeHtml(text)} <a href="${escapeHtml(linkedPath)}">打开</a>`;
+}
+
 function hasEvidence(actualValues, expected) {
   return asArray(actualValues).some((value) => evidenceText(value).includes(expected));
 }
@@ -151,6 +174,111 @@ export function buildManualReviewPack(record, options = {}) {
   return `${lines.join("\n")}\n`;
 }
 
+function evidenceListHtml(item, category) {
+  const values = asArray(item?.evidence?.[category]);
+  if (values.length === 0) {
+    return "<li>无</li>";
+  }
+  return values.map((value) => `<li>${evidenceHtml(value)}</li>`).join("\n");
+}
+
+export function buildManualReviewHtmlPack(record, options = {}) {
+  const recordPath = options.recordPath ?? "manual-evidence-record.review.json";
+  const outputPath = options.outputPath ?? "manual-evidence-review-pack.html";
+  const items = asArray(record?.items);
+  const statusCounts = formatStatusCounts(items);
+  const recordHeadSha = record?.headSha ?? "unknown";
+  const currentHeadSha = options.currentHeadSha ?? "unknown";
+  const freshness = packageFreshness(record?.headSha, options.currentHeadSha);
+  const filledPath = path.join(path.dirname(recordPath), "manual-evidence-record.filled.json");
+  const itemSections = items
+    .map((item, index) => {
+      const missing = missingEvidence(item);
+      const missingText =
+        missing.length === 0
+          ? "无"
+          : missing.map((entry) => escapeHtml(entry)).join(", ");
+      const evidenceSections = evidenceCategories
+        .map(
+          ([category, label]) => `
+          <section class="evidence-group">
+            <h4>${escapeHtml(label)}</h4>
+            <ul>${evidenceListHtml(item, category)}</ul>
+          </section>`
+        )
+        .join("\n");
+      const operatorNotes = item?.evidence?.operatorNotes
+        ? `<p><strong>operatorNotes:</strong> ${escapeHtml(item.evidence.operatorNotes)}</p>`
+        : "";
+      const blocker = item?.evidence?.blocker
+        ? `<p><strong>blocker:</strong> ${escapeHtml(item.evidence.blocker)}</p>`
+        : "";
+      return `
+      <article class="item">
+        <h3>${index + 1}. ${escapeHtml(item?.title ?? item?.item ?? item?.id ?? "未命名项目")}</h3>
+        <p>id: <code>${escapeHtml(item?.id ?? "")}</code></p>
+        <p>status: <code>${escapeHtml(item?.status ?? "missing")}</code></p>
+        <p>缺少候选证据：${missingText}</p>
+        ${blocker}
+        ${operatorNotes}
+        <div class="evidence-grid">
+          ${evidenceSections}
+        </div>
+      </article>`;
+    })
+    .join("\n");
+
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iOS 人工验收 Review Pack</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; color: #17201b; background: #f7f8f5; }
+    h1, h2, h3 { margin: 0 0 12px; }
+    code { background: #eef1ec; padding: 2px 5px; border-radius: 4px; }
+    .warning { border: 1px solid #b45309; background: #fff7ed; padding: 14px 16px; border-radius: 8px; }
+    .panel, .item { background: #fff; border: 1px solid #dde2da; border-radius: 8px; padding: 18px; margin: 18px 0; }
+    .evidence-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .evidence-group { border-top: 1px solid #edf0ea; padding-top: 10px; }
+    a { color: #0f766e; }
+    li { margin: 6px 0; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <h1>iOS 人工验收 Review Pack</h1>
+  <p class="warning">本文件不代表验收通过。它只把 review / filled 记录中的候选证据整理给操作者逐项复核。</p>
+  <section class="panel">
+    <h2>概览</h2>
+    <p>record: <code>${escapeHtml(recordPath)}</code></p>
+    <p>output: <code>${escapeHtml(outputPath)}</code></p>
+    <p>recordHeadSha: <code>${escapeHtml(recordHeadSha)}</code></p>
+    <p>currentHeadSha: <code>${escapeHtml(currentHeadSha)}</code></p>
+    <p>packageFreshness: <code>${escapeHtml(freshness)}</code></p>
+    <p>acceptanceVerdict: <code>${escapeHtml(record?.acceptanceVerdict ?? "missing")}</code></p>
+    <p>manualAcceptanceRequired: <code>${escapeHtml(record?.manualAcceptanceRequired ?? "missing")}</code></p>
+    <p>automationCanReplaceManualAcceptance: <code>${escapeHtml(record?.automationCanReplaceManualAcceptance ?? "missing")}</code></p>
+    <p>totalItems: <code>${items.length}</code></p>
+    <p>statusCounts: <code>${escapeHtml(statusCounts.text)}</code></p>
+  </section>
+  <section class="panel">
+    <h2>操作者签署边界</h2>
+    <p>逐项打开截图、录屏、API 摘要、Bridge marker 和系统证据后，再决定每项是 <code>passed</code>、<code>failed</code> 还是 <code>blocked</code>。</p>
+    <p>真实复核通过后，再生成签署记录并运行 completion audit。</p>
+    <pre><code>pnpm prepare:ios-manual-evidence-record -- --record ${escapeHtml(recordPath)} --output ${escapeHtml(filledPath)} --mark-passed --operator &lt;name&gt; --confirmed-at &lt;iso8601&gt;
+node scripts/validate-ios-manual-evidence-record.mjs --record &lt;filled-path&gt; --require-complete --report &lt;report-path&gt;
+pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record &lt;filled-path&gt; --external-knowledge-status not_synced</code></pre>
+  </section>
+  <section>
+    <h2>逐项复核</h2>
+    ${itemSections}
+  </section>
+</body>
+</html>
+`;
+}
+
 function parseArgs(argv) {
   const args = {};
   for (let index = 0; index < argv.length; index += 1) {
@@ -210,6 +338,7 @@ function runCli() {
     rootDir,
     args.outputPath ?? path.join(path.dirname(recordPath), "manual-evidence-review-pack.md")
   );
+  const htmlOutputPath = outputPath.replace(/\.md$/i, ".html");
 
   let record;
   try {
@@ -226,9 +355,16 @@ function runCli() {
     outputPath: path.relative(rootDir, outputPath),
     recordPath: path.relative(rootDir, recordPath),
   });
+  const html = buildManualReviewHtmlPack(record, {
+    currentHeadSha: currentGitHeadSha(rootDir),
+    outputPath: path.relative(rootDir, htmlOutputPath),
+    recordPath: path.relative(rootDir, recordPath),
+  });
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, markdown);
+  fs.writeFileSync(htmlOutputPath, html);
   console.log(`iOS manual review pack written to ${outputPath}`);
+  console.log(`iOS manual review HTML pack written to ${htmlOutputPath}`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
