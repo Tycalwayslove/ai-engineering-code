@@ -334,6 +334,7 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 - 系统通知截图。
 - 调试日志或 Xcode 控制台记录本地通知标识 `ai-code.reminder.{id}`。
 - 自动证据包 `ios.systemDiagnostics.notifications.authorizationStatus`、`notifications.pendingReminderCount` 和 `notifications.pendingReminderIds` 摘要。
+- 自动证据包 `notificationSyncBridge.available=true`、`bridgeOutboundLabel` 包含 `notifications.reminders.sync` 且 `targetReminderIncluded=true` 时，可作为 H5 已把目标 scheduled 提醒同步给 Native 的 Bridge 辅助证据；它不替代通知权限弹窗、系统通知截图或 delivered diagnostics。
 - 自动证据包显式开启 `--seed-notification-delivery` 后，`notificationDelivery.available=true`、`pendingNotificationFound=true`、`deliveredNotificationFound=true` 和 `notifications.deliveredReminderIds` 包含目标标识，可作为系统通知 delivered 诊断辅助证据；它不替代真实系统通知展示截图。
 - `/reminders?conversationId=...` 响应摘要。
 

@@ -5031,3 +5031,66 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把附件类可自动整理的系统 UI 候选证据从 completion audit 缺口中移出，当前剩余缺口已经集中到语音权限与通知系统链路。下一步应优先补通知 sync / 权限 / banner / 点击录屏，或者补真实语音权限弹窗截图，而不是继续在附件 synthetic bridge 上堆证据。
+
+## 阶段 180：通知同步 Bridge 辅助证据稳定化
+
+问题背景：
+
+- HEAD `180ce4c` 的正式 audit 中，本地通知仍缺 `notifications.reminders.sync`、通知权限弹窗、系统通知截图和系统通知点击录屏。
+- 此前 `notificationSyncBridge` 会重新打开一个独立 H5 页面采集 outbound bridge marker；live 运行中多次出现第二个页面没有及时观测到 `notifications.reminders.sync`，但同一会话的 H5 surface 页面实际已经发出了该消息。
+- 这类缺口属于采证时机问题，不应通过降低本地通知验收门槛解决。
+
+完成内容：
+
+- `collectH5SurfaceScreenshots` 在已成功渲染对话、Timeline、日程、费用、提醒、执行记录和设置 7 个页面后，导出 `window.__AI_NATIVE_MESSAGES__` 中的 outbound message 摘要。
+- 导出的 `bridgeOutboundMessages` 只保留 `type`、`reminderCount` 和 `reminderIds`，不把完整提醒 payload 写入证据包。
+- `collectNotificationSyncBridgeEvidence` 优先复用 `h5SurfaceScreenshots.bridgeOutboundMessages` 生成 `notificationSyncBridge`，并在 label 中记录 `reminderId`、提醒数量和 `targetIncluded=true/false/null`。
+- 如果 H5 surface 没有捕获到 `notifications.reminders.sync`，仍保留原 standalone H5 fallback。
+- 新增测试守住：通知同步 Bridge 可以复用 H5 surface outbound messages，且 `supportingOnly=true`，不会写成系统通知通过证据。
+
+验证结果：
+
+- 目标测试：`node --test --test-name-pattern "notification delivery diagnostics|notification sync bridge can reuse|partial notification evidence" scripts/collect-ios-acceptance-evidence.test.mjs scripts/manual-evidence-review.test.mjs` 通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 23 项测试。
+- 采证工具：`pnpm validate:ios-acceptance-evidence` 通过 27 项测试。
+- 护栏：`pnpm validate:native-shells`、`git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把本地通知缺口中的 H5 -> Native outbound bridge marker 从偶发不可见推进到可稳定归档。边界仍然不变：`notificationSyncBridge.available=true` 只证明 H5 已把已确认 scheduled 提醒通过 `notifications.reminders.sync` 同步给 Native，不证明用户看到通知权限弹窗、系统通知 banner / 锁屏通知，也不证明真实系统通知点击回流。
+
+## 阶段 181：HEAD 36f786f 通知 Bridge audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-36f786f
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-36f786f --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-36f786f`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-36f786f`。
+- `notificationSyncBridge.available=true`，`targetReminderIncluded=true`。
+- `bridgeOutboundLabel=notifications.reminders.sync · reminderId=reminder_044b3f887eec4165ae77d0d2da61b490 · reminders=48 · targetIncluded=true`。
+- `notificationSyncBridge.screenshotPath` 复用 `.tmp/ios-acceptance-evidence/current-head-final-20260601-36f786f/h5-surfaces/reminders.png`。
+- `verdict=not_complete`，`missingEvidenceCount=5`。
+- `local_notification` 已不再缺 `notifications.reminders.sync`，仍缺 `iOS 通知权限弹窗截图` 和 `系统通知截图`。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 语音仍缺真实麦克风 / 语音识别权限弹窗截图或录屏。
+- 本地通知仍缺通知权限弹窗和系统通知截图。
+- 通知点击回流仍缺系统通知点击录屏。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段把剩余自动可补的通知 Bridge marker 从 completion audit 缺口中移出，使 v1 收口剩余项更清楚地聚焦到真实系统 UI 证据。下一步应优先补真实语音权限弹窗、通知权限弹窗、系统通知截图和系统通知点击录屏；不能把 H5 outbound bridge 截图冒充系统通知投递或点击完成。

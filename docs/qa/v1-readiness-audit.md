@@ -59,7 +59,7 @@ Goal 不能标记 complete。
 | 照片附件 | PhotosPicker 截图、`inputKind=attachment`、`attachmentKind=image`、OCR 文本、`base64Content` 小文件样例、附件接口摘要 | `pnpm validate:ios-attachment-ui-test` 已能归档 `PhotosPicker 选择流程` 候选截图；`pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理照片附件 payload、费用确认卡和 `/expenses` 摘要；两者仍不验证真实选中文件、权限弹窗或 Vision OCR 样本质量 |
 | 文件附件 | fileImporter 截图、文件名 / MIME / size、超过 5MB 不传 `base64Content` 的边界样例 | `pnpm validate:ios-attachment-ui-test` 已能归档 `fileImporter 选择流程` 候选截图；`pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理文件附件 payload 的辅助证据；两者仍不验证真实文件内容、安全作用域读取或选择后元数据质量 |
 | PDF 文本提取 | PDF 选择截图、PDFKit 抽取文本摘要、后续追问或确认卡 | `pnpm validate:ios-attachment-ui-test` 已能归档 `PDF 选择流程` 候选截图；`pnpm collect:ios-attachment-evidence` 可补 H5 / 后端处理 PDF 文本 payload、日程 follow-up 和文本摘要候选证据，但不验证真实 PDFKit 样本抽取质量 |
-| 本地通知 | 通知权限弹窗、系统通知截图、`ai-code.reminder.{id}` 标识、提醒事实摘要 | payload smoke 不证明系统通知投递 |
+| 本地通知 | 通知权限弹窗、系统通知截图、`ai-code.reminder.{id}` 标识、提醒事实摘要 | `notificationSyncBridge.available=true` 只能证明 H5 已通过 `notifications.reminders.sync` 把目标 scheduled 提醒同步给 Native；payload smoke 和 Bridge marker 都不证明系统通知投递或用户可见通知 |
 | 通知点击回流 | 点击通知录屏、reminders drawer 打开、目标提醒高亮、`source=native.notifications.reminders.opened` | 自动脚本不触发真实系统通知点击 |
 | 系统日历写入 | 日历权限弹窗、系统日历事件截图、`AI_CODE_EVENT_ID:{id}` 和 `AI_CODE_ACTION_ID:{sourceActionId}` notes marker | payload smoke 不证明 EventKit 写入用户可见日历 |
 | 系统日历取消清理 | H5 取消动作、后端 `canceled` 状态、系统日历旧事件消失 | payload smoke 不证明 EventKit 删除实际成功 |

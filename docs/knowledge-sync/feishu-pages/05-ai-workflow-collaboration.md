@@ -704,6 +704,20 @@ AI_CODE_API_BASE_URL="http://${MAC_LAN_IP}:8000"
 
 这个分层让 completion audit 更准确：系统层失败不会吞掉 H5 层已成立的证据，H5 层成立也不会冒充系统通知已投递或已点击。若局域网模式下持续无法观测 pending notification，下一步应修采证脚本的 Native notification sync 等待和诊断，而不是降低验收门槛。
 
+## 通知 Bridge outbound 采证复用规则
+
+2026-06-01 的通知同步 Bridge 辅助证据稳定化补充了一个更具体的采证规则：如果同一轮 `collectH5SurfaceScreenshots` 已经打开当前 `conversationId` 的 H5 native 页面，并成功切过 7 个 H5 surface，那么这一个页面上的 NativeBridge outbound message 比另起一个 H5 页面更适合作为 `notifications.reminders.sync` 的采证来源。
+
+当前协作约定：
+
+- H5 surface 采证可以导出 `bridgeOutboundMessages`，但只保留 `type`、`reminderCount` 和 `reminderIds`，避免把完整提醒 payload 写进人工证据包。
+- `notificationSyncBridge` 优先复用 `h5SurfaceScreenshots.bridgeOutboundMessages`；只有没捕获到 `notifications.reminders.sync` 时，才走 standalone H5 fallback。
+- `bridgeOutboundLabel` 必须写清 `reminderId`、reminders 数量和 `targetIncluded=true/false/null`，这样人工复核时能区分“发出了通知同步消息”和“是否包含本轮目标提醒”。
+- 复用 `h5-surfaces/reminders.png` 作为截图是允许的，因为它证明同一会话 reminders surface 可见；但这仍只是 H5 / Bridge 辅助证据。
+- `notificationSyncBridge.supportingOnly=true` 必须保持。即使 `available=true` 且 `targetReminderIncluded=true`，也不能替代 iOS 通知权限弹窗、系统通知截图、delivered diagnostics 或真实通知点击录屏。
+
+HEAD `36f786f` 的正式证据包显示 `notificationSyncBridge.available=true`、`targetReminderIncluded=true`，completion audit 的 `missingEvidenceCount=5`。这代表 `notifications.reminders.sync` 这项 Bridge marker 已经从缺口中移出；剩余通知缺口必须继续在系统 UI 层补证，不能继续用 synthetic H5 或 outbound bridge 证据稀释验收标准。
+
 ## 原生语音 UI test 证据归档
 
 2026-06-01 的语音 UI test 证据归档把键盘输入的模式扩展到语音输入，但边界必须更严格：
