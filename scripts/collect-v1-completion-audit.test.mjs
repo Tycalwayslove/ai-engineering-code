@@ -180,6 +180,84 @@ test("v1 completion audit does not pass with a stale manual evidence record head
   assert.match(audit.markdown, /packageFreshness: stale/);
 });
 
+test("v1 completion audit accepts passed evidence when later changes are docs only", () => {
+  const record = {
+    ...passedManualRecord(),
+    headSha: "code123",
+  };
+  const commandResults = new Map(
+    buildV1CompletionAudit({ manualRecord: record }).automatedCommands.map(
+      (command) => [
+        command.script,
+        {
+          status: "passed",
+          command: `pnpm ${command.script}`,
+          exitCode: 0,
+          durationMs: 10,
+        },
+      ]
+    )
+  );
+
+  const audit = buildV1CompletionAudit({
+    commandResults,
+    currentHeadSha: "docs456",
+    generatedAt: "2026-05-29T10:00:00.000Z",
+    manualRecord: record,
+    manualRecordPath: "manual-evidence-record.filled.json",
+    postRecordChangedFiles: [
+      "ai-factory/memory/working/active-context/current-project-state.md",
+      "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+    ],
+  });
+
+  assert.equal(audit.verdict, "passed");
+  assert.equal(audit.manualEvidence.status, "passed");
+  assert.equal(
+    audit.manualEvidence.packageFreshness.status,
+    "current_with_docs_only_changes"
+  );
+  assert.deepEqual(audit.manualEvidence.packageFreshness.changedFiles, [
+    "ai-factory/memory/working/active-context/current-project-state.md",
+    "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+  ]);
+  assert.match(audit.markdown, /packageFreshness: current_with_docs_only_changes/);
+  assert.match(audit.markdown, /仅包含文档或记忆源稿变更/);
+});
+
+test("v1 completion audit still blocks stale evidence when later changes touch code", () => {
+  const record = {
+    ...passedManualRecord(),
+    headSha: "code123",
+  };
+  const commandResults = new Map(
+    buildV1CompletionAudit({ manualRecord: record }).automatedCommands.map(
+      (command) => [
+        command.script,
+        {
+          status: "passed",
+          command: `pnpm ${command.script}`,
+          exitCode: 0,
+          durationMs: 10,
+        },
+      ]
+    )
+  );
+
+  const audit = buildV1CompletionAudit({
+    commandResults,
+    currentHeadSha: "code789",
+    generatedAt: "2026-05-29T10:00:00.000Z",
+    manualRecord: record,
+    manualRecordPath: "manual-evidence-record.filled.json",
+    postRecordChangedFiles: ["scripts/collect-v1-completion-audit.mjs"],
+  });
+
+  assert.equal(audit.verdict, "not_complete");
+  assert.equal(audit.manualEvidence.packageFreshness.status, "stale");
+  assert.match(audit.markdown, /人工证据记录来自旧 HEAD/);
+});
+
 test("v1 completion audit writes json and markdown artifacts", () => {
   const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
   const result = writeV1CompletionAudit({

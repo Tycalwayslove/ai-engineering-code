@@ -5477,3 +5477,28 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把新增 Review Pack 入口后的最新 HEAD 重新拉回 current evidence / current audit 状态。工程门禁和机器候选证据已经再次证明齐全，剩余阻塞没有变化：必须由真实操作者逐项复核 14 个 item，生成 passed filled 记录并重跑 full completion audit；AI 仍不能代替人工签署。
+
+## 阶段 194：docs-only audit 新鲜度规则
+
+背景：
+
+- 每次 full audit 之后都需要更新 `current-project-state.md` 和飞书源稿，形成一个新的文档提交。
+- 旧逻辑只比较 `recordHeadSha === currentHeadSha`，导致“记录 audit 结果”本身会让刚生成的证据包变成 `stale`。
+- 不能简单放宽 stale 判定，因为如果后续提交触及产品代码、脚本或采证逻辑，旧证据确实不能证明当前代码。
+
+实现：
+
+- `collect-v1-completion-audit` 新增 `current_with_docs_only_changes` 新鲜度状态。
+- 当人工记录 HEAD 与当前 HEAD 不一致时，脚本会读取 `git diff --name-only <recordHead>..<currentHead>`；只有所有变更都位于 `docs/`、`ai-factory/memory/` 或少量文档入口文件时，才标记为 `current_with_docs_only_changes`。
+- 若后续变更触及 `scripts/`、`apps/`、`python/`、`packages/`、`package.json` 等产品或采证代码，仍保持 `stale`，completion audit 仍必须 `not_complete`。
+- 该状态只解决 audit 记录提交导致的新鲜度循环，不绕过 `manualEvidence.requireCompletePassed`。review / draft 记录仍不能被视为 passed。
+- `validate:native-shells` 已新增护栏，防止该边界状态和测试被误删。
+
+验证：
+
+- `node --test scripts/collect-v1-completion-audit.test.mjs` 通过，覆盖 docs-only 可继承和 code-change 仍 stale 两个分支。
+- `node --test scripts/validate-native-shells.test.mjs` 通过。
+
+阶段价值：
+
+这一阶段把“生成 audit -> 记录 audit -> audit 立刻 stale”的尾部循环收束成可审计规则。它让文档记录不再制造虚假的代码 stale，同时保持真实代码变更必须重新采证 / 审计的边界。

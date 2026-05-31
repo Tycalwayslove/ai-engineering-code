@@ -106,6 +106,7 @@ assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manual-rec
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "manualRecordStrategies");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "人工证据记录选择");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "packageFreshness");
+assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "current_with_docs_only_changes");
 assertIncludes(v1CompletionAuditScriptPath, v1CompletionAuditScript, "旧 HEAD");
 
 const v1CompletionAuditTestPath = "scripts/collect-v1-completion-audit.test.mjs";
@@ -115,6 +116,7 @@ assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "archives manua
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "external knowledge sync");
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "manual-record best");
 assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "stale manual evidence record head");
+assertIncludes(v1CompletionAuditTestPath, v1CompletionAuditTest, "later changes are docs only");
 
 const iosBuildScriptPath = "scripts/validate-ios-build.mjs";
 const iosBuildScript = readRequired(iosBuildScriptPath);

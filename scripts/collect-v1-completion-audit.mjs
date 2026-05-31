@@ -24,6 +24,14 @@ const manualEvidenceRecordFileNames = [
 const manualEvidenceRecordPriority = new Map(
   manualEvidenceRecordFileNames.map((fileName, index) => [fileName, index])
 );
+const docsOnlyFreshnessPathPrefixes = [
+  "ai-factory/memory/",
+  "docs/",
+];
+const docsOnlyFreshnessPaths = new Set([
+  "README.md",
+  "AGENTS.md",
+]);
 
 export const requiredAutomatedCommands = [
   {
@@ -165,6 +173,40 @@ function currentGitHeadSha() {
     encoding: "utf8",
   });
   return result.status === 0 ? result.stdout.trim() : null;
+}
+
+function postRecordChangedFilesBetweenHeads(recordHeadSha, currentHeadSha) {
+  if (!recordHeadSha || !currentHeadSha || recordHeadSha === currentHeadSha) {
+    return [];
+  }
+  const result = spawnSync(
+    "git",
+    ["diff", "--name-only", `${recordHeadSha}..${currentHeadSha}`],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+    }
+  );
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout.split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
+function isDocsOnlyFreshnessPath(filePath) {
+  return (
+    docsOnlyFreshnessPaths.has(filePath) ||
+    docsOnlyFreshnessPathPrefixes.some((prefix) => filePath.startsWith(prefix))
+  );
+}
+
+function docsOnlyFreshnessStatusForChangedFiles(changedFiles) {
+  if (!Array.isArray(changedFiles) || changedFiles.length === 0) {
+    return null;
+  }
+  return changedFiles.every(isDocsOnlyFreshnessPath)
+    ? "current_with_docs_only_changes"
+    : null;
 }
 
 function relativeToRoot(absolutePath) {
@@ -335,6 +377,7 @@ function readManifestForManualRecord(record, manualRecordPath) {
 function buildManualEvidencePackageFreshness({
   currentHeadSha,
   manualRecordPath,
+  postRecordChangedFiles,
   record,
 }) {
   const manifest = readManifestForManualRecord(record, manualRecordPath);
@@ -343,8 +386,17 @@ function buildManualEvidencePackageFreshness({
     ? currentHeadSha ?? currentGitHeadSha()
     : currentHeadSha ?? null;
   let status = "unknown";
+  let changedFiles = [];
   if (recordHeadSha && effectiveCurrentHeadSha) {
-    status = recordHeadSha === effectiveCurrentHeadSha ? "current" : "stale";
+    if (recordHeadSha === effectiveCurrentHeadSha) {
+      status = "current";
+    } else {
+      const resolvedChangedFiles =
+        postRecordChangedFiles ??
+        postRecordChangedFilesBetweenHeads(recordHeadSha, effectiveCurrentHeadSha);
+      changedFiles = Array.isArray(resolvedChangedFiles) ? resolvedChangedFiles : [];
+      status = docsOnlyFreshnessStatusForChangedFiles(resolvedChangedFiles) ?? "stale";
+    }
   } else if (!recordHeadSha) {
     status = "missing_record_head";
   }
@@ -365,6 +417,7 @@ function buildManualEvidencePackageFreshness({
     manifestHeadSha: manifest?.headSha ?? null,
     manifestPath,
     recordHeadSha,
+    changedFiles,
   };
 }
 
@@ -372,6 +425,7 @@ function buildManualEvidenceAudit({
   currentHeadSha,
   manualEvidenceReportPath,
   manualRecordSelection,
+  postRecordChangedFiles,
   manualRecord,
   manualRecordPath,
 }) {
@@ -398,6 +452,7 @@ function buildManualEvidenceAudit({
   const packageFreshness = buildManualEvidencePackageFreshness({
     currentHeadSha,
     manualRecordPath,
+    postRecordChangedFiles,
     record,
   });
   return {
@@ -582,6 +637,9 @@ function markdownForAudit(audit) {
       : "- 人工证据记录尚未通过 completion 校验。",
     audit.manualEvidence.packageFreshness?.status === "stale"
       ? "- 人工证据记录来自旧 HEAD，不能证明当前代码状态。"
+      : audit.manualEvidence.packageFreshness?.status ===
+          "current_with_docs_only_changes"
+        ? "- 人工证据记录之后仅包含文档或记忆源稿变更，未发现产品代码旧 HEAD 阻塞。"
       : "- 人工证据记录未发现旧 HEAD 阻塞。",
     audit.externalKnowledgeSync.finalDisclosureRequired
       ? "- 外部知识库未记录为已同步；最终回复必须明确说明“仓库已更新，外部知识库未同步”。"
@@ -614,6 +672,7 @@ export function buildV1CompletionAudit(options = {}) {
     currentHeadSha: options.currentHeadSha,
     manualEvidenceReportPath: options.manualEvidenceReportPath,
     manualRecordSelection: resolvedManualRecord.manualRecordSelection,
+    postRecordChangedFiles: options.postRecordChangedFiles,
     manualRecord: options.manualRecord,
     manualRecordPath: resolvedManualRecord.manualRecordPath,
   });

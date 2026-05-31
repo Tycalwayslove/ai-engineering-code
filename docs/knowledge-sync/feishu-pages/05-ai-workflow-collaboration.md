@@ -496,11 +496,14 @@ Calendar 写入类辅助证据的当前边界是：系统 Calendar App 截图和
 关键边界：
 
 - `packageFreshness.status=current` 表示人工记录和当前代码 HEAD 一致。
+- `packageFreshness.status=current_with_docs_only_changes` 表示人工记录之后只有 `docs/` 或 `ai-factory/memory/` 这类文档 / 记忆源稿变更；它可以避免“记录 audit 结果的文档提交”反复制造 stale 循环。
 - `packageFreshness.status=stale` 表示人工记录来自旧 HEAD；即使自动化命令通过、人工记录本身通过 completion 校验，`v1-completion-audit` 也必须保持 `not_complete`。
 - Markdown 报告会展示 `packageFreshness`、`recordHeadSha` 和 `currentHeadSha`，让人工复查时不用打开 JSON 也能看见证据版本是否匹配。
 - `validate:native-shells` 和 `validate:v1-readiness` 会守住这个字段和旧 HEAD 判定说明，避免后续误删。
 
 这让 goal 模式的收尾更贴近真实发布判断：证据不只是“存在”和“齐全”，还必须证明当前这版代码。旧证据包可以帮助定位缺口，但不能让当前迭代完成。
+
+`current_with_docs_only_changes` 不是绕过验收的后门：只要后续变更触及 `scripts/`、`apps/`、`python/`、`packages/`、`package.json` 或其他产品 / 采证代码，状态仍必须是 `stale`。即使是 docs-only 状态，completion 也仍然要求人工 evidence record 已经 `passed`，不能把 review / draft 记录当成通过。
 
 ## 当前 HEAD iOS 辅助证据包刷新
 
@@ -884,7 +887,7 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 
 ## 自动化全绿后的停线边界
 
-HEAD `0e25651` 的 full audit 给出一个清晰边界：自动化命令全部 `passed`、机器证据缺口为 0、证据包 HEAD 新鲜，但 v1 仍是 `not_complete`。
+HEAD `0e25651` 的 full audit 给出一个清晰边界：自动化命令全部 `passed`、机器证据缺口为 0、证据包 HEAD 新鲜，但 v1 仍是 `not_complete`。后续为了记录审计结果产生的 docs-only 提交，可以由 `current_with_docs_only_changes` 表示“产品代码未变”，但不能改变人工验收结论。
 
 后续协作必须遵守：
 
