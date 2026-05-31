@@ -5380,3 +5380,39 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段修的是自动采证稳定性，不是产品语义让步。用户真实输入仍可以自然表达费用；采证 seed 则应尽量结构化、可重复，避免真实 LLM 在长期会话上下文中漂移，影响 completion audit 对系统日历写入和取消清理辅助证据的判断。
+
+## 阶段 191：HEAD 44574d1 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-44574d1-lan
+
+pnpm prepare:ios-manual-evidence-record -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-44574d1-lan/manual-evidence-record.review.json \
+  --output .tmp/ios-acceptance-evidence/current-head-final-20260601-44574d1-lan/manual-evidence-record.filled.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-44574d1-lan/manual-evidence-record.filled.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-44574d1-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-44574d1-lan`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-44574d1-lan`。
+- `acceptanceFactSeed.available=true`，费用 seed 已恢复为 `expense.create_reimbursement_draft` 确认 / 执行链路。
+- `calendarSystemAppEvidence.available=true`、`calendarCleanupSeed.available=true`、`notificationSyncBridge.available=true`、`notificationUiTest.available=true`、`voicePermissionUiTest.available=true`、`nativeAttachmentInputs.available=true`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=44574d1`，`currentHeadSha=44574d1`。
+- 21 个自动化命令全部 `passed`，包括 product smoke、Postgres smoke、H5 click smoke、iOS build / simulator smoke、6 条 iOS UI test、LLM smoke、SDK / contract / native-shells / context-sync / v1-readiness 和 `git diff --check`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把最新代码 HEAD 的工程侧收尾重新证明为“自动化全绿、机器证据齐、证据包新鲜”。v1 仍不能完成的唯一产品验收阻塞已经收敛为人工 operator sign-off：必须由真实操作者逐项复核 14 个 item 后，再用 filled 记录标记 `passed` 并重跑 completion audit。AI 不能代替这一步。

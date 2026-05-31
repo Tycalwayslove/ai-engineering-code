@@ -869,3 +869,14 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 - 费用 seed 要写出 `新增费用草稿`、`标题 <seedRunId> ...`、`金额 ...`、`发生日期 ...`，不要依赖“备注”承载 seed，也不要使用容易触发“提交报销 / 选择已有费用”的 `报销`。
 - seed 文案的目标不是覆盖用户自然语言能力，而是为 completion audit 生成可重复的辅助证据；自然语言能力仍由 product smoke、LLM smoke 和真实 App 验收覆盖。
 - 如果证据包出现 `acceptanceFactSeed.available=false`，要先检查三领域 seed 哪一项没有 `confirmation_required`，再考虑是否是文案歧义、脏会话历史或服务状态问题。
+
+## 自动化全绿后的停线边界
+
+HEAD `44574d1` 的 full audit 给出一个清晰边界：自动化命令全部 `passed`、机器证据缺口为 0、证据包 HEAD 新鲜，但 v1 仍是 `not_complete`。
+
+后续协作必须遵守：
+
+- 不再用“继续补自动截图”替代人工验收。当前缺口报告已经显示 14 个 item 的 `missingEvidence=无`，问题是 `status=pending` 和顶层 `acceptanceVerdict=not_evaluated`。
+- AI 可以继续帮助生成 filled 草稿、运行 `--require-complete`、整理 audit 产物和解释缺口，但不能自行把 item 标为 `passed`。
+- 如果操作者已经真实复核，可以使用 `pnpm prepare:ios-manual-evidence-record -- --record <review> --output <filled> --mark-passed --operator <name> --confirmed-at <iso8601>` 生成签署记录；随后必须运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <filled> --require-complete --report <report>` 和 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled>`。
+- 未执行飞书 / Obsidian 真实同步前，外部同步状态必须继续是 `not_synced`，最终回复继续披露“仓库已更新，外部知识库未同步”。
