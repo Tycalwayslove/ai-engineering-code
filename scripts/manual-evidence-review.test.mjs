@@ -53,6 +53,13 @@ test("manual evidence review fills objective evidence without passing items", ()
         bridgeMarkers: ["calendar.events.sync", "status=canceled"],
         systemArtifacts: ["iOS 系统日历事件消失截图"],
       }),
+      item("h5_address_override", "H5 地址覆盖", {
+        screenshots: ["默认地址 App 启动截图", "局域网地址 App 启动截图"],
+        recordings: [],
+        apiSummaries: [],
+        bridgeMarkers: ["H5DevServerURL", "h5NativeTargetMarkerFound=true"],
+        systemArtifacts: ["构建产物 Info.plist 的 H5DevServerURL"],
+      }),
       item("system_sync_degradation", "系统同步降级", {
         screenshots: ["权限拒绝"],
         recordings: [],
@@ -113,6 +120,8 @@ test("manual evidence review fills objective evidence without passing items", ()
       counts: { calendarEvents: 2 },
     },
     ios: {
+      h5DevServerUrl: "http://192.168.1.238:3000/?native=ios",
+      screenshotPath: "/tmp/simulator-launch.png",
       conversationPersistence: {
         afterRelaunch: "conversation_ios_123",
         afterRelaunchScreenshotPath: "/tmp/conversation-after-relaunch.png",
@@ -120,6 +129,9 @@ test("manual evidence review fills objective evidence without passing items", ()
         beforeRelaunchScreenshotPath: "/tmp/conversation-before-relaunch.png",
         stableAcrossRelaunch: true,
       },
+    },
+    serviceHealth: {
+      h5NativeTargetMarkerFound: true,
     },
     calendarPermissionDenialSeed: {
       available: true,
@@ -233,6 +245,7 @@ test("manual evidence review fills objective evidence without passing items", ()
   const calendarItem = review.items.find((candidate) => candidate.id === "system_calendar_write");
   const localNotificationItem = review.items.find((candidate) => candidate.id === "local_notification");
   const cleanupItem = review.items.find((candidate) => candidate.id === "system_calendar_cleanup");
+  const h5AddressItem = review.items.find((candidate) => candidate.id === "h5_address_override");
   const degradationItem = review.items.find((candidate) => candidate.id === "system_sync_degradation");
   const keyboardItem = review.items.find((candidate) => candidate.id === "keyboard_input");
   const navigationItem = review.items.find((candidate) => candidate.id === "navigation_surfaces");
@@ -266,6 +279,13 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(cleanupItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件消失截图/);
   assert.match(cleanupItem.evidence.apiSummaries.join("\n"), /后端 canceled 状态: eventId=calendar_event_1, status=canceled/);
   assert.match(cleanupItem.evidence.bridgeMarkers.join("\n"), /status=canceled/);
+  assert.equal(h5AddressItem.status, "pending");
+  assert.match(h5AddressItem.evidence.screenshots.join("\n"), /默认地址 App 启动截图/);
+  assert.match(h5AddressItem.evidence.screenshots.join("\n"), /局域网地址 App 启动截图/);
+  assert.match(h5AddressItem.evidence.screenshots.join("\n"), /simulator-launch/);
+  assert.match(h5AddressItem.evidence.bridgeMarkers.join("\n"), /H5DevServerURL: http:\/\/192\.168\.1\.238:3000/);
+  assert.match(h5AddressItem.evidence.bridgeMarkers.join("\n"), /h5NativeTargetMarkerFound=true/);
+  assert.match(h5AddressItem.evidence.systemArtifacts.join("\n"), /构建产物 Info\.plist 的 H5DevServerURL/);
   assert.match(degradationItem.evidence.screenshots.join("\n"), /权限拒绝/);
   assert.match(degradationItem.evidence.bridgeMarkers.join("\n"), /native\.error/);
   assert.match(degradationItem.evidence.operatorNotes, /候选证据/);

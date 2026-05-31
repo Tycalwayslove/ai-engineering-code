@@ -31,6 +31,29 @@ function apiSummary(evidence, label) {
   return `${label}: conversationId=${conversationId}, counts=${JSON.stringify(counts)}`;
 }
 
+function isPrivateLanUrl(value) {
+  if (!value) {
+    return false;
+  }
+  let hostname = "";
+  try {
+    hostname = new URL(value).hostname;
+  } catch {
+    return false;
+  }
+  const octets = hostname.split(".").map((part) => Number.parseInt(part, 10));
+  if (octets.length !== 4 || octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+  const [first, second] = octets;
+  return (
+    first === 10 ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168) ||
+    (first === 169 && second === 254)
+  );
+}
+
 function evidenceSuggestionsForItem(item, evidence) {
   const suggestions = {
     screenshots: [],
@@ -49,6 +72,12 @@ function evidenceSuggestionsForItem(item, evidence) {
         );
       }
       if (evidence?.ios?.h5DevServerUrl) {
+        if (evidence?.ios?.screenshotPath && isPrivateLanUrl(evidence.ios.h5DevServerUrl)) {
+          addUnique(
+            suggestions.screenshots,
+            `局域网地址 App 启动截图: ${evidence.ios.screenshotPath}`
+          );
+        }
         addUnique(
           suggestions.bridgeMarkers,
           `H5DevServerURL: ${evidence.ios.h5DevServerUrl}`

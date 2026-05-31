@@ -668,3 +668,25 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - H5 synthetic seed 和真实 UI test 各自证明不同层面：synthetic seed 证明 H5 / 后端能处理 Native 来源消息；真实 UI test 证明 Native 输入控件、系统键盘和发送按钮可用。completion audit 需要两类证据共同缩小缺口。
 
 这个模式后续可以继续用于语音：语音 UI test 证明 `source=native.composer.voice`、识别文本和 H5 确认卡；系统麦克风 / 语音权限弹窗仍必须由人工截图或录屏补齐。
+
+## H5 地址覆盖证据分层
+
+2026-06-01 的 H5 局域网地址 review 映射补充了一个容易混淆的证据规则：构建产物里的 `H5DevServerURL`、H5 marker 和 App 启动截图各证明不同层面，不能互相替代。
+
+当前协作约定：
+
+- `H5DevServerURL` marker 证明 iOS 构建产物读取到了目标 H5 地址。
+- `h5NativeTargetMarkerFound=true` 证明该目标地址能返回 H5 native 页面，并包含必要页面 marker。
+- “默认地址 App 启动截图”证明 App 能在当前配置下启动。
+- “局域网地址 App 启动截图”只有在 `H5DevServerURL` 是私有局域网地址时才可预填；`localhost`、`127.0.0.1` 和无效地址不能冒充。
+- 自动 review 只能预填候选证据，不得把 `h5_address_override.status` 改成 `passed`。
+
+正式局域网采证建议同时设置：
+
+```bash
+H5_DEV_SERVER_URL="http://${MAC_LAN_IP}:3000/?native=ios&bridgeDebug=1"
+AI_CODE_H5_NATIVE_BASE_URL="http://${MAC_LAN_IP}:3000"
+AI_CODE_API_BASE_URL="http://${MAC_LAN_IP}:8000"
+```
+
+采证前需要先确认 H5 / API 已监听到局域网地址，且 `curl "${AI_CODE_H5_NATIVE_BASE_URL}/?native=ios&bridgeDebug=1"` 能看到 H5 页面 marker。completion audit 仍以最新 HEAD 的证据包和人工 filled 记录为准。

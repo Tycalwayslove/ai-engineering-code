@@ -4717,3 +4717,28 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - 对应 audit `.tmp/v1-completion-audit/current-best-final-20260601-71aa8fe` 显示 `missingEvidenceCount=19`、`verdict=not_complete`。
 - `keyboard_input.missingEvidence=无`，review 中包含“输入框文本” xcresult attachment、H5 确认卡和提醒页截图、`/reminders` 摘要以及 `source=native.composer.keyboard`。
 - 所有人工项仍为 `pending`，不能把 goal 标记为 complete。
+
+## 阶段 170：H5 局域网地址覆盖 review 映射
+
+问题背景：
+
+- `h5_address_override` 的人工模板要求同时提供“默认地址 App 启动截图”和“局域网地址 App 启动截图”。
+- 既有证据包已经能读取 `Info.plist` 的 `H5DevServerURL`、App 启动截图和 H5 native marker，但 review 整理脚本此前只把启动截图归为“默认地址”，不会在地址确实为局域网 IP 时预填局域网截图。
+- 这个缺口不能用 `localhost` 或 `127.0.0.1` 冒充，因为目标是证明 iOS 壳能按构建配置访问局域网 H5 地址。
+
+完成内容：
+
+- `manual-evidence-review` 新增局域网地址判断：只有 `ios.h5DevServerUrl` 是私有局域网 IPv4（`10.*`、`172.16.*` 到 `172.31.*`、`192.168.*` 或 `169.254.*`）且有 App 启动截图时，才预填“局域网地址 App 启动截图”。
+- `h5_address_override` 仍会记录 `H5DevServerURL` bridge marker、`h5NativeTargetMarkerFound=true` 和“构建产物 Info.plist 的 H5DevServerURL”系统摘要。
+- 自动 review 仍保持 item `status=pending`，只减少人工整理缺口，不替代人工验收。
+
+验证结果：
+
+- 红灯：新增 `h5_address_override` 测试后，`node --test --test-name-pattern "manual evidence" scripts/manual-evidence-review.test.mjs` 因缺少“局域网地址 App 启动截图”预填失败。
+- 绿灯：补齐局域网地址映射后，同一测试通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 19 项测试。
+- 静态检查：`node --check scripts/manual-evidence-review.mjs` 通过。
+
+阶段价值：
+
+这一阶段把 H5 地址覆盖从“只看到构建地址”推进到“能区分默认地址和局域网地址候选截图”。后续正式采证时仍必须用局域网 `H5_DEV_SERVER_URL` / `AI_CODE_H5_NATIVE_BASE_URL` 重新生成当前 HEAD 证据包，completion audit 才能确认 `h5_address_override.missingEvidence` 是否收敛。
