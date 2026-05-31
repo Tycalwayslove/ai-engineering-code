@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import process from "node:process";
 
 import { fetchWithRetry } from "./http-retry.mjs";
+import { finalizeNativeKeyboardInputEvidence } from "./ios-acceptance-keyboard-evidence.mjs";
 import { isCalendarPermissionDenialAvailable } from "./ios-acceptance-predicates.mjs";
 import { buildManualEvidenceReview } from "./manual-evidence-review.mjs";
 
@@ -688,6 +689,7 @@ function emptyNotificationClickBackflowSeed({
   return {
     available: false,
     apiBaseUrl,
+    backendBridgeAvailable: false,
     bridgeInboundLabel: null,
     commands: {},
     conversationId: conversationId ?? null,
@@ -768,6 +770,7 @@ function emptyNativeKeyboardInputSeed({
     conversationId: conversationId ?? null,
     enabled,
     errors: [],
+    h5ReminderVisible: null,
     mode: "h5_synthetic_native_input",
     reminderId: null,
     reminderTitle: null,
@@ -2423,27 +2426,30 @@ async function seedNativeKeyboardInput({
     keyboard.reminderTitle = targetReminder?.title ?? null;
 
     await sendH5NativeMessage(page, "native.viewChanged", {
+      reminderId: keyboard.reminderId ?? undefined,
       source: "ios-acceptance-keyboard-input",
       view: "reminders",
     });
     await expect(surfaceRegion).toContainText("提醒", { timeout: 10000 });
-    await expect(page.locator("body")).toContainText(seedRunId, {
-      timeout: 10000,
-    });
+    try {
+      await expect(page.locator("body")).toContainText(seedRunId, {
+        timeout: 10000,
+      });
+      keyboard.h5ReminderVisible = true;
+    } catch (error) {
+      keyboard.h5ReminderVisible = false;
+      keyboard.errors.push(error instanceof Error ? error.message : String(error));
+    }
     await page.screenshot({ fullPage: true, path: keyboard.screenshotPath });
     keyboard.commands.h5SyntheticKeyboardInput = {
       command: `Playwright ${url} + native.inputSubmitted source=${keyboard.source}`,
       ok: true,
       status: 0,
     };
-    keyboard.available =
-      keyboard.errors.length === 0 &&
-      keyboard.confirmationCardFound === true &&
-      Boolean(keyboard.reminderId);
     if (!keyboard.reminderId) {
       keyboard.errors.push("keyboard input seed reminder was not found after confirmation");
     }
-    return keyboard;
+    return finalizeNativeKeyboardInputEvidence(keyboard);
   } catch (error) {
     keyboard.errors.push(error instanceof Error ? error.message : String(error));
     return keyboard;

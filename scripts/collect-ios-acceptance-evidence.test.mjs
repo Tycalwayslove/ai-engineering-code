@@ -383,6 +383,39 @@ test("collect iOS acceptance evidence can opt into native keyboard input support
   assert.match(keyboardItem.evidence.operatorNotes, /待人工补充/);
 });
 
+test("native keyboard evidence requires the backend fact to be visible in H5 reminders", async () => {
+  const { finalizeNativeKeyboardInputEvidence } = await import(
+    "./ios-acceptance-keyboard-evidence.mjs"
+  );
+
+  const keyboard = finalizeNativeKeyboardInputEvidence({
+    available: false,
+    bridgeInboundLabel:
+      "native.inputSubmitted · source=native.composer.keyboard · view=conversation",
+    confirmationCardFound: true,
+    errors: ["Timed out while waiting for seed text on reminders surface"],
+    h5ReminderVisible: false,
+    reminderId: "reminder_123",
+    reminderTitle: "seed_20260531键盘验收带电脑",
+  });
+
+  assert.equal(keyboard.backendBridgeAvailable, true);
+  assert.equal(keyboard.available, false);
+  assert.equal(keyboard.h5ReminderVisible, false);
+  assert.deepEqual(keyboard.errors, [
+    "Timed out while waiting for seed text on reminders surface",
+  ]);
+
+  const visibleKeyboard = finalizeNativeKeyboardInputEvidence({
+    ...keyboard,
+    errors: [],
+    h5ReminderVisible: true,
+  });
+
+  assert.equal(visibleKeyboard.backendBridgeAvailable, true);
+  assert.equal(visibleKeyboard.available, true);
+});
+
 test("collect iOS acceptance evidence can opt into native attachment inputs support", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-inputs-")
