@@ -107,6 +107,30 @@ function pushEvidenceSection(lines, item, category, label) {
   }
 }
 
+function requiredEvidenceSummary(item) {
+  const requiredEvidence = item?.requiredEvidence ?? {};
+  const summaries = [];
+  for (const [category, label] of evidenceCategories) {
+    const values = asArray(requiredEvidence[category]);
+    if (values.length > 0) {
+      summaries.push(`${label}：${values.map(evidenceText).join("、")}`);
+    }
+  }
+  return summaries;
+}
+
+function pushRequiredEvidenceSection(lines, item) {
+  const summaries = requiredEvidenceSummary(item);
+  lines.push("- 必需证据：");
+  if (summaries.length === 0) {
+    lines.push("  - 无");
+    return;
+  }
+  for (const summary of summaries) {
+    lines.push(`  - ${summary}`);
+  }
+}
+
 export function buildManualReviewPack(record, options = {}) {
   const recordPath = options.recordPath ?? "manual-evidence-record.review.json";
   const outputPath = options.outputPath ?? "manual-evidence-review-pack.md";
@@ -155,6 +179,7 @@ export function buildManualReviewPack(record, options = {}) {
     lines.push("");
     lines.push(`- id: \`${item?.id ?? ""}\``);
     lines.push(`- status: \`${item?.status ?? "missing"}\``);
+    pushRequiredEvidenceSection(lines, item);
     lines.push(`- 缺少候选证据：${missing.length === 0 ? "无" : missing.map((entry) => `\`${entry}\``).join(", ")}`);
     if (item?.evidence?.blocker) {
       lines.push(`- blocker: ${item.evidence.blocker}`);
@@ -180,6 +205,14 @@ function evidenceListHtml(item, category) {
     return "<li>无</li>";
   }
   return values.map((value) => `<li>${evidenceHtml(value)}</li>`).join("\n");
+}
+
+function requiredEvidenceHtml(item) {
+  const summaries = requiredEvidenceSummary(item);
+  if (summaries.length === 0) {
+    return "<li>无</li>";
+  }
+  return summaries.map((summary) => `<li>${escapeHtml(summary)}</li>`).join("\n");
 }
 
 export function buildManualReviewHtmlPack(record, options = {}) {
@@ -218,6 +251,10 @@ export function buildManualReviewHtmlPack(record, options = {}) {
         <h3>${index + 1}. ${escapeHtml(item?.title ?? item?.item ?? item?.id ?? "未命名项目")}</h3>
         <p>id: <code>${escapeHtml(item?.id ?? "")}</code></p>
         <p>status: <code>${escapeHtml(item?.status ?? "missing")}</code></p>
+        <section class="required-evidence">
+          <h4>必需证据</h4>
+          <ul>${requiredEvidenceHtml(item)}</ul>
+        </section>
         <p>缺少候选证据：${missingText}</p>
         ${blocker}
         ${operatorNotes}

@@ -21,6 +21,7 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /"prepare:ios-manual-review-pack"/);
   assert.match(validator, /scripts\/generate-ios-manual-review-pack\.mjs/);
   assert.match(validator, /buildManualReviewHtmlPack/);
+  assert.match(validator, /requiredEvidenceSummary/);
   assert.match(validator, /manual review HTML pack written/);
   assert.match(validator, /HTML manual review pack renders evidence links/);
   assert.match(validator, /scripts\/collect-v1-completion-audit\.mjs/);

@@ -86,6 +86,9 @@ test("manual review pack summarizes pending statuses and evidence without passin
   assert.match(markdown, /本文件不代表验收通过/);
   assert.match(markdown, /## 1\. 语音输入/);
   assert.match(markdown, /- status: `pending`/);
+  assert.match(markdown, /- 必需证据：/);
+  assert.match(markdown, /截图：识别文本/);
+  assert.match(markdown, /系统证据：iOS 权限弹窗截图或录屏/);
   assert.match(markdown, /识别文本: \/tmp\/voice-text\.png/);
   assert.match(markdown, /缺少候选证据：无/);
   assert.match(markdown, /## 2\. 本地通知/);
@@ -134,6 +137,9 @@ test("HTML manual review pack renders evidence links without passing pending ite
   assert.match(html, /packageFreshness: <code>stale<\/code>/);
   assert.match(html, /acceptanceVerdict: <code>not_evaluated<\/code>/);
   assert.match(html, /statusCounts: <code>passed=0, pending=2, failed=0, blocked=0, other=0<\/code>/);
+  assert.match(html, /必需证据/);
+  assert.match(html, /截图：识别文本/);
+  assert.match(html, /系统证据：iOS 权限弹窗截图或录屏/);
   assert.match(html, /href="\/tmp\/voice-text\.png"/);
   assert.match(html, /source=native\.composer\.voice/);
   assert.match(html, /缺少候选证据：screenshots: 系统通知截图/);

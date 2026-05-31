@@ -103,7 +103,7 @@ pnpm collect:ios-attachment-evidence
 pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.review.json
 ```
 
-该命令会同时生成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`。HTML 版会把截图、录屏、日志、JSON、xcresult 等候选证据路径渲染为可点击链接，便于逐项打开材料复核；它仍不代表验收通过。
+该命令会同时生成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`。两种格式都会按 item 展示 required evidence 和已预填候选证据；HTML 版还会把截图、录屏、日志、JSON、xcresult 等候选证据路径渲染为可点击链接，便于逐项打开材料复核；它仍不代表验收通过。
 
 证据包默认输出到 `.tmp/ios-acceptance-evidence/<timestamp>/`，包含 `manifest.json`、`acceptance-evidence.json`、`summary.md`、`manual-checklist.todo.md`、`manual-evidence-record.template.json`、`manual-evidence-record.draft.json`、`manual-evidence-record.review.json` 和 `simulator-launch.png`。常用参数：
 
@@ -132,7 +132,7 @@ pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/<ru
 
 人工复核时可以先用 `pnpm prepare:ios-manual-evidence-record -- --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.review.json --output .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.filled.json` 生成 filled 草稿。默认模式只写入 `operatorSignoff.mode=draft`，保留 `acceptanceVerdict=not_evaluated` 和所有 item 的 `pending` 状态，便于操作者逐项检查。只有操作者已经真实复核并确认所有证据通过时，才允许追加 `--mark-passed --operator <name> --confirmed-at <iso8601>`；该模式会先按 `--require-complete` 校验证据字段，缺证据时不会生成通过记录。生成后的 filled 记录仍要再运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete --report <report-path>`，再进入 completion audit。
 
-正式签署前建议先生成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`。它们会汇总 record 路径、record HEAD、当前 HEAD、新鲜度、`acceptanceVerdict`、每个 item 的状态、缺少的候选证据、已预填的截图 / 录屏 / API 摘要 / bridge marker / 系统 artifact，以及下一步签署命令。HTML 版会把本地候选证据路径渲染为可点击链接。它们都是复核工作台，不是通过证明；只要 review 记录仍是 `pending` / `not_evaluated`，completion audit 就必须保持 `not_complete`。
+正式签署前建议先生成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`。它们会汇总 record 路径、record HEAD、当前 HEAD、新鲜度、`acceptanceVerdict`、每个 item 的状态、required evidence、缺少的候选证据、已预填的截图 / 录屏 / API 摘要 / bridge marker / 系统 artifact，以及下一步签署命令。HTML 版会把本地候选证据路径渲染为可点击链接。它们都是复核工作台，不是通过证明；只要 review 记录仍是 `pending` / `not_evaluated`，completion audit 就必须保持 `not_complete`。
 
 可以用结构化记录校验器检查模板或已补证记录：
 

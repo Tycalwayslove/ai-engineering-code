@@ -85,6 +85,7 @@ const iosManualReviewPackScriptPath = "scripts/generate-ios-manual-review-pack.m
 const iosManualReviewPackScript = readRequired(iosManualReviewPackScriptPath);
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "buildManualReviewPack");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "buildManualReviewHtmlPack");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "requiredEvidenceSummary");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "packageFreshness");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "本文件不代表验收通过");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--mark-passed --operator");
