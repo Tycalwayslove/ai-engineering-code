@@ -735,3 +735,14 @@ HEAD `a7a2241` 的 audit 把 `missingEvidenceCount` 收敛到 15 后，后续协
 - 系统选择器层不能被 synthetic bridge 替代：PhotosPicker / Files picker 的选择流程、系统权限弹窗、系统选择器截图必须来自真实 iOS 系统 UI 或人工录屏。
 
 因此，review 映射可以为 `photo_attachment` 预填 `费用确认卡或金额追问` 和 `/expenses?conversationId=...`，但不能因此预填 `PhotosPicker 选择流程` 或 `PhotosPicker 权限与选择器截图`。后续补文件和 PDF 时也应沿用这个原则：能自动化业务后续链路，但不能把 synthetic `native.inputSubmitted` 当成真实系统选择器。
+
+## PDF 附件 follow-up 与上下文顺序
+
+2026-06-01 的 PDF 附件证据归档补了两个协作规则：
+
+- 附件 follow-up 应尽量贴着附件提交立即执行。照片、文件、PDF 连续提交后再回头点旧 quick reply，会让“最近附件”上下文漂移，LLM 或规则 planner 可能围绕错误附件生成候选计划。
+- 自动采证可以证明 PDF 可读文本进入业务链路：点击“作为日程材料处理”、出现日程追问或确认卡、保存 `native-attachment-pdf-schedule-follow-up.png`、把 `PDF 日程材料 明天上午十点项目会` 作为文本摘要候选证据。
+- 这些证据仍只属于业务链路层，不能代替真实 Files / PDF 选择器截图。`PDF 选择流程` 必须来自系统 UI、UI test 或人工录屏。
+- `manual-evidence-review` 只能预填 `pdf_text_extraction` 的“后续追问或确认卡”和“PDF 样本文本摘要截图”，不得把 item status 改成 `passed`。
+
+正式 audit 使用 HEAD `ebb9eb2` 的证据包后，`missingEvidenceCount=11`，说明 PDF 业务后续证据已经从缺口中移出；但 v1 completion 仍阻塞在人工验收状态和系统 UI 证据上。后续协作应把精力放到真实 PhotosPicker / fileImporter / PDF 选择器、语音权限弹窗、通知权限弹窗和系统通知点击录屏，而不是继续堆 synthetic bridge 截图。

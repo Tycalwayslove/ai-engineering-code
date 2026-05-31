@@ -4902,3 +4902,68 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把自动可证明的照片附件业务链路从 completion audit 缺口中移出，使剩余 `photo_attachment` 缺口更准确地聚焦到系统 PhotosPicker 层。下一步同类高收益任务是补 PDF 后续追问 / 确认卡和 PDF 文本摘要候选证据。
+
+## 阶段 176：PDF 附件日程证据归档
+
+问题背景：
+
+- HEAD `09a35d1` 的 audit 中，`pdf_text_extraction` 仍缺“后续追问或确认卡”和“PDF 样本文本摘要截图”。
+- 这两项属于 PDF 可读文本进入 H5 / 后端业务链路后的候选证据，可以用 synthetic Native bridge + Playwright 自动化整理。
+- live 采证还发现一个上下文稳定性问题：如果先连续提交照片、文件、PDF，再回头点击照片 quick reply，最近附件上下文可能已经漂移到 PDF，导致费用 follow-up 偶发被 LLM / planner 理解偏。
+
+完成内容：
+
+- `seedNativeAttachmentInputs` 改为在每个附件提交成功后立即处理该附件自己的 quick reply。
+- 照片附件提交后立刻点击“作为费用票据处理”，避免被后续 PDF 附件污染最近附件上下文。
+- PDF 附件提交后立刻点击“作为日程材料处理”，保存 `native-attachment-pdf-schedule-follow-up.png`。
+- PDF sample 新增 `scheduleFollowUp` 和 `textSummary`，dry-run 下也会暴露默认结构。
+- `manual-evidence-review` 会为 `pdf_text_extraction` 预填“后续追问或确认卡”和“PDF 样本文本摘要截图”候选证据。
+
+验证结果：
+
+- targeted：`node --test --test-name-pattern "native attachment inputs|manual evidence" scripts/collect-ios-acceptance-evidence.test.mjs scripts/manual-evidence-review.test.mjs` 通过。
+- 语法：`node --check scripts/collect-ios-acceptance-evidence.mjs`、`node --check scripts/manual-evidence-review.mjs` 通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 21 项测试。
+- 护栏：`pnpm validate:native-shells`、`git diff --check` 通过。
+- live 采证：`.tmp/ios-acceptance-evidence/worktree-pdf-followup-20260601-rerun` 显示 `nativeAttachmentInputs.available=true`、`photo.expenseFollowUp.available=true`、`pdf.scheduleFollowUp.available=true`，且 `pdf.textSummary=PDF 日程材料 明天上午十点项目会`。
+
+阶段价值：
+
+这一阶段把 PDF 附件从“可被 intake / upload 记录”推进到“PDF 可读文本能驱动日程追问或确认卡”。同时修正了附件 follow-up 的处理顺序，让照片和 PDF 都围绕自己的附件上下文执行。真实 Files / PDF 选择器流程仍必须由系统 UI 截图或人工录屏补齐。
+
+## 阶段 177：HEAD ebb9eb2 PDF audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-ebb9eb2
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-ebb9eb2 --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ebb9eb2`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-ebb9eb2`。
+- `verdict=not_complete`，`missingEvidenceCount=11`。
+- `nativeAttachmentInputs.available=true`，并且 `photo.expenseFollowUp.available=true`、`pdf.scheduleFollowUp.available=true`。
+- `pdf_text_extraction` 已预填 `H5 附件摘要卡`、`后续追问或确认卡`、`PDF 样本文本摘要截图`、`/attachments?conversationId=...`、`source=native.composer.attachment.file` 和 `attachmentKind=pdf`。
+- `pdf_text_extraction` 剩余缺口只剩 `PDF 选择流程`。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 语音仍缺真实麦克风 / 语音识别权限弹窗截图或录屏。
+- 照片仍缺真实 `PhotosPicker` 选择流程和权限 / 选择器截图。
+- 文件仍缺真实 `fileImporter` 选择流程和 Files 选择器截图。
+- PDF 仍缺真实 PDF 选择流程。
+- 本地通知仍缺 `notifications.reminders.sync`、通知权限弹窗、系统通知截图和系统通知点击录屏。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段把 PDF 的业务后续证据从 completion audit 缺口中移出，使附件类剩余缺口更准确地聚焦到真实系统选择器层。下一步应优先补真实 PhotosPicker / fileImporter / PDF 选择流程，以及通知和语音权限弹窗这类系统 UI 证据。
