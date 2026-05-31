@@ -804,3 +804,12 @@ HEAD `180ce4c` 的正式 audit 后，`missingEvidenceCount=6`，附件三项的 
 - H5 执行结果文案可能随产品 UI 演进变化，通知 UI test 应等待用户可见事实文案（例如 `已执行：创建提醒`、`scheduled`、提醒标题），不要绑定旧的通用状态文案。
 
 后续 completion audit 仍要重新生成当前 HEAD 证据包，并绑定 `notificationUiTest.available=true` 的 review 记录；没有人工 `passed` 记录时，即使通知截图和录屏都齐，goal 也不能标记为 complete。
+
+## 系统通知 audit 刷新后的下一步选择
+
+HEAD `2018cc1` 的 audit 显示 `missingEvidenceCount=1`，说明系统通知 UI test 已经把本地通知和通知点击回流的显式材料补齐。后续协作要避免继续在通知链路上重复堆证据，应转向两个更明确的收尾动作：
+
+- 如果目标是继续减少机器可见缺口，下一步应在局域网 H5/API 地址下重新跑证据包，补 `h5_address_override` 的“局域网地址 App 启动截图”。本轮用 `127.0.0.1` 跑包，所以这个缺口仍合理存在。
+- 如果目标是接近 v1 complete，必须由人工复核 `manual-evidence-record.review.json`，把 14 个 item 从 `pending` 改成真实的 `passed/failed/blocked`，并补操作者说明。自动 review 记录只能预填证据，不能自己变成验收结论。
+- 正式收尾必须运行 `pnpm collect:v1-completion-audit -- --run-automated-commands ...`，否则 audit 中自动化命令仍是 `not_run`，不能作为 complete 证据。
+- 外部知识库同步仍需要真实执行飞书或 Obsidian 同步命令；只更新 `docs/knowledge-sync/feishu-pages/` 源稿时，最终回复仍必须说明“仓库已更新，外部知识库未同步”。

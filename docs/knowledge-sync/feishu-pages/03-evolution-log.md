@@ -5198,3 +5198,39 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把系统通知展示和真实通知点击回流从纯人工缺口推进到可归档 UI test 候选证据。边界仍然清楚：它证明系统通知 banner 和点击回流可被自动捕获，不证明通知权限首弹一定出现，也不自动代表人工验收已通过。
+
+## 阶段 185：HEAD 2018cc1 系统通知 audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://127.0.0.1:3000/?native=ios&bridgeDebug=1' pnpm validate:ios-notification-ui-test
+
+H5_DEV_SERVER_URL='http://127.0.0.1:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://127.0.0.1:3000' \
+AI_CODE_API_BASE_URL='http://127.0.0.1:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-2018cc1
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-2018cc1 --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-2018cc1`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-2018cc1`。
+- `notificationUiTest.available=true`，并记录 `ios-notification-ui-test.log`、`ios-notification-ui-test.xcresult`、`system-notification-click.mp4`、`系统通知截图` 和 `通知点击后 App 回流` attachment。
+- `automatedEvidence` 包含 `ios_notification_ui_test_artifact`。
+- `verdict=not_complete`，`missingEvidenceCount=1`。
+- 本地通知和通知点击回流已不再缺系统通知截图 / 点击录屏候选证据。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 本轮证据包使用 `127.0.0.1`，因此 `h5_address_override` 仍缺“局域网地址 App 启动截图”。
+- completion audit 未使用 `--run-automated-commands` 跑全量最终门禁，自动化命令状态仍是 `not_run`。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段把 v1 收口的显式证据缺口从 3 个降到 1 个，通知系统链路的自动候选证据已齐：Bridge 同步、系统通知截图、点击录屏和 H5 回流截图都能归档。后续如果要继续向 complete 推进，应补局域网地址 App 启动截图，并由人工把 14 个验收 item 逐项复核为 `passed`，再运行带 `--run-automated-commands` 的正式 completion audit。
