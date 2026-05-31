@@ -44,6 +44,10 @@ const h5BackendApiPath = "apps/h5/src/app/ai-time-agent/backendApi.ts";
 const h5BackendApi = readRequired(h5BackendApiPath);
 const h5ClickSmokePath = "scripts/validate-h5-click-smoke.mjs";
 const h5ClickSmoke = readRequired(h5ClickSmokePath);
+const h5NextConfigPath = "apps/h5/next.config.ts";
+const h5NextConfig = readRequired(h5NextConfigPath);
+const h5NextEnvPath = "apps/h5/next-env.d.ts";
+const h5NextEnv = readRequired(h5NextEnvPath);
 
 assertNotIncludes(
   h5RuntimePath,
@@ -188,6 +192,30 @@ assertIncludes(
   h5BackendApi,
   "promptSha256",
   "Agent debug settings must include the provider prompt hash for log correlation",
+);
+assertIncludes(
+  h5NextConfigPath,
+  h5NextConfig,
+  "NEXT_DIST_DIR",
+  "H5 smoke tests must be able to isolate Next dev lock state from a running local dev server",
+);
+assertIncludes(
+  h5ClickSmokePath,
+  h5ClickSmoke,
+  "NEXT_DIST_DIR",
+  "H5 click smoke must launch Next with an isolated distDir so dev:full can keep running",
+);
+assertIncludes(
+  h5ClickSmokePath,
+  h5ClickSmoke,
+  "restoreH5NextEnv",
+  "H5 click smoke must restore Next's generated next-env.d.ts after using a temporary distDir",
+);
+assertNotIncludes(
+  h5NextEnvPath,
+  h5NextEnv,
+  ".tmp/next-h5-click-smoke",
+  "H5 click smoke must not leave a temporary Next distDir in the tracked next-env.d.ts file",
 );
 
 const handleCancelSection = readFunctionSection(

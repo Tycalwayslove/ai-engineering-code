@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,9 +13,19 @@ const repoRoot = path.resolve(
 const apiPort = await getFreePort();
 const h5Port = await getFreePort();
 const conversationId = `conversation_h5_click_smoke_${Date.now()}`;
+const h5DistDir = `.tmp/next-h5-click-smoke-${process.pid}`;
+const h5NextEnvPath = path.join(repoRoot, "apps/h5/next-env.d.ts");
+const originalH5NextEnv = existsSync(h5NextEnvPath)
+  ? readFileSync(h5NextEnvPath, "utf8")
+  : null;
 const childProcesses = [];
 
 try {
+  rmSync(path.join(repoRoot, "apps/h5", h5DistDir), {
+    force: true,
+    recursive: true,
+  });
+
   const apiBaseUrl = `http://127.0.0.1:${apiPort}`;
   const h5BaseUrl = `http://127.0.0.1:${h5Port}`;
   const pythonBin = existsSync(path.join(repoRoot, ".venv/bin/python"))
@@ -60,6 +70,7 @@ try {
       String(h5Port),
     ],
     {
+      NEXT_DIST_DIR: h5DistDir,
       NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
     },
   );
@@ -386,6 +397,17 @@ try {
   console.log("H5 click smoke validation passed.");
 } finally {
   await stopProcesses();
+  restoreH5NextEnv();
+  rmSync(path.join(repoRoot, "apps/h5", h5DistDir), {
+    force: true,
+    recursive: true,
+  });
+}
+
+function restoreH5NextEnv() {
+  if (originalH5NextEnv !== null) {
+    writeFileSync(h5NextEnvPath, originalH5NextEnv);
+  }
 }
 
 async function sendNativeMessage(page, type, payload) {

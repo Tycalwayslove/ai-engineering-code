@@ -144,9 +144,12 @@ const iosVoicePermissionUiTestScript = readRequired(
 );
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "xcodebuild");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "simctl");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "uninstall");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "privacy");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "reset");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "microphone");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "PRODUCT_BUNDLE_IDENTIFIER");
+assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "com.aiengineeringcode.shell.voicepermissionuitest");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "testNativeVoicePermissionPromptCanBeCaptured");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "voice-permission-ui-test.json");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "ios-voice-permission-ui-test.log");

@@ -19,7 +19,9 @@ const h5DevServerUrl =
   process.env.H5_DEV_SERVER_URL ??
   "http://127.0.0.1:3000/?native=ios&bridgeDebug=1";
 const bundleId =
-  process.env.AI_CODE_IOS_BUNDLE_ID ?? "com.aiengineeringcode.shell";
+  process.env.AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_BUNDLE_ID ??
+  process.env.AI_CODE_IOS_BUNDLE_ID ??
+  "com.aiengineeringcode.shell.voicepermissionuitest";
 const uiTestTarget =
   process.env.AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_TARGET ??
   "AIEngineeringCodeUITests";
@@ -88,6 +90,7 @@ fs.rmSync(resultBundlePath, { force: true, recursive: true });
 const privacyCommands = [];
 if (shouldResetPrivacy) {
   for (const args of [
+    ["simctl", "uninstall", "booted", bundleId],
     ["simctl", "privacy", "booted", "reset", "microphone", bundleId],
     ["simctl", "privacy", "booted", "reset", "all", bundleId],
   ]) {
@@ -117,6 +120,7 @@ const testArgs = [
   resultBundlePath,
   `H5_DEV_SERVER_URL=${h5DevServerUrl}`,
   "CODE_SIGNING_ALLOWED=NO",
+  `PRODUCT_BUNDLE_IDENTIFIER=${bundleId}`,
   "-only-testing:" + onlyTesting,
   "test",
 ];
