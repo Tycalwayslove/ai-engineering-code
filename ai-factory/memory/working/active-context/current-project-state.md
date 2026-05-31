@@ -1382,6 +1382,8 @@ pnpm validate:h5-runtime
 - 本次“语音权限 full audit 稳定化”和“HEAD 69af3fb full audit 刷新”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS README 和当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 2026-06-01 已新增人工验收 filled 草稿入口：`pnpm prepare:ios-manual-evidence-record` 会先运行 `scripts/fill-ios-manual-evidence-record.test.mjs`，再由 `scripts/fill-ios-manual-evidence-record.mjs` 从 `manual-evidence-record.review.json` 生成 `manual-evidence-record.filled.json` 草稿。默认模式保留 `acceptanceVerdict=not_evaluated` 和 14 个 item 的 `pending` 状态；只有显式传入 `--mark-passed --operator <name> --confirmed-at <iso8601>` 且证据完整性校验通过时，才会生成 passed filled 记录。该入口用于减少人工签署漏填，不替代真实人工验收。
 - 本次“人工验收 filled 草稿入口”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单、v1 readiness 审计和当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
+- 2026-06-01 当前 HEAD `04c8a09` 重新生成局域网证据包时发现 `acceptanceFactSeed.available=false`，根因是费用 seed 文案 `新建一条昨天打车费 58 元的费用草稿，备注 ...` 在长期脏会话和真实 LLM provider 下返回 `assistant_message`，没有生成确认卡，连带系统 Calendar App 和日历取消清理辅助证据不可用。已将费用 seed 改为 `新增费用草稿，标题 <seedRunId> 验收打车费，金额 58 元，发生日期昨天`，并用 `pnpm validate:ios-acceptance-evidence` 和 `pnpm validate:native-shells` 验证脚本护栏通过。提交后必须重新生成当前 HEAD 证据包和 audit。
+- 本次“验收事实费用 seed 再稳定化”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 飞书同步不是自动的；需要先更新 `docs/knowledge-sync/feishu-pages/` 源稿，再用 `lark-cli docs +update --api-version v2` 同步对应页面。
 - 如果新窗口没有执行 Obsidian 或飞书写入，就不能声称外部知识库已经更新。
 

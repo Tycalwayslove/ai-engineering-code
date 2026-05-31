@@ -860,3 +860,12 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 - 生成 passed filled 记录后，仍需再次运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <filled-path> --require-complete --report <report-path>`，再把该记录交给 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path>`。
 
 协作原则不变：AI 可以整理候选证据、生成草稿和运行校验，但不能代替操作者确认系统权限、系统 App、通知、语音、附件和业务事实是否真实通过。
+
+## 验收事实 seed 文案规则
+
+自动采证中的 seed 文案要优先选择结构化、单义、抗历史上下文污染的表达：
+
+- 创建类 seed 要明确写出“新增”或“创建”，避免在长期会话中被 LLM 理解成管理已有事项。
+- 费用 seed 要写出 `新增费用草稿`、`标题 <seedRunId> ...`、`金额 ...`、`发生日期 ...`，不要依赖“备注”承载 seed，也不要使用容易触发“提交报销 / 选择已有费用”的 `报销`。
+- seed 文案的目标不是覆盖用户自然语言能力，而是为 completion audit 生成可重复的辅助证据；自然语言能力仍由 product smoke、LLM smoke 和真实 App 验收覆盖。
+- 如果证据包出现 `acceptanceFactSeed.available=false`，要先检查三领域 seed 哪一项没有 `confirmation_required`，再考虑是否是文案歧义、脏会话历史或服务状态问题。

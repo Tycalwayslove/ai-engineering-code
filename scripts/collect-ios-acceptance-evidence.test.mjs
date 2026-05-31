@@ -1134,6 +1134,10 @@ test("collect iOS acceptance evidence can opt into seeded acceptance facts", () 
     (input) => input.domain === "expense"
   )?.input;
   assert.match(expenseSeedInput, /费用草稿/);
+  assert.match(expenseSeedInput, /标题 seed_/);
+  assert.match(expenseSeedInput, /金额 58 元/);
+  assert.match(expenseSeedInput, /发生日期昨天/);
+  assert.doesNotMatch(expenseSeedInput, /备注/);
   assert.doesNotMatch(expenseSeedInput, /报销/);
   assert.deepEqual(
     evidence.acceptanceFactSeed.inputs.map((input) => input.domain),

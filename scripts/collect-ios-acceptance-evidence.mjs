@@ -129,7 +129,7 @@ function buildAcceptanceSeedInputs(seedRunId) {
     },
     {
       domain: "expense",
-      input: `新建一条昨天打车费 58 元的费用草稿，备注 ${seedRunId} 验收`,
+      input: `新增费用草稿，标题 ${seedRunId} 验收打车费，金额 58 元，发生日期昨天`,
     },
     {
       domain: "reminder",

@@ -5357,3 +5357,26 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把最后的人工作业从“手改 JSON”收拢成可审计的签署流程：默认先生成安全草稿，只有操作者显式签名和时间戳、且证据字段完整时，才允许生成 completion audit 可消费的 passed 记录。它不降低人工验收门槛，只减少人为漏填和误填。
+
+## 阶段 190：验收事实费用 seed 再稳定化
+
+背景：
+
+- HEAD `04c8a09` 重新生成局域网证据包时，manifest 已经绑定当前 HEAD，但 `acceptanceFactSeed.available=false`。
+- 失败点是费用 seed 文案 `新建一条昨天打车费 58 元的费用草稿，备注 ...` 在长期脏会话和真实 LLM provider 下返回了 `assistant_message`，没有生成 `confirmation_required`。
+- 费用 seed 失败会连带阻断系统 Calendar App 截图和系统日历取消清理，因为这些证据依赖三领域验收事实 seed 成功。
+
+实现：
+
+- 将费用 seed 改为更结构化的命令式输入：`新增费用草稿，标题 <seedRunId> 验收打车费，金额 58 元，发生日期昨天`。
+- 测试护栏要求费用 seed 包含 `费用草稿`、`标题 seed_`、`金额 58 元` 和 `发生日期昨天`，同时不含 `备注` 或 `报销`。
+- 同一真实会话探针验证该文案能返回 `confirmation_required` 和 `expense.create_reimbursement_draft`，避免旧草稿上下文把输入误导成管理已有费用或普通闲聊。
+
+验证：
+
+- `pnpm validate:ios-acceptance-evidence` 通过，29 个测试全部 pass。
+- `pnpm validate:native-shells` 通过。
+
+阶段价值：
+
+这一阶段修的是自动采证稳定性，不是产品语义让步。用户真实输入仍可以自然表达费用；采证 seed 则应尽量结构化、可重复，避免真实 LLM 在长期会话上下文中漂移，影响 completion audit 对系统日历写入和取消清理辅助证据的判断。
