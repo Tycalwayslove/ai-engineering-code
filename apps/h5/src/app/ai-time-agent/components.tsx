@@ -869,6 +869,8 @@ function BackendElementCard({
     return (
       <ConfirmationCard
         actions={element.actions}
+        data-confirmation-id={element.id}
+        data-plan-id={element.planId}
         description={element.description}
         onCancel={() => onCancel(element)}
         onConfirm={() => onConfirm(element)}

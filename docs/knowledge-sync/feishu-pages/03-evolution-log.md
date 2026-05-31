@@ -4484,3 +4484,41 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把会话持久 ID 从“只有 plist/API 文本证据”推进为“重启前后也有可归档截图”。它仍不自动把人工项标记为 `passed`，但能让人工复核人员直接看到当前 run 的重启前后截图路径和同一个 `conversation_ios_*` 值。
+
+## 阶段 163：验收事实 H5 确认卡辅助采证
+
+问题背景：
+
+- 三领域 `acceptanceFactSeed` 已经能通过真实后端 `/agent/turns` 和 `/execution-plans/{id}/confirm` 写入日程、费用和提醒事实。
+- 但该 seed 是 API 直提交，不经过 H5 确认卡渲染，导致 `system_calendar_write` 缺“日程确认卡”，`local_notification` 缺“提醒确认卡”。
+- 这些确认卡是用户可见执行前确认的关键证据；如果只保留确认后的日历 / 提醒页截图，会缺少“用户看到并确认了什么”的上下文。
+
+完成内容：
+
+- `acceptanceFactSeed` 新增 `confirmationScreenshots.calendar` 和 `confirmationScreenshots.reminder`：
+  - `acceptance-calendar-confirmation-card.png`
+  - `acceptance-reminder-confirmation-card.png`
+- 采证语义保持克制：
+  - API seed 仍负责创建 pending plan 和最终确认写入事实。
+  - calendar / reminder seed 在确认前打开同一 `conversationId` 的 H5 native 页面。
+  - H5 通过 pending confirmation 恢复渲染确认卡。
+  - H5 确认卡 DOM 暴露 `data-plan-id` 和 `data-confirmation-id`。
+  - Playwright 优先使用 `data-plan-id` 定位目标卡，保留 `article` + `seedRunId` + “确认”按钮作为 fallback，避免误截长期脏会话中的旧 pending 卡，也兼容日程标题被规划器归一化后不显示 seed 标记的情况。
+- `manual-evidence-review` 会把：
+  - calendar 截图预填到 `system_calendar_write.evidence.screenshots` 的“日程确认卡”。
+  - reminder 截图预填到 `local_notification.evidence.screenshots` 的“提醒确认卡”。
+- review item 仍保持 `pending`，不会因为自动候选证据存在而自动通过。
+
+验证结果：
+
+- 红灯：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 先因缺少 `confirmationScreenshots` 字段和 review 映射失败。
+- 绿灯：补齐字段、H5 截图 helper 和 review 映射后，同一测试通过。
+- 回归：`pnpm validate:ios-acceptance-evidence` 通过 21 项测试。
+- 回归：`pnpm validate:native-shells` 通过。
+- 静态检查：`node --check scripts/manual-evidence-review.mjs && node --check scripts/collect-ios-acceptance-evidence.mjs && git diff --check` 通过。
+- live 采证验证：`acceptanceFactSeed.available=true`，`acceptance-calendar-confirmation-card.png` 和 `acceptance-reminder-confirmation-card.png` 均真实生成。
+- completion audit 验证：新证据包可被 `--manual-record best` 选中，人工补证缺口收敛到 26，`verdict=not_complete`。
+
+阶段价值：
+
+这一阶段把三领域 seed 从“后端事实写入可证”推进到“关键确认卡也有 H5 可见截图”。它减少了日程写入和本地通知两项的人工补证噪音，但边界不变：这些截图不能证明真实 Native 键盘或语音输入，也不能替代通知权限弹窗、系统通知截图、系统 Calendar 事件详情和人工复核结论。

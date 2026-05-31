@@ -571,3 +571,20 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - review 文案会带上具体 `conversation_ios_*` 值，便于人工把截图、UserDefaults 和 `/agent/conversations/{conversationId}/turns` 摘要对齐复核。
 - 该证据仍是候选证据；`conversation_persistence.status` 必须保持 `pending`，直到人工确认截图、API 摘要和 bridge marker 后再改为 `passed`。
 - 如果截图未显示足够上下文，人工仍可以补录屏或额外截图；completion audit 只负责暴露缺口，不替代人工判断截图质量。
+
+## 验收事实确认卡截图
+
+2026-05-31 的 iOS v1 收口继续把自动辅助证据靠近真实用户路径。`acceptanceFactSeed` 仍通过 API 提交三领域 seed，保证写事实的主语义不变；但 calendar / reminder seed 在确认前会额外打开同会话 H5 native 页面，等待 pending confirmation 恢复渲染，并保存两张确认卡截图：
+
+- `acceptance-calendar-confirmation-card.png`
+- `acceptance-reminder-confirmation-card.png`
+
+协作边界：
+
+- H5 确认卡必须带 `data-plan-id` 和 `data-confirmation-id`，Playwright 优先按当前后端 `planId` 定位；`seedRunId` 只作为 fallback，用于避免旧 pending 卡污染本轮采证。
+- 截图只作为 `system_calendar_write` 和 `local_notification` 的候选辅助证据进入 `manual-evidence-record.review.json`。
+- 自动 review 只预填证据，不改 item 状态；人工仍需判断截图质量并把 filled 记录改为 `passed`。
+- 这些截图不能证明真实 Native 输入来源，键盘 / 语音仍要依赖原生 UI test、人工截图或真实录屏。
+- 本地通知仍需要权限弹窗、系统通知截图和必要的点击回流证据；系统日历仍需要 Calendar App 详情、notes marker、无重复和取消后消失等人工复核。
+
+这类补证改动的优先级判断是：优先补“自动能稳定采到、且能减少人工整理成本”的证据；不要为了让 audit 看起来更绿，把候选证据误升级为完成证据。

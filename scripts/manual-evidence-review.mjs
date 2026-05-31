@@ -123,6 +123,14 @@ function evidenceSuggestionsForItem(item, evidence) {
       break;
     }
     case "local_notification": {
+      const reminderConfirmation =
+        evidence?.acceptanceFactSeed?.confirmationScreenshots?.reminder;
+      if (reminderConfirmation?.available && reminderConfirmation.path) {
+        addUnique(
+          suggestions.screenshots,
+          `提醒确认卡: ${reminderConfirmation.path}`
+        );
+      }
       if (evidence?.notificationDelivery?.available) {
         addUnique(suggestions.apiSummaries, `/reminders?conversationId=...: ${apiSummary(evidence, "reminders")}`);
         addUnique(
@@ -196,6 +204,14 @@ function evidenceSuggestionsForItem(item, evidence) {
       break;
     }
     case "system_calendar_write": {
+      const calendarConfirmation =
+        evidence?.acceptanceFactSeed?.confirmationScreenshots?.calendar;
+      if (calendarConfirmation?.available && calendarConfirmation.path) {
+        addUnique(
+          suggestions.screenshots,
+          `日程确认卡: ${calendarConfirmation.path}`
+        );
+      }
       if (evidence?.calendarSystemAppEvidence?.available) {
         addUnique(
           suggestions.systemArtifacts,

@@ -7,6 +7,15 @@ import { test } from "node:test";
 
 const rootDir = process.cwd();
 const scriptPath = path.join(rootDir, "scripts", "collect-ios-acceptance-evidence.mjs");
+const h5ComponentsPath = path.join(
+  rootDir,
+  "apps",
+  "h5",
+  "src",
+  "app",
+  "ai-time-agent",
+  "components.tsx"
+);
 const packageJson = JSON.parse(
   fs.readFileSync(path.join(rootDir, "package.json"), "utf8")
 );
@@ -450,6 +459,16 @@ test("native keyboard evidence confirms the seed-specific card", () => {
   );
 });
 
+test("acceptance confirmation screenshots target the exact pending plan card", () => {
+  const collectorSource = fs.readFileSync(scriptPath, "utf8");
+  const h5Source = fs.readFileSync(h5ComponentsPath, "utf8");
+
+  assert.ok(collectorSource.includes('locator(`[data-plan-id="${planId}"]`)'));
+  assert.doesNotMatch(collectorSource, /planConfirmationCard\.count\(\)/);
+  assert.match(h5Source, /data-plan-id=\{element\.planId\}/);
+  assert.match(h5Source, /data-confirmation-id=\{element\.id\}/);
+});
+
 test("collect iOS acceptance evidence can opt into native attachment inputs support", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-inputs-")
@@ -633,6 +652,30 @@ test("collect iOS acceptance evidence can opt into seeded acceptance facts", () 
   assert.equal(evidence.acceptanceFactSeed.seedNow.endsWith("+08:00"), true);
   assert.equal(evidence.acceptanceFactSeed.apiBaseUrl, "http://127.0.0.1:8000");
   assert.match(evidence.acceptanceFactSeed.seedRunId, /^seed_/);
+  assert.equal(
+    evidence.acceptanceFactSeed.confirmationScreenshots.calendar.available,
+    false
+  );
+  assert.equal(
+    evidence.acceptanceFactSeed.confirmationScreenshots.calendar.supportingOnly,
+    true
+  );
+  assert.match(
+    evidence.acceptanceFactSeed.confirmationScreenshots.calendar.path,
+    /acceptance-calendar-confirmation-card\.png$/
+  );
+  assert.equal(
+    evidence.acceptanceFactSeed.confirmationScreenshots.reminder.available,
+    false
+  );
+  assert.equal(
+    evidence.acceptanceFactSeed.confirmationScreenshots.reminder.supportingOnly,
+    true
+  );
+  assert.match(
+    evidence.acceptanceFactSeed.confirmationScreenshots.reminder.path,
+    /acceptance-reminder-confirmation-card\.png$/
+  );
   assert.ok(
     evidence.acceptanceFactSeed.inputs.every((input) =>
       input.input.includes(evidence.acceptanceFactSeed.seedRunId)

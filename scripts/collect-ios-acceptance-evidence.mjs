@@ -576,12 +576,36 @@ function collectBackendFactSnapshot({ conversationId, dryRun }) {
   return result;
 }
 
-function emptyAcceptanceFactSeed({ enabled, conversationId, seedRunId }) {
+function emptyAcceptanceFactSeed({ enabled, conversationId, outputDir, seedRunId }) {
   const inputs = buildAcceptanceSeedInputs(seedRunId);
   return {
     available: false,
     apiBaseUrl,
     commands: {},
+    confirmationScreenshots: {
+      calendar: {
+        available: false,
+        capturedAt: null,
+        errors: [],
+        path: path.join(outputDir, "acceptance-calendar-confirmation-card.png"),
+        planId: null,
+        seedRunId,
+        selectorRequiresSeedRunId: true,
+        source: "h5_pending_confirmation_snapshot",
+        supportingOnly: true,
+      },
+      reminder: {
+        available: false,
+        capturedAt: null,
+        errors: [],
+        path: path.join(outputDir, "acceptance-reminder-confirmation-card.png"),
+        planId: null,
+        seedRunId,
+        selectorRequiresSeedRunId: true,
+        source: "h5_pending_confirmation_snapshot",
+        supportingOnly: true,
+      },
+    },
     conversationId: conversationId ?? null,
     enabled,
     inputs,
@@ -939,10 +963,104 @@ async function getJson(url) {
   };
 }
 
-async function seedAcceptanceFacts({ conversationId, dryRun, enabled }) {
+async function captureAcceptanceConfirmationCardScreenshot({
+  conversationId,
+  domain,
+  planId,
+  screenshotPath,
+  seedRunId,
+}) {
+  const result = {
+    available: false,
+    capturedAt: null,
+    errors: [],
+    path: screenshotPath,
+    planId: planId ?? null,
+    seedRunId,
+    selectorRequiresSeedRunId: true,
+    source: "h5_pending_confirmation_snapshot",
+    supportingOnly: true,
+  };
+  if (!conversationId) {
+    result.errors.push("Native conversationId was not found; confirmation card screenshot skipped.");
+    return result;
+  }
+  if (!planId) {
+    result.errors.push(`${domain} seed planId was not found; confirmation card screenshot skipped.`);
+    return result;
+  }
+
+  let browser;
+  try {
+    const { chromium, expect } = await import("@playwright/test");
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { height: 844, width: 390 } });
+    await page.addInitScript(() => {
+      window.__AI_NATIVE_MESSAGES__ = [];
+      window.__AI_NATIVE_HOST__ = {
+        bridgeVersion: "ios-acceptance-confirmation-card",
+        platform: "ios",
+      };
+      window.webkit = {
+        messageHandlers: {
+          NativeBridge: {
+            postMessage(message) {
+              window.__AI_NATIVE_MESSAGES__.push(message);
+            },
+          },
+        },
+      };
+    });
+
+    const url = `${h5NativeBaseUrl}/?native=ios&bridgeDebug=1&conversationId=${encodeURIComponent(
+      conversationId
+    )}`;
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    const surfaceRegion = page.getByLabel("后端元素渲染区");
+    await expect(surfaceRegion).toContainText("AI 时间管理 Agent", {
+      timeout: 15000,
+    });
+    await sendH5NativeMessage(page, "native.hostContext", {
+      bridgeVersion: "ios-acceptance-confirmation-card",
+      h5URL: page.url(),
+      platform: "ios",
+    });
+    const planConfirmationCard = surfaceRegion
+      .locator(`[data-plan-id="${planId}"]`)
+      .filter({ has: page.getByRole("button", { name: "确认" }) })
+      .last();
+    const seedConfirmationCard = surfaceRegion
+      .locator("article")
+      .filter({ hasText: seedRunId })
+      .filter({ has: page.getByRole("button", { name: "确认" }) })
+      .last();
+    let targetConfirmationCard = planConfirmationCard;
+    try {
+      await expect(targetConfirmationCard).toContainText("确认", { timeout: 20000 });
+    } catch {
+      targetConfirmationCard = seedConfirmationCard;
+      await expect(targetConfirmationCard).toContainText("确认", { timeout: 20000 });
+    }
+    await targetConfirmationCard.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+    await page.screenshot({ fullPage: true, path: screenshotPath });
+    result.available = true;
+    result.capturedAt = new Date().toISOString();
+    return result;
+  } catch (error) {
+    result.errors.push(error instanceof Error ? error.message : String(error));
+    return result;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+async function seedAcceptanceFacts({ conversationId, dryRun, enabled, outputDir }) {
   const seedRunId =
     process.env.AI_CODE_IOS_ACCEPTANCE_SEED_RUN_ID ?? defaultSeedRunId();
-  const seed = emptyAcceptanceFactSeed({ enabled, conversationId, seedRunId });
+  const seed = emptyAcceptanceFactSeed({ enabled, conversationId, outputDir, seedRunId });
   if (!enabled) {
     return seed;
   }
@@ -999,6 +1117,23 @@ async function seedAcceptanceFacts({ conversationId, dryRun, enabled }) {
         status: turn.status,
       });
       continue;
+    }
+
+    if (seedInput.domain === "calendar" || seedInput.domain === "reminder") {
+      const confirmationScreenshot =
+        await captureAcceptanceConfirmationCardScreenshot({
+          conversationId,
+          domain: seedInput.domain,
+          planId,
+          screenshotPath: seed.confirmationScreenshots[seedInput.domain].path,
+          seedRunId,
+        });
+      seed.confirmationScreenshots[seedInput.domain] = confirmationScreenshot;
+      seed.commands[`${seedInput.domain}.captureConfirmationCard`] = {
+        command: `Playwright ${h5NativeBaseUrl}/?native=ios&bridgeDebug=1&conversationId=<redacted> + pending confirmation card seedRunId=${seedRunId}`,
+        ok: confirmationScreenshot.available,
+        status: confirmationScreenshot.available ? 0 : 1,
+      };
     }
 
     const confirmUrl = `${apiBaseUrl}/execution-plans/${encodeURIComponent(
@@ -3310,6 +3445,14 @@ function writeSummary(evidence, outputDir) {
             `- ${result.domain} 结果：${result.ok ? "succeeded" : "failed"} ${result.planId ?? ""}`
         )
       : []),
+    `- H5 日程确认卡截图：${evidence.acceptanceFactSeed.confirmationScreenshots.calendar.available ? evidence.acceptanceFactSeed.confirmationScreenshots.calendar.path : "未采集"}`,
+    `- H5 提醒确认卡截图：${evidence.acceptanceFactSeed.confirmationScreenshots.reminder.available ? evidence.acceptanceFactSeed.confirmationScreenshots.reminder.path : "未采集"}`,
+    ...(evidence.acceptanceFactSeed.confirmationScreenshots.calendar.errors.length > 0
+      ? evidence.acceptanceFactSeed.confirmationScreenshots.calendar.errors.map((error) => `- calendarConfirmationError：${error}`)
+      : []),
+    ...(evidence.acceptanceFactSeed.confirmationScreenshots.reminder.errors.length > 0
+      ? evidence.acceptanceFactSeed.confirmationScreenshots.reminder.errors.map((error) => `- reminderConfirmationError：${error}`)
+      : []),
     ...(evidence.acceptanceFactSeed.errors.length > 0
       ? evidence.acceptanceFactSeed.errors.map((error) => `- error：${error}`)
       : []),
@@ -3705,6 +3848,7 @@ async function main() {
     conversationId: currentNativeConversationId,
     dryRun: args.dryRun,
     enabled: args.seedAcceptanceFacts,
+    outputDir,
   });
   const seedRefresh = acceptanceFactSeed.available
     ? refreshNativeSystemDiagnostics({

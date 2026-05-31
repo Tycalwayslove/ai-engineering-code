@@ -33,11 +33,18 @@ test("manual evidence review fills objective evidence without passing items", ()
         systemArtifacts: [],
       }),
       item("system_calendar_write", "系统日历写入", {
-        screenshots: ["H5 日历页 scheduled 结果"],
+        screenshots: ["日程确认卡", "H5 日历页 scheduled 结果"],
         recordings: [],
         apiSummaries: ["/calendar/events?conversationId=..."],
         bridgeMarkers: ["calendar.events.sync"],
         systemArtifacts: ["iOS 系统日历事件截图"],
+      }),
+      item("local_notification", "本地通知", {
+        screenshots: ["提醒确认卡", "H5 提醒页 scheduled 结果", "系统通知截图"],
+        recordings: [],
+        apiSummaries: ["/reminders?conversationId=..."],
+        bridgeMarkers: ["notifications.reminders.sync"],
+        systemArtifacts: ["iOS 通知权限弹窗截图或录屏"],
       }),
       item("system_calendar_cleanup", "系统日历取消清理", {
         screenshots: ["H5 日程取消动作"],
@@ -117,6 +124,23 @@ test("manual evidence review fills objective evidence without passing items", ()
       screenshotPath: "/tmp/system-calendar-app.png",
       targetEventId: "calendar_event_1",
     },
+    notificationDelivery: {
+      available: true,
+      notificationIdentifier: "ai-code.reminder.reminder_1",
+    },
+    acceptanceFactSeed: {
+      available: true,
+      confirmationScreenshots: {
+        calendar: {
+          available: true,
+          path: "/tmp/acceptance-calendar-confirmation-card.png",
+        },
+        reminder: {
+          available: true,
+          path: "/tmp/acceptance-reminder-confirmation-card.png",
+        },
+      },
+    },
     calendarCleanupSeed: {
       available: true,
       canceledEvent: {
@@ -179,6 +203,7 @@ test("manual evidence review fills objective evidence without passing items", ()
   const review = buildManualEvidenceReview(record, evidence);
   const persistenceItem = review.items.find((candidate) => candidate.id === "conversation_persistence");
   const calendarItem = review.items.find((candidate) => candidate.id === "system_calendar_write");
+  const localNotificationItem = review.items.find((candidate) => candidate.id === "local_notification");
   const cleanupItem = review.items.find((candidate) => candidate.id === "system_calendar_cleanup");
   const degradationItem = review.items.find((candidate) => candidate.id === "system_sync_degradation");
   const keyboardItem = review.items.find((candidate) => candidate.id === "keyboard_input");
@@ -201,6 +226,13 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(persistenceItem.evidence.bridgeMarkers.join("\n"), /conversation_ios_123/);
   assert.match(calendarItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件截图/);
   assert.match(calendarItem.evidence.bridgeMarkers.join("\n"), /calendar\.events\.sync/);
+  assert.match(calendarItem.evidence.screenshots.join("\n"), /日程确认卡/);
+  assert.match(calendarItem.evidence.screenshots.join("\n"), /acceptance-calendar-confirmation-card/);
+  assert.equal(localNotificationItem.status, "pending");
+  assert.match(localNotificationItem.evidence.screenshots.join("\n"), /提醒确认卡/);
+  assert.match(localNotificationItem.evidence.screenshots.join("\n"), /acceptance-reminder-confirmation-card/);
+  assert.match(localNotificationItem.evidence.apiSummaries.join("\n"), /reminders/);
+  assert.match(localNotificationItem.evidence.bridgeMarkers.join("\n"), /notifications\.reminders\.sync/);
   assert.match(cleanupItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件消失截图/);
   assert.match(cleanupItem.evidence.apiSummaries.join("\n"), /后端 canceled 状态: eventId=calendar_event_1, status=canceled/);
   assert.match(cleanupItem.evidence.bridgeMarkers.join("\n"), /status=canceled/);
