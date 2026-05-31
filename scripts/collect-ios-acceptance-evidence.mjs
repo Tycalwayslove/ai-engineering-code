@@ -887,8 +887,22 @@ function buildNativeAttachmentSamples(seedRunId) {
   ];
 }
 
-function evidenceAttachmentSample(sample, attachment) {
+function emptyAttachmentExpenseFollowUp({ outputDir }) {
   return {
+    available: false,
+    errors: [],
+    expenseRecordId: null,
+    planId: null,
+    responseKind: null,
+    screenshotPath: path.join(
+      outputDir,
+      "native-attachment-photo-expense-follow-up.png"
+    ),
+  };
+}
+
+function evidenceAttachmentSample(sample, attachment, options = {}) {
+  const result = {
     attachmentId: sample.attachmentId,
     backendAttachmentId: attachment?.id ?? null,
     contentStatus: attachment?.contentStatus ?? null,
@@ -898,6 +912,87 @@ function evidenceAttachmentSample(sample, attachment) {
     source: sample.source,
     type: sample.attachmentType,
   };
+  if (sample.itemId === "photo_attachment") {
+    result.expenseFollowUp =
+      options.expenseFollowUp ??
+      emptyAttachmentExpenseFollowUp({ outputDir: options.outputDir ?? "." });
+  }
+  return result;
+}
+
+function findExpenseRecordForAttachment(expensesPayload, photoSample) {
+  const records = Array.isArray(expensesPayload)
+    ? expensesPayload
+    : Array.isArray(expensesPayload?.expenses)
+      ? expensesPayload.expenses
+      : [];
+  return records.find((record) => {
+    const title = typeof record?.title === "string" ? record.title : "";
+    const amount = Number(record?.amount);
+    return (
+      title.includes(photoSample.attachmentName) ||
+      (Number.isFinite(amount) && Math.abs(amount - 88.5) < 0.001)
+    );
+  });
+}
+
+async function capturePhotoExpenseFollowUp({
+  conversationId,
+  page,
+  photoSample,
+  screenshotPath,
+}) {
+  const result = {
+    ...emptyAttachmentExpenseFollowUp({ outputDir: path.dirname(screenshotPath) }),
+    screenshotPath,
+  };
+  try {
+    const { expect } = await import("@playwright/test");
+    const replyText = `把 ${photoSample.attachmentName} 作为费用票据处理`;
+    await page.getByRole("button", { name: replyText }).first().click();
+    const confirmationCard = page
+      .locator("[data-plan-id]")
+      .filter({ has: page.getByRole("button", { name: "确认" }) })
+      .last();
+    try {
+      await expect(confirmationCard).toContainText("确认", { timeout: 30000 });
+      result.responseKind = "confirmation_required";
+      result.planId = await confirmationCard.getAttribute("data-plan-id");
+      await confirmationCard.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+      await page.screenshot({ fullPage: true, path: screenshotPath });
+      await confirmationCard.getByRole("button", { name: "确认" }).click();
+      await expect(page.locator("body")).toContainText(
+        "已确认执行，数据库视图和执行记录已刷新",
+        { timeout: 30000 }
+      );
+      const expensesUrl = `${apiBaseUrl}/expenses?conversationId=${encodeURIComponent(
+        conversationId
+      )}`;
+      const expenses = await getJson(expensesUrl);
+      const expenseRecord = findExpenseRecordForAttachment(
+        expenses.payload,
+        photoSample
+      );
+      result.expenseRecordId = expenseRecord?.id ?? null;
+      if (!result.expenseRecordId) {
+        result.errors.push(
+          "photo attachment expense record was not found after confirmation"
+        );
+      }
+    } catch (confirmationError) {
+      await expect(page.locator("body")).toContainText("补充金额", {
+        timeout: 15000,
+      });
+      result.responseKind = "clarification_request";
+      await page.screenshot({ fullPage: true, path: screenshotPath });
+    }
+    result.available = fs.existsSync(screenshotPath) && result.errors.length === 0;
+    return result;
+  } catch (error) {
+    result.errors.push(error instanceof Error ? error.message : String(error));
+    return result;
+  }
 }
 
 function emptyNativeAttachmentInputsSeed({
@@ -915,7 +1010,7 @@ function emptyNativeAttachmentInputsSeed({
     errors: [],
     mode: "h5_synthetic_native_attachment_inputs",
     samples: buildNativeAttachmentSamples(seedRunId).map((sample) =>
-      evidenceAttachmentSample(sample)
+      evidenceAttachmentSample(sample, null, { outputDir })
     ),
     screenshotPath: path.join(outputDir, "native-attachment-inputs.png"),
     seedRunId,
@@ -2928,6 +3023,14 @@ async function seedNativeAttachmentInputs({
   }
 
   const samples = buildNativeAttachmentSamples(seedRunId);
+  const photoSample = samples.find((sample) => sample.itemId === "photo_attachment");
+  let photoExpenseFollowUp = emptyAttachmentExpenseFollowUp({ outputDir });
+  const sampleEvidence = (sample, attachment) =>
+    evidenceAttachmentSample(sample, attachment, {
+      expenseFollowUp:
+        sample.itemId === "photo_attachment" ? photoExpenseFollowUp : undefined,
+      outputDir,
+    });
   let browser;
   try {
     const { chromium, expect } = await import("@playwright/test");
@@ -3010,7 +3113,7 @@ async function seedNativeAttachmentInputs({
         const attachment = attachmentList.find(
           (candidate) => candidate.attachmentId === sample.attachmentId
         );
-        return evidenceAttachmentSample(sample, attachment);
+        return sampleEvidence(sample, attachment);
       });
       missing = attachmentInputs.samples.filter(
         (sample) => !sample.backendAttachmentId
@@ -3026,6 +3129,37 @@ async function seedNativeAttachmentInputs({
           .map((sample) => sample.attachmentId)
           .join(", ")}`
       );
+    }
+
+    if (photoSample && missing.length === 0) {
+      photoExpenseFollowUp = await capturePhotoExpenseFollowUp({
+        conversationId,
+        page,
+        photoSample,
+        screenshotPath: photoExpenseFollowUp.screenshotPath,
+      });
+      const attachments = await getJson(attachmentsUrl);
+      const attachmentList = Array.isArray(attachments.payload)
+        ? attachments.payload
+        : Array.isArray(attachments.payload?.attachments)
+          ? attachments.payload.attachments
+          : [];
+      attachmentInputs.commands.queryAttachmentsAfterPhotoExpenseFollowUp = {
+        command: `GET ${attachmentsUrl}`,
+        ok: attachments.ok,
+        status: attachments.status,
+      };
+      attachmentInputs.samples = samples.map((sample) => {
+        const attachment = attachmentList.find(
+          (candidate) => candidate.attachmentId === sample.attachmentId
+        );
+        return sampleEvidence(sample, attachment);
+      });
+      attachmentInputs.commands.photoExpenseFollowUp = {
+        command: `Playwright ${url} + quick reply '${photoSample.attachmentName}' expense follow-up`,
+        ok: photoExpenseFollowUp.available,
+        status: photoExpenseFollowUp.available ? 0 : 1,
+      };
     }
 
     await page.screenshot({

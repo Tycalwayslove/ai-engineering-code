@@ -324,6 +324,18 @@ function evidenceSuggestionsForItem(item, evidence) {
           suggestions.apiSummaries,
           `/attachments?conversationId=...: attachmentId=${sample.attachmentId}, backendId=${sample.backendAttachmentId}`
         );
+        if (item.id === "photo_attachment" && sample.expenseFollowUp?.available) {
+          addUnique(
+            suggestions.screenshots,
+            `费用确认卡或金额追问: ${sample.expenseFollowUp.screenshotPath}`
+          );
+          if (sample.expenseFollowUp.expenseRecordId) {
+            addUnique(
+              suggestions.apiSummaries,
+              `/expenses?conversationId=...: expenseRecordId=${sample.expenseFollowUp.expenseRecordId}, responseKind=${sample.expenseFollowUp.responseKind ?? "unknown"}`
+            );
+          }
+        }
         addUnique(
           suggestions.bridgeMarkers,
           `inputKind=attachment: source=${sample.source}, attachment=${sample.name}`

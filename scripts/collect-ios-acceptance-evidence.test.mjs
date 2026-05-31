@@ -633,6 +633,14 @@ test("collect iOS acceptance evidence can opt into native attachment inputs supp
     evidence.nativeAttachmentInputs.samples.map((sample) => sample.itemId),
     ["photo_attachment", "file_attachment", "pdf_text_extraction"]
   );
+  const photoSample = evidence.nativeAttachmentInputs.samples.find(
+    (sample) => sample.itemId === "photo_attachment"
+  );
+  assert.equal(photoSample.expenseFollowUp.available, false);
+  assert.match(
+    photoSample.expenseFollowUp.screenshotPath,
+    /native-attachment-photo-expense-follow-up\.png$/
+  );
   assert.match(
     evidence.nativeAttachmentInputs.screenshotPath,
     /native-attachment-inputs\.png$/

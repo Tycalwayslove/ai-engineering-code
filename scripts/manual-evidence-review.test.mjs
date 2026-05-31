@@ -219,6 +219,13 @@ test("manual evidence review fills objective evidence without passing items", ()
       samples: [
         {
           attachmentId: "attachment_photo",
+          backendAttachmentId: "backend_attachment_photo",
+          expenseFollowUp: {
+            available: true,
+            expenseRecordId: "expense_photo",
+            responseKind: "confirmation_required",
+            screenshotPath: "/tmp/native-attachment-photo-expense-follow-up.png",
+          },
           itemId: "photo_attachment",
           kind: "image",
           name: "receipt.jpg",
@@ -306,7 +313,10 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(navigationItem.evidence.systemArtifacts.join("\n"), /ios-navigation-ui-test\.xcresult/);
   assert.match(navigationItem.evidence.systemArtifacts.join("\n"), /输出或 xcresult/);
   assert.match(photoItem.evidence.screenshots.join("\n"), /native-attachment-inputs/);
+  assert.match(photoItem.evidence.screenshots.join("\n"), /费用确认卡或金额追问/);
+  assert.match(photoItem.evidence.screenshots.join("\n"), /native-attachment-photo-expense-follow-up/);
   assert.match(photoItem.evidence.apiSummaries.join("\n"), /attachment_photo/);
+  assert.match(photoItem.evidence.apiSummaries.join("\n"), /\/expenses\?conversationId=.*expense_photo/);
   assert.match(photoItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.attachment\.photo/);
   assert.match(photoItem.evidence.bridgeMarkers.join("\n"), /attachmentKind=image/);
   assert.match(fileItem.evidence.apiSummaries.join("\n"), /attachment_file/);
