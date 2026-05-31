@@ -890,9 +890,12 @@ HEAD `69af3fb` 的 full completion audit 已经证明 21 个自动化命令全�
 
 HEAD `b9d4fc5` 的 full audit 给出一个清晰边界：自动化命令全部 `passed`、机器证据缺口为 0、证据包 HEAD 新鲜，但 v1 仍是 `not_complete`。后续为了记录审计结果产生的 docs-only 提交，可以由 `current_with_docs_only_changes` 表示“产品代码未变”，但不能改变人工验收结论。
 
+HEAD `ca74628` 的 full audit 再次确认 HTML Review Pack 增强没有降低验收门槛：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan` 已生成当前 HEAD 证据包，Markdown / HTML Review Pack 均已生成，`.tmp/v1-completion-audit/current-full-final-20260601-ca74628-lan` 中 21 个自动化命令全部 `passed`，`packageFreshness.status=current`，`manualEvidence.missingEvidenceCount=0`。但 14 个 item 仍是 `pending`，`acceptanceVerdict=not_evaluated`，所以 `verdict=not_complete`。
+
 后续协作必须遵守：
 
 - 不再用“继续补自动截图”替代人工验收。当前缺口报告已经显示 14 个 item 的 `missingEvidence=无`，问题是 `status=pending` 和顶层 `acceptanceVerdict=not_evaluated`。
+- HTML Review Pack 只用于点击打开候选证据，帮助操作者逐项复核截图、录屏、API 摘要、bridge marker、系统 artifact 和操作者备注。
 - AI 可以继续帮助生成 filled 草稿、运行 `--require-complete`、整理 audit 产物和解释缺口，但不能自行把 item 标为 `passed`。
 - 如果操作者已经真实复核，可以使用 `pnpm prepare:ios-manual-evidence-record -- --record <review> --output <filled> --mark-passed --operator <name> --confirmed-at <iso8601>` 生成签署记录；随后必须运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <filled> --require-complete --report <report>` 和 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled>`。
 - 未执行飞书 / Obsidian 真实同步前，外部同步状态必须继续是 `not_synced`，最终回复继续披露“仓库已更新，外部知识库未同步”。

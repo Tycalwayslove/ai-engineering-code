@@ -5564,3 +5564,38 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把人工验收从“读 JSON / Markdown 找路径”推进到“打开 HTML 后逐项点证据复核”。它提升操作者签署效率，但不改变 completion 边界：AI 仍不能替代人工把 14 个 item 改成 `passed`。
+
+## 阶段 197：HEAD ca74628 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan
+
+pnpm prepare:ios-manual-review-pack -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-ca74628-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-ca74628-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-ca74628-lan`。
+- `manifest.headSha=ca74628`，`manual-evidence-record.review.json.headSha=ca74628`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=ca74628`，`currentHeadSha=ca74628`。
+- 21 个自动化命令全部 `passed`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 HTML Review Pack 这次脚本增强后的最新 HEAD 重新拉回 current evidence / current audit 状态。工程门禁、iOS 自动化和候选证据全部齐备；剩余边界没有变化，必须由真实操作者逐项复核并签署 filled 记录后，goal 才能进入 complete 判定。
