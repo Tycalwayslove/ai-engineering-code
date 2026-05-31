@@ -236,6 +236,14 @@ function evidenceSuggestionsForItem(item, evidence) {
           canceledEvent?.id ?? evidence.calendarCleanupSeed.targetEventId ?? "unknown";
         const canceledStatus =
           canceledEvent?.status ?? evidence.calendarCleanupSeed.postCancelStatus ?? "unknown";
+        const h5Cancel =
+          evidence.calendarCleanupSeed.h5CancelActionScreenshot;
+        if (h5Cancel?.available && h5Cancel.path) {
+          addUnique(
+            suggestions.screenshots,
+            `H5 日程取消动作: ${h5Cancel.path}`
+          );
+        }
         addUnique(
           suggestions.systemArtifacts,
           `iOS 系统日历事件消失截图: ${evidence.calendarCleanupSeed.systemCalendarAppScreenshots?.afterPath}`

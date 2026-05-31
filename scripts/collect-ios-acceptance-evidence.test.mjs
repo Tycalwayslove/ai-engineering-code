@@ -469,6 +469,16 @@ test("acceptance confirmation screenshots target the exact pending plan card", (
   assert.match(h5Source, /data-confirmation-id=\{element\.id\}/);
 });
 
+test("calendar cleanup evidence clicks the exact H5 calendar cancel action", () => {
+  const collectorSource = fs.readFileSync(scriptPath, "utf8");
+  const h5Source = fs.readFileSync(h5ComponentsPath, "utf8");
+
+  assert.ok(collectorSource.includes('locator(`[data-summary-item-id="${targetEventId}"]`)'));
+  assert.ok(collectorSource.includes('[data-summary-action-type="calendar.cancel"]'));
+  assert.match(h5Source, /data-summary-item-id=\{item\.id\}/);
+  assert.match(h5Source, /data-summary-action-type=\{action\.type\}/);
+});
+
 test("collect iOS acceptance evidence can opt into native attachment inputs support", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-inputs-")
@@ -802,6 +812,18 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
   );
   assert.ok(evidence.calendarCleanupSeed.postCancelRefreshMaxAttempts >= 8);
   assert.equal(evidence.calendarCleanupSeed.postCancelRemovedEventIdPresent, false);
+  assert.equal(
+    evidence.calendarCleanupSeed.h5CancelActionScreenshot.available,
+    false
+  );
+  assert.equal(
+    evidence.calendarCleanupSeed.h5CancelActionScreenshot.supportingOnly,
+    true
+  );
+  assert.match(
+    evidence.calendarCleanupSeed.h5CancelActionScreenshot.path,
+    /calendar-cleanup-h5-cancel-action\.png$/
+  );
   assert.deepEqual(evidence.calendarCleanupSeed.postCancelSystemDiagnostics, {});
   assert.equal(evidence.calendarCleanupSeed.targetEventId, null);
   assert.equal(

@@ -148,6 +148,10 @@ test("manual evidence review fills objective evidence without passing items", ()
         status: "canceled",
         title: "开会",
       },
+      h5CancelActionScreenshot: {
+        available: true,
+        path: "/tmp/calendar-cleanup-h5-cancel-action.png",
+      },
       postCancelStatus: "canceled",
       targetEventId: "calendar_event_1",
       systemCalendarAppScreenshots: {
@@ -233,6 +237,8 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(localNotificationItem.evidence.screenshots.join("\n"), /acceptance-reminder-confirmation-card/);
   assert.match(localNotificationItem.evidence.apiSummaries.join("\n"), /reminders/);
   assert.match(localNotificationItem.evidence.bridgeMarkers.join("\n"), /notifications\.reminders\.sync/);
+  assert.match(cleanupItem.evidence.screenshots.join("\n"), /H5 日程取消动作/);
+  assert.match(cleanupItem.evidence.screenshots.join("\n"), /calendar-cleanup-h5-cancel-action/);
   assert.match(cleanupItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件消失截图/);
   assert.match(cleanupItem.evidence.apiSummaries.join("\n"), /后端 canceled 状态: eventId=calendar_event_1, status=canceled/);
   assert.match(cleanupItem.evidence.bridgeMarkers.join("\n"), /status=canceled/);

@@ -4522,3 +4522,33 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段把三领域 seed 从“后端事实写入可证”推进到“关键确认卡也有 H5 可见截图”。它减少了日程写入和本地通知两项的人工补证噪音，但边界不变：这些截图不能证明真实 Native 键盘或语音输入，也不能替代通知权限弹窗、系统通知截图、系统 Calendar 事件详情和人工复核结论。
+
+## 阶段 164：H5 日程取消动作辅助采证
+
+问题背景：
+
+- `system_calendar_cleanup` 已经能通过后端 canceled 状态和系统 Calendar App 前后截图证明取消结果。
+- 但此前自动流程主要是直接调用取消 API，不能证明用户在 H5 日程行内点击了“取消”。
+- 页面里还有确认卡、编辑弹层、提醒和费用等多个同名“取消”按钮，需要稳定定位到目标日程行，避免长期脏会话误点旧按钮。
+
+完成内容：
+
+- H5 summary row 新增 `data-summary-item-id={item.id}`。
+- H5 行内 action 新增：
+  - `data-summary-action-type={action.type}`
+  - `data-summary-action-target-id={action.targetId ?? item.id}`
+- `calendarCleanupSeed` 改为打开同一 `conversationId` 的 H5 native 页面，切到 calendar surface，按 seed 日程 ID 定位目标行，再点击 `calendar.cancel`。
+- 点击成功后采证器保存 `calendar-cleanup-h5-cancel-action.png`，并继续校验后端 canceled 状态。
+- `manual-evidence-review` 会把截图预填到 `system_calendar_cleanup` 的“`H5 日程取消动作`”。
+
+验证结果：
+
+- 红灯：新增测试后，`manual-evidence-review.test.mjs` 先因缺少 H5 取消动作映射失败，`collect-ios-acceptance-evidence.test.mjs` 先因缺少 H5 selector 和截图字段失败。
+- 绿灯：补齐 H5 data 属性、H5 点击采证 helper 和 review 映射后，同一测试通过。
+- 回归：`pnpm validate:ios-acceptance-evidence` 通过。
+- 回归：`pnpm validate:native-shells` 通过。
+- 静态检查：`pnpm --filter @ai-code/h5 typecheck`、`node --check scripts/manual-evidence-review.mjs && node --check scripts/collect-ios-acceptance-evidence.mjs && git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把“日程取消结果可证”推进到“用户可见 H5 行内取消动作也可证”。它仍只生成 review 候选证据，不自动把 `system_calendar_cleanup` 改为 `passed`；人工仍需复核截图质量、系统 Calendar App 消失结果和最终验收结论。

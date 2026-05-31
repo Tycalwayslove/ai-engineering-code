@@ -939,6 +939,7 @@ function BackendElementCard({
               data-highlighted-summary-item={
                 item.highlighted ? "true" : undefined
               }
+              data-summary-item-id={item.id}
               key={item.id}
             >
             <StatusBadge tone={item.tone}>{item.label}</StatusBadge>
@@ -963,6 +964,8 @@ function BackendElementCard({
                   {item.actions.map((action) => (
                     <button
                       className="ai-agent-inline-action"
+                      data-summary-action-target-id={action.targetId ?? item.id}
+                      data-summary-action-type={action.type}
                       key={action.type}
                       onClick={() => onSummaryAction(item.id, action)}
                       type="button"

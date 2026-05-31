@@ -588,3 +588,17 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 - 本地通知仍需要权限弹窗、系统通知截图和必要的点击回流证据；系统日历仍需要 Calendar App 详情、notes marker、无重复和取消后消失等人工复核。
 
 这类补证改动的优先级判断是：优先补“自动能稳定采到、且能减少人工整理成本”的证据；不要为了让 audit 看起来更绿，把候选证据误升级为完成证据。
+
+## H5 行内动作辅助采证协作规则
+
+2026-05-31 的“日程取消动作”补证把一个重要规则固化下来：凡是 completion audit 要求证明“用户在 H5 中点击了某个业务行内动作”，采证器应优先通过稳定 DOM 契约定位目标业务对象，而不是全局点击同名按钮。
+
+本阶段形成的协作约定：
+
+- H5 summary row 使用 `data-summary-item-id` 标识业务对象。
+- H5 行内 action 使用 `data-summary-action-type` 标识动作类型，例如 `calendar.cancel`。
+- H5 行内 action 使用 `data-summary-action-target-id` 标识动作目标。
+- Playwright 采证应先限定在 `后端元素渲染区`，再按 item id 和 action type 定位，避免旧 pending 卡、确认弹层或其它领域的同名“取消”按钮污染证据。
+- 采证脚本可以把截图预填到 `manual-evidence-record.review.json`，但不得把 item 状态自动改成 `passed`。
+
+这条规则后续也适用于费用提交 / 取消、提醒完成 / 取消、编辑保存等可点击业务动作。证据分层仍保持不变：H5 点击截图证明用户界面动作，API summary 证明后端事实状态，Native / 系统 App 截图证明系统集成结果。

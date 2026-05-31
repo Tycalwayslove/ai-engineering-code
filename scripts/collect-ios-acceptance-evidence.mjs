@@ -631,6 +631,16 @@ function emptyCalendarCleanupSeed({
     conversationId: conversationId ?? null,
     enabled,
     errors: [],
+    h5CancelActionScreenshot: {
+      available: false,
+      canceledEvent: null,
+      errors: [],
+      path: path.join(outputDir, "calendar-cleanup-h5-cancel-action.png"),
+      source: "h5_calendar_row_action",
+      statusText: null,
+      supportingOnly: true,
+      targetEventId: null,
+    },
     postCancelStoredIdentifierPresent: null,
     postCancelRefreshMaxAttempts: Number(
       process.env.AI_CODE_IOS_ACCEPTANCE_CALENDAR_CLEANUP_POST_CANCEL_ATTEMPTS ??
@@ -1534,6 +1544,123 @@ function captureCalendarCleanupSystemScreenshot({
     commandOk(openCommand) && commandOk(screenshotCommand);
 }
 
+async function cancelCalendarEventThroughH5({
+  conversationId,
+  screenshotPath,
+  targetEventId,
+  targetEventTitle,
+}) {
+  const result = {
+    available: false,
+    canceledEvent: null,
+    commands: {},
+    errors: [],
+    path: screenshotPath,
+    source: "h5_calendar_row_action",
+    statusText: null,
+    supportingOnly: true,
+    targetEventId,
+  };
+  if (!conversationId) {
+    result.errors.push("Native conversationId was not found; H5 cancel action skipped.");
+    return result;
+  }
+  if (!targetEventId) {
+    result.errors.push("calendar cleanup target event id was not found; H5 cancel action skipped.");
+    return result;
+  }
+
+  let browser;
+  try {
+    const { chromium, expect } = await import("@playwright/test");
+    browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { height: 844, width: 390 } });
+    await page.addInitScript(() => {
+      window.__AI_NATIVE_MESSAGES__ = [];
+      window.__AI_NATIVE_HOST__ = {
+        bridgeVersion: "ios-acceptance-calendar-cleanup",
+        platform: "ios",
+      };
+      window.webkit = {
+        messageHandlers: {
+          NativeBridge: {
+            postMessage(message) {
+              window.__AI_NATIVE_MESSAGES__.push(message);
+            },
+          },
+        },
+      };
+    });
+
+    const url = `${h5NativeBaseUrl}/?native=ios&bridgeDebug=1&conversationId=${encodeURIComponent(
+      conversationId
+    )}`;
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    const surfaceRegion = page.getByLabel("后端元素渲染区");
+    await expect(surfaceRegion).toContainText("AI 时间管理 Agent", {
+      timeout: 15000,
+    });
+    await sendH5NativeMessage(page, "native.hostContext", {
+      bridgeVersion: "ios-acceptance-calendar-cleanup",
+      h5URL: page.url(),
+      platform: "ios",
+    });
+    await sendH5NativeMessage(page, "native.viewChanged", {
+      source: "ios-acceptance-calendar-cleanup",
+      view: "calendar",
+    });
+    await expect(surfaceRegion).toContainText("日程", { timeout: 10000 });
+
+    const targetEventRow = surfaceRegion.locator(`[data-summary-item-id="${targetEventId}"]`);
+    await expect(targetEventRow).toContainText("取消", { timeout: 20000 });
+    if (targetEventTitle) {
+      await expect(targetEventRow).toContainText(targetEventTitle, {
+        timeout: 10000,
+      });
+    }
+    const cancelButton = targetEventRow
+      .locator('[data-summary-action-type="calendar.cancel"]')
+      .last();
+    await expect(cancelButton).toContainText("取消", { timeout: 10000 });
+    await targetEventRow.scrollIntoViewIfNeeded();
+    await cancelButton.click();
+    await expect(page.locator("body")).toContainText("已取消日程", {
+      timeout: 20000,
+    });
+    await page.screenshot({ fullPage: true, path: screenshotPath });
+
+    const encodedConversationId = encodeURIComponent(conversationId);
+    const calendarUrl = `${apiBaseUrl}/calendar/events?conversationId=${encodedConversationId}`;
+    const calendarEvents = await getJson(calendarUrl);
+    result.commands.queryCalendarEvents = {
+      command: `GET ${calendarUrl}`,
+      ok: calendarEvents.ok,
+      status: calendarEvents.status,
+    };
+    const events = Array.isArray(calendarEvents.payload)
+      ? calendarEvents.payload
+      : Array.isArray(calendarEvents.payload?.events)
+        ? calendarEvents.payload.events
+        : [];
+    result.canceledEvent =
+      events.find((event) => event.id === targetEventId) ?? null;
+    result.statusText = "已取消日程";
+    result.available =
+      calendarEvents.ok && result.canceledEvent?.status === "canceled";
+    if (!result.available) {
+      result.errors.push("H5 calendar cancel action did not produce canceled backend event.");
+    }
+    return result;
+  } catch (error) {
+    result.errors.push(error instanceof Error ? error.message : String(error));
+    return result;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
 async function seedCalendarCleanup({
   acceptanceFactSeed,
   conversationId,
@@ -1660,23 +1787,25 @@ async function seedCalendarCleanup({
     waitMs,
   });
 
-  const encodedConversationId = encodeURIComponent(conversationId);
-  const cancelUrl = `${apiBaseUrl}/calendar/events/${encodeURIComponent(
-    cleanup.targetEventId
-  )}/cancel?conversationId=${encodedConversationId}`;
-  const cancelCommand = run("curl", ["-fsS", "-X", "POST", cancelUrl]);
-  const cancelPayload = parseJson(cancelCommand.stdout) ?? null;
-  cleanup.commands.cancelTargetEvent = {
-    command: `POST ${cancelUrl}`,
-    ok: commandOk(cancelCommand),
-    status: cancelCommand.status,
-    stderr: cancelCommand.stderr,
-    stdout: cancelCommand.stdout,
+  const h5Cancel = await cancelCalendarEventThroughH5({
+    conversationId,
+    screenshotPath: cleanup.h5CancelActionScreenshot.path,
+    targetEventId: cleanup.targetEventId,
+    targetEventTitle: cleanup.targetEventTitle,
+  });
+  cleanup.h5CancelActionScreenshot = h5Cancel;
+  cleanup.commands.h5CancelTargetEvent = {
+    command: `Playwright ${h5NativeBaseUrl}/?native=ios&bridgeDebug=1&conversationId=<redacted> + calendar.cancel targetEventId=${cleanup.targetEventId}`,
+    ok: h5Cancel.available,
+    status: h5Cancel.available ? 0 : 1,
   };
-  cleanup.canceledEvent = cancelPayload;
-  cleanup.postCancelStatus = cancelPayload?.status ?? null;
-  if (!commandOk(cancelCommand) || cancelPayload?.status !== "canceled") {
-    cleanup.errors.push(`calendar cleanup seed cancel failed: ${cancelCommand.status}`);
+  for (const [key, command] of Object.entries(h5Cancel.commands ?? {})) {
+    cleanup.commands[`h5Cancel.${key}`] = command;
+  }
+  cleanup.canceledEvent = h5Cancel.canceledEvent;
+  cleanup.postCancelStatus = h5Cancel.canceledEvent?.status ?? null;
+  if (!h5Cancel.available || cleanup.postCancelStatus !== "canceled") {
+    cleanup.errors.push("calendar cleanup seed H5 cancel action failed");
   }
 
   return cleanup;
@@ -3493,6 +3622,11 @@ function writeSummary(evidence, outputDir) {
     `- postCancelStoredIdentifierPresent：${evidence.calendarCleanupSeed.postCancelStoredIdentifierPresent === null ? "未采集" : String(evidence.calendarCleanupSeed.postCancelStoredIdentifierPresent)}`,
     `- postCancelRemovedEventIdPresent：${evidence.calendarCleanupSeed.postCancelRemovedEventIdPresent ? "是" : "否"}`,
     `- removedEventIds：${evidence.calendarCleanupSeed.removedEventIds.length > 0 ? evidence.calendarCleanupSeed.removedEventIds.join(", ") : "未采集"}`,
+    `- H5 日程取消动作截图可用：${evidence.calendarCleanupSeed.h5CancelActionScreenshot.available ? "是" : "否"}`,
+    `- H5 日程取消动作截图：${evidence.calendarCleanupSeed.h5CancelActionScreenshot.path}`,
+    ...(evidence.calendarCleanupSeed.h5CancelActionScreenshot.errors.length > 0
+      ? evidence.calendarCleanupSeed.h5CancelActionScreenshot.errors.map((error) => `- h5CancelError：${error}`)
+      : []),
     `- 系统 Calendar 取消前后截图不替代人工复核：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.supportingOnly ? "是" : "否"}`,
     `- 系统 Calendar 取消前截图可用：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.beforeAvailable ? "是" : "否"}`,
     `- 系统 Calendar 取消前截图：${evidence.calendarCleanupSeed.systemCalendarAppScreenshots.beforePath}`,
