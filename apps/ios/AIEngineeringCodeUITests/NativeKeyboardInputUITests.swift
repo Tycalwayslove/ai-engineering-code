@@ -217,6 +217,7 @@ final class NativeKeyboardInputUITests: XCTestCase {
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5), app.debugDescription)
 
         keyboardField.typeText(inputText)
+        attachScreenshot(named: "输入框文本", in: app)
 
         let submitButton = app.buttons["ai-code.composer.submit-button"]
         XCTAssertTrue(submitButton.waitForExistence(timeout: 5), app.debugDescription)

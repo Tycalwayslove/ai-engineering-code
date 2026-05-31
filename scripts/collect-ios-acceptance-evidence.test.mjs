@@ -46,6 +46,10 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
           outputDir,
           "missing-navigation-ui-test.json"
         ),
+        AI_CODE_IOS_KEYBOARD_UI_TEST_METADATA_PATH: path.join(
+          outputDir,
+          "missing-keyboard-ui-test.json"
+        ),
       },
     }
   );
@@ -165,6 +169,11 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(
     evidence.navigationUiTest.metadataPath,
     /missing-navigation-ui-test\.json$/
+  );
+  assert.equal(evidence.keyboardUiTest.available, false);
+  assert.match(
+    evidence.keyboardUiTest.metadataPath,
+    /missing-keyboard-ui-test\.json$/
   );
   assert.equal(evidence.h5SurfaceScreenshots.available, false);
   assert.equal(evidence.h5SurfaceScreenshots.conversationId, null);

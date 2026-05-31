@@ -4680,3 +4680,33 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把最新 HEAD 的自动候选证据状态钉住：工程辅助证据已经明显收敛，但 completion audit 仍正确阻止 goal 被标为完成。后续重点不再是补自动脚本花活，而是补真实系统交互截图 / 录屏并生成人工 filled 记录。
+
+## 阶段 169：原生键盘 UI test 证据归档
+
+问题背景：
+
+- `keyboard_input` 的自动辅助证据已经能通过 H5 synthetic `native.inputSubmitted` 证明后端提醒事实、确认卡和 `source=native.composer.keyboard`。
+- 但 completion audit 仍缺“输入框文本”截图，因为真实 XCTest 键盘路径此前只在终端输出通过结果，没有稳定落盘 log、xcresult metadata 和输入框截图 attachment。
+
+完成内容：
+
+- `validate-ios-keyboard-ui-test.mjs` 新增稳定产物：
+  - `.tmp/ios-keyboard-ui-test/ios-keyboard-ui-test.log`
+  - `.tmp/ios-keyboard-ui-test/ios-keyboard-ui-test.xcresult`
+  - `.tmp/ios-keyboard-ui-test/keyboard-ui-test.json`
+- `NativeKeyboardInputUITests.testNativeKeyboardComposerConfirmsReminderThroughBackend` 在系统键盘输入中文后保存 `输入框文本` screenshot attachment。
+- `collect-ios-acceptance-evidence` 新增 `keyboardUiTest` 证据对象，并在 metadata 可用时加入 `ios_keyboard_ui_test_artifact`。
+- `manual-evidence-review` 会把 `keyboardUiTest.screenshotAttachments.inputText` 预填到 `keyboard_input.evidence.screenshots`；原有 `nativeKeyboardInput` 继续负责 H5 确认卡、提醒页、`/reminders` 和 bridge marker。
+
+验证结果：
+
+- 红灯：新增测试后，`node --test --test-name-pattern "dry-run output|manual evidence" scripts/collect-ios-acceptance-evidence.test.mjs scripts/manual-evidence-review.test.mjs` 先因缺少 `keyboardUiTest` 字段和“输入框文本”截图映射失败。
+- 绿灯：补齐 keyboard UI test metadata、collect 读取和 review 映射后，同一测试通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 19 项测试。
+- 回归：`pnpm validate:native-shells` 通过。
+- 静态检查：`node --check scripts/validate-ios-keyboard-ui-test.mjs && node --check scripts/collect-ios-acceptance-evidence.mjs && node --check scripts/manual-evidence-review.mjs && git diff --check` 通过。
+- 真实 UI test：`pnpm validate:ios-keyboard-ui-test` 通过 1 个 XCTest，输出 log、xcresult 和 metadata，并在 xcodebuild 日志中看到 `Added attachment named '输入框文本'`。
+
+阶段价值：
+
+这一阶段把键盘输入从“真实 UI test 已能跑通”推进到“真实输入框文本可被证据包引用”。它仍不自动把键盘输入验收改为 `passed`，但能减少人工整理截图和 completion audit 缺口。

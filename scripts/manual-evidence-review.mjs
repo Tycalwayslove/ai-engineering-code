@@ -187,6 +187,13 @@ function evidenceSuggestionsForItem(item, evidence) {
       break;
     }
     case "keyboard_input": {
+      const keyboardUiTest = evidence?.keyboardUiTest;
+      if (keyboardUiTest?.available && keyboardUiTest.screenshotAttachments?.inputText) {
+        addUnique(
+          suggestions.screenshots,
+          `输入框文本: ${keyboardUiTest.screenshotAttachments.inputText} (${keyboardUiTest.resultBundlePath})`
+        );
+      }
       if (evidence?.nativeKeyboardInput?.available) {
         addUnique(
           suggestions.screenshots,

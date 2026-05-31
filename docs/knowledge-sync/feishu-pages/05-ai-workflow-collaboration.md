@@ -656,3 +656,15 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 1. 先补真实系统交互截图 / 录屏和 API 摘要。
 2. 再复制 `manual-evidence-record.review.json` 为 filled 记录，并由人工把可通过项改为 `passed`。
 3. 最后用该 filled 记录跑 `collect:v1-completion-audit`，不要用自动 review 记录冒充人工完成记录。
+
+## 原生输入 UI test 证据归档
+
+2026-06-01 的键盘输入补证把导航 UI test 的归档模式推广到原生输入：
+
+- 每个能够证明真实 Native 操作路径的 UI test 命令，都应固定输出 log、xcresult 和 JSON metadata。
+- XCTest 应在关键用户可见状态保存 screenshot attachment，例如键盘输入后的 `输入框文本`。
+- `collect-ios-acceptance-evidence` 只读取 metadata，把它作为 `supportingOnly` 证据写进证据包。
+- `manual-evidence-review` 只预填人工 review 候选证据，不修改 item status。
+- H5 synthetic seed 和真实 UI test 各自证明不同层面：synthetic seed 证明 H5 / 后端能处理 Native 来源消息；真实 UI test 证明 Native 输入控件、系统键盘和发送按钮可用。completion audit 需要两类证据共同缩小缺口。
+
+这个模式后续可以继续用于语音：语音 UI test 证明 `source=native.composer.voice`、识别文本和 H5 确认卡；系统麦克风 / 语音权限弹窗仍必须由人工截图或录屏补齐。

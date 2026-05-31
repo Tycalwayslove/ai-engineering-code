@@ -61,7 +61,7 @@ test("manual evidence review fills objective evidence without passing items", ()
         systemArtifacts: ["iOS 权限拒绝截图"],
       }),
       item("keyboard_input", "键盘输入", {
-        screenshots: ["H5 确认卡", "提醒页 scheduled 结果"],
+        screenshots: ["输入框文本", "H5 确认卡", "提醒页 scheduled 结果"],
         recordings: [],
         apiSummaries: ["/reminders?conversationId=..."],
         bridgeMarkers: ["source=native.composer.keyboard"],
@@ -184,6 +184,14 @@ test("manual evidence review fills objective evidence without passing items", ()
       reminderId: "reminder_1",
       screenshotPath: "/tmp/native-keyboard-input.png",
     },
+    keyboardUiTest: {
+      available: true,
+      logPath: "/tmp/ios-keyboard-ui-test.log",
+      resultBundlePath: "/tmp/ios-keyboard-ui-test.xcresult",
+      screenshotAttachments: {
+        inputText: "输入框文本",
+      },
+    },
     navigationUiTest: {
       available: true,
       logPath: "/tmp/ios-navigation-ui-test.log",
@@ -262,6 +270,8 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.match(degradationItem.evidence.bridgeMarkers.join("\n"), /native\.error/);
   assert.match(degradationItem.evidence.operatorNotes, /候选证据/);
   assert.match(keyboardItem.evidence.screenshots.join("\n"), /native-keyboard-input/);
+  assert.match(keyboardItem.evidence.screenshots.join("\n"), /输入框文本/);
+  assert.match(keyboardItem.evidence.screenshots.join("\n"), /ios-keyboard-ui-test\.xcresult/);
   assert.match(keyboardItem.evidence.apiSummaries.join("\n"), /reminder_1/);
   assert.match(keyboardItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.keyboard/);
   assert.match(keyboardItem.evidence.operatorNotes, /候选证据/);
