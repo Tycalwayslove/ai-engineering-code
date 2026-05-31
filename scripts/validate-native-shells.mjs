@@ -68,6 +68,8 @@ assertIncludes(packageJsonPath, packageJson, '"validate:ios-voice-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-voice-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-voice-permission-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-voice-permission-ui-test.mjs");
+assertIncludes(packageJsonPath, packageJson, '"validate:ios-notification-ui-test"');
+assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-notification-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-attachment-ui-test"');
 assertIncludes(packageJsonPath, packageJson, "scripts/validate-ios-attachment-ui-test.mjs");
 assertIncludes(packageJsonPath, packageJson, '"validate:ios-navigation-ui-test"');
@@ -149,6 +151,20 @@ assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScrip
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "voice-permission-ui-test.json");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "ios-voice-permission-ui-test.log");
 assertIncludes(iosVoicePermissionUiTestScriptPath, iosVoicePermissionUiTestScript, "ios-voice-permission-ui-test.xcresult");
+
+const iosNotificationUiTestScriptPath =
+  "scripts/validate-ios-notification-ui-test.mjs";
+const iosNotificationUiTestScript = readRequired(
+  iosNotificationUiTestScriptPath
+);
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "xcodebuild");
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "simctl");
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "recordVideo");
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "testNativeNotificationDeliveryAndClickCanBeCaptured");
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "notification-ui-test.json");
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "ios-notification-ui-test.log");
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "ios-notification-ui-test.xcresult");
+assertIncludes(iosNotificationUiTestScriptPath, iosNotificationUiTestScript, "system-notification-click.mp4");
 
 const iosAttachmentUiTestScriptPath = "scripts/validate-ios-attachment-ui-test.mjs";
 const iosAttachmentUiTestScript = readRequired(iosAttachmentUiTestScriptPath);

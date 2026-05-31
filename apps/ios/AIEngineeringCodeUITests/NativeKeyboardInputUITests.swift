@@ -64,6 +64,63 @@ final class NativeKeyboardInputUITests: XCTestCase {
         }
     }
 
+    func testNativeNotificationDeliveryAndClickCanBeCaptured() throws {
+        let inputText = "1分钟后提醒我查看系统通知"
+        let app = launchAppForPermissionPrompt(conversationPrefix: "conversation_ui_notification")
+
+        submitKeyboardReminder(inputText, in: app)
+        XCTAssertTrue(
+            waitForStaticText(containing: "请确认执行计划", in: app, timeout: 30),
+            app.debugDescription
+        )
+
+        let confirmButton = button(containing: "确认", in: app, timeout: 30)
+        XCTAssertTrue(confirmButton.exists, app.debugDescription)
+        if !confirmButton.isHittable {
+            app.swipeUp()
+        }
+        confirmButton.tap()
+
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        if optionalSystemAlert(in: springboard, timeout: 8).exists {
+            attachScreenshot(named: "iOS 通知权限弹窗截图", in: springboard)
+            let allowButton = permissionAllowButton(in: springboard)
+            XCTAssertTrue(allowButton.exists, springboard.debugDescription)
+            allowButton.tap()
+        }
+
+        XCTAssertTrue(
+            waitForStaticText(containing: "已执行：创建提醒", in: app, timeout: 30),
+            app.debugDescription
+        )
+        XCTAssertTrue(
+            waitForStaticText(containing: "scheduled", in: app, timeout: 30),
+            app.debugDescription
+        )
+        XCTAssertTrue(
+            waitForStaticText(containing: "查看系统通知", in: app, timeout: 30),
+            app.debugDescription
+        )
+
+        let notification = waitForNotificationElement(containing: "查看系统通知", in: springboard, timeout: 100)
+        XCTAssertTrue(
+            notification.exists,
+            "\(app.debugDescription)\n\(springboard.debugDescription)"
+        )
+        attachScreenshot(named: "系统通知截图", in: springboard)
+        notification.tap()
+
+        XCTAssertTrue(
+            waitForStaticText(containing: "已从系统通知打开提醒", in: app, timeout: 30),
+            app.debugDescription
+        )
+        XCTAssertTrue(
+            waitForStaticText(containing: "查看系统通知", in: app, timeout: 30),
+            app.debugDescription
+        )
+        attachScreenshot(named: "通知点击后 App 回流", in: app)
+    }
+
     func testNativeAttachmentButtonPresentsAttachmentChoices() throws {
         let app = launchApp(conversationPrefix: "conversation_ui_attachment")
 
@@ -332,5 +389,58 @@ final class NativeKeyboardInputUITests: XCTestCase {
         }
 
         return springboard.buttons.element(boundBy: max(springboard.buttons.count - 1, 0))
+    }
+
+    private func optionalSystemAlert(in springboard: XCUIApplication, timeout: TimeInterval) -> XCUIElement {
+        let alert = springboard.alerts.firstMatch
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if alert.exists {
+                return alert
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        return alert
+    }
+
+    private func waitForNotificationElement(
+        containing text: String,
+        in springboard: XCUIApplication,
+        timeout: TimeInterval
+    ) -> XCUIElement {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let element = notificationElement(containing: text, in: springboard)
+            if element.exists {
+                return element
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        return notificationElement(containing: text, in: springboard)
+    }
+
+    private func notificationElement(containing text: String, in springboard: XCUIApplication) -> XCUIElement {
+        let predicate = NSPredicate(
+            format: "label CONTAINS %@ OR identifier CONTAINS %@ OR value CONTAINS %@",
+            text,
+            text,
+            text
+        )
+        let button = springboard.buttons.matching(predicate).firstMatch
+        if button.exists {
+            return button
+        }
+        let staticText = springboard.staticTexts.matching(predicate).firstMatch
+        if staticText.exists {
+            return staticText
+        }
+        let banner = springboard
+            .descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND label CONTAINS %@", "NotificationShortLookView", text))
+            .firstMatch
+        if banner.exists {
+            return banner
+        }
+        return springboard.descendants(matching: .any).matching(predicate).firstMatch
     }
 }

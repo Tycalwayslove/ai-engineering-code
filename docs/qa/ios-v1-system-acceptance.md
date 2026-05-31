@@ -113,6 +113,7 @@ pnpm collect:ios-attachment-evidence
 - `pnpm validate:ios-keyboard-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.mode-toggle-button`、`ai-code.composer.keyboard-text-field`、系统键盘和 `ai-code.composer.submit-button`，并在 H5 Bridge Debug 中断言 `source=native.composer.keyboard` 与提交文本；随后点击 H5 确认卡，断言确认完成后出现 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该命令会通过 UI test 专用启动参数跳过通知 / 日历权限请求，避免键盘路径被系统同步弹窗污染，并为每次运行注入独立 `AI_CODE_UI_TEST_CONVERSATION_ID`，避免旧会话数据干扰。
 - `pnpm validate:ios-voice-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.voice-button`，并在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时通过 UI test 专用 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 注入“明天上午十点提醒我带电脑”，随后断言 H5 Bridge Debug 出现 `source=native.composer.voice`，点击 H5 确认卡，并看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该命令只证明 Native 语音入口、H5 Bridge、确认卡和后端提醒读模型的工程闭环，不替代麦克风权限弹窗、真实录音和中文识别质量验收。
 - `pnpm validate:ios-voice-permission-ui-test`：运行 Xcode UI test，先重置目标 App 麦克风 / 系统权限，再真实点击 `ai-code.composer.voice-button`，从 SpringBoard 权限弹窗保存 `麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏` screenshot attachment。该命令只证明权限弹窗可触发并可归档，不替代真实语音识别质量或人工验收结论。
+- `pnpm validate:ios-notification-ui-test`：运行 Xcode UI test，真实创建“1 分钟后”的提醒确认卡，等待 iOS 系统通知 banner，保存 `系统通知截图`，点击通知后断言 H5 显示 `已从系统通知打开提醒`，并归档 `通知点击后 App 回流` screenshot attachment 和 `system-notification-click.mp4` 录屏。该命令证明系统通知展示和点击回流可归档，不把通知权限首弹当作必然产物，也不替代人工验收结论。
 - `pnpm validate:ios-attachment-ui-test`：运行 Xcode UI test，真实点击 `ai-code.composer.attachment-button`，断言系统菜单展示“选择附件”“选择照片”“选择文件”和“取消”，并继续打开照片 / 文件入口，保存 `附件菜单`、`PhotosPicker 选择流程`、`fileImporter 选择流程` 和 `PDF 选择流程` screenshot attachment。该命令会固定写出 log、xcresult 和 `attachment-ui-test.json` metadata，作为 completion audit 的 supporting-only 候选证据；它不替代真实选中文件、PhotosPicker、fileImporter、权限弹窗、安全作用域文件读取、Vision OCR 或 PDFKit 抽取质量验收。
 - `pnpm collect:ios-keyboard-evidence`、`AI_CODE_IOS_ACCEPTANCE_SEED_KEYBOARD_INPUT=1` 或 `--seed-keyboard-input`：显式向当前 Native 会话注入同形态 `native.inputSubmitted`，使用 `source=native.composer.keyboard` 走 H5 `/agent/turns`、确认卡、确认执行和 `/reminders` 读模型闭环，并保存 `native-keyboard-input.png`。该证据只证明 H5 / 后端能处理原生键盘来源的输入，不替代真实 Native 输入框获得焦点、系统键盘弹出、用户实际输入和点击发送的截图。
 - `pnpm collect:ios-attachment-evidence`、`AI_CODE_IOS_ACCEPTANCE_SEED_ATTACHMENT_INPUTS=1` 或 `--seed-attachment-inputs`：显式向当前 Native 会话注入同形态 `native.inputSubmitted` 附件消息，覆盖 `source=native.composer.attachment.photo`、`source=native.composer.attachment.file` 和 PDF 文本提取样例，走 H5 `/attachments/upload`、附件摘要卡和 `/attachments` 读模型闭环，并保存 `native-attachment-inputs.png`。该证据只证明 H5 / 后端能处理 Native 附件 payload，不替代真实 PhotosPicker、fileImporter、系统权限弹窗、安全作用域文件读取、Vision OCR 或 PDFKit 抽取质量验收。
@@ -338,12 +339,13 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 
 验收证据：
 
-- 权限弹窗截图。
+- 通知权限状态截图或诊断摘要；如果首次授权环境出现系统权限弹窗，补充权限弹窗截图。
 - 系统通知截图。
 - 调试日志或 Xcode 控制台记录本地通知标识 `ai-code.reminder.{id}`。
 - 自动证据包 `ios.systemDiagnostics.notifications.authorizationStatus`、`notifications.pendingReminderCount` 和 `notifications.pendingReminderIds` 摘要。
 - 自动证据包 `notificationSyncBridge.available=true`、`bridgeOutboundLabel` 包含 `notifications.reminders.sync` 且 `targetReminderIncluded=true` 时，可作为 H5 已把目标 scheduled 提醒同步给 Native 的 Bridge 辅助证据；它不替代通知权限弹窗、系统通知截图或 delivered diagnostics。
 - 自动证据包显式开启 `--seed-notification-delivery` 后，`notificationDelivery.available=true`、`pendingNotificationFound=true`、`deliveredNotificationFound=true` 和 `notifications.deliveredReminderIds` 包含目标标识，可作为系统通知 delivered 诊断辅助证据；它不替代真实系统通知展示截图。
+- `pnpm validate:ios-notification-ui-test` 生成的 `系统通知截图`、`ios-notification-ui-test.xcresult` 和 `notification-ui-test.json` 可作为系统通知展示候选证据；该命令不保证通知权限首弹一定出现。
 - `/reminders?conversationId=...` 响应摘要。
 
 ### 通知点击回流
@@ -366,6 +368,7 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 - 点击通知后的提醒页截图或录屏。
 - H5 debug / bridge debug 中的 viewChanged 摘要，包含 `source=native.notifications.reminders.opened`、`view=reminders` 和 `reminderId`。
 - 自动证据包 `notificationClickBackflow.available=true`、`pendingNotificationFound=true`、`h5StatusText=已从系统通知打开提醒` 和 `highlightedReminderFound=true` 的摘要；该证据使用 synthetic Native message，只能辅助证明 H5 回流处理，不能替代真实系统通知点击录屏。
+- `pnpm validate:ios-notification-ui-test` 生成的 `system-notification-click.mp4`、`通知点击后 App 回流` attachment 和 xcresult 可作为真实系统通知点击回流候选证据；人工记录仍需保持复核结论。
 
 ### 系统日历写入
 

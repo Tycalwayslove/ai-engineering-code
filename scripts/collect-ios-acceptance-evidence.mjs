@@ -45,6 +45,14 @@ const voicePermissionUiTestMetadataPath =
     "ios-voice-permission-ui-test",
     "voice-permission-ui-test.json"
   );
+const notificationUiTestMetadataPath =
+  process.env.AI_CODE_IOS_NOTIFICATION_UI_TEST_METADATA_PATH ??
+  path.join(
+    rootDir,
+    ".tmp",
+    "ios-notification-ui-test",
+    "notification-ui-test.json"
+  );
 const attachmentUiTestMetadataPath =
   process.env.AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH ??
   path.join(rootDir, ".tmp", "ios-attachment-ui-test", "attachment-ui-test.json");
@@ -226,7 +234,7 @@ const manualEvidenceGuides = {
     apiSummaries: ["/reminders?conversationId=..."],
     bridgeMarkers: ["notifications.reminders.sync"],
     screenshots: ["提醒确认卡", "H5 提醒页 scheduled 结果"],
-    systemArtifacts: ["iOS 通知权限弹窗截图", "系统通知截图"],
+    systemArtifacts: ["系统通知截图"],
   },
   通知点击回流: {
     apiSummaries: ["/reminders?conversationId=..."],
@@ -1285,6 +1293,66 @@ function collectVoicePermissionUiTestEvidence() {
       result.errors.push(
         "voice permission UI test metadata is present but not usable"
       );
+    }
+  } catch (error) {
+    result.errors.push(error instanceof Error ? error.message : String(error));
+  }
+  return result;
+}
+
+function collectNotificationUiTestEvidence() {
+  const result = {
+    available: false,
+    errors: [],
+    logPath: null,
+    metadataPath: notificationUiTestMetadataPath,
+    notificationIdentifier: null,
+    reminderId: null,
+    resultBundlePath: null,
+    screenshotAttachments: {},
+    source: "validate:ios-notification-ui-test",
+    supportingOnly: true,
+    systemArtifacts: [],
+    videoPath: null,
+  };
+  if (!fs.existsSync(notificationUiTestMetadataPath)) {
+    result.errors.push("notification UI test metadata was not found");
+    return result;
+  }
+
+  try {
+    const metadata = JSON.parse(
+      fs.readFileSync(notificationUiTestMetadataPath, "utf8")
+    );
+    result.logPath =
+      typeof metadata.logPath === "string" ? metadata.logPath : null;
+    result.notificationIdentifier =
+      typeof metadata.notificationIdentifier === "string"
+        ? metadata.notificationIdentifier
+        : null;
+    result.reminderId =
+      typeof metadata.reminderId === "string" ? metadata.reminderId : null;
+    result.resultBundlePath =
+      typeof metadata.resultBundlePath === "string"
+        ? metadata.resultBundlePath
+        : null;
+    result.screenshotAttachments =
+      metadata.screenshotAttachments &&
+      typeof metadata.screenshotAttachments === "object"
+        ? metadata.screenshotAttachments
+        : {};
+    result.systemArtifacts = Array.isArray(metadata.systemArtifacts)
+      ? metadata.systemArtifacts.filter((artifact) => typeof artifact === "string")
+      : [];
+    result.videoPath =
+      typeof metadata.videoPath === "string" ? metadata.videoPath : null;
+    result.available =
+      metadata.passed === true &&
+      Boolean(result.logPath && fs.existsSync(result.logPath)) &&
+      Boolean(result.resultBundlePath && fs.existsSync(result.resultBundlePath)) &&
+      Boolean(result.videoPath && fs.existsSync(result.videoPath));
+    if (!result.available) {
+      result.errors.push("notification UI test metadata is present but not usable");
     }
   } catch (error) {
     result.errors.push(error instanceof Error ? error.message : String(error));
@@ -4122,28 +4190,55 @@ function supportingSignalsForManualItem(item, evidence) {
     ];
   }
 
-  if (item === "本地通知" && evidence.ios.systemDiagnostics["notifications.authorizationStatus"]) {
-    return [
-      `通知权限状态=${evidence.ios.systemDiagnostics["notifications.authorizationStatus"]}`,
-      `pendingReminderCount=${evidence.ios.systemDiagnostics["notifications.pendingReminderCount"] ?? "unknown"}`,
-      ...(evidence.notificationDelivery?.available
-        ? [
-            `目标提醒已进入 delivered notification 诊断：${evidence.notificationDelivery.notificationIdentifier}`,
-            `mode=${evidence.notificationDelivery.mode}, supportingOnly=${String(evidence.notificationDelivery.supportingOnly)}`,
-          ]
-        : []),
-    ];
+  if (
+    item === "本地通知" &&
+    (evidence.ios.systemDiagnostics["notifications.authorizationStatus"] ||
+      evidence.notificationUiTest?.available)
+  ) {
+    const signals = [];
+    if (evidence.ios.systemDiagnostics["notifications.authorizationStatus"]) {
+      signals.push(
+        `通知权限状态=${evidence.ios.systemDiagnostics["notifications.authorizationStatus"]}`,
+        `pendingReminderCount=${evidence.ios.systemDiagnostics["notifications.pendingReminderCount"] ?? "unknown"}`
+      );
+    }
+    if (evidence.notificationDelivery?.available) {
+      signals.push(
+        `目标提醒已进入 delivered notification 诊断：${evidence.notificationDelivery.notificationIdentifier}`,
+        `mode=${evidence.notificationDelivery.mode}, supportingOnly=${String(evidence.notificationDelivery.supportingOnly)}`
+      );
+    }
+    if (evidence.notificationUiTest?.available) {
+      signals.push(
+        "真实 iOS 系统通知截图和通知点击录屏由 pnpm validate:ios-notification-ui-test 归档",
+        "ios_notification_ui_test_artifact",
+        `source=${evidence.notificationUiTest.source}, supportingOnly=${String(evidence.notificationUiTest.supportingOnly)}`
+      );
+    }
+    return signals;
   }
 
   if (
     item === "通知点击回流" &&
-    evidence.notificationClickBackflow?.available
+    (evidence.notificationClickBackflow?.available ||
+      evidence.notificationUiTest?.available)
   ) {
-    return [
-      `pending notification exists：${evidence.notificationClickBackflow.notificationIdentifier}`,
-      `H5 synthetic native.viewChanged 已打开提醒页并高亮 reminderId=${evidence.notificationClickBackflow.reminderId}`,
-      `mode=${evidence.notificationClickBackflow.mode}, supportingOnly=${String(evidence.notificationClickBackflow.supportingOnly)}`,
-    ];
+    const signals = [];
+    if (evidence.notificationClickBackflow?.available) {
+      signals.push(
+        `pending notification exists：${evidence.notificationClickBackflow.notificationIdentifier}`,
+        `H5 synthetic native.viewChanged 已打开提醒页并高亮 reminderId=${evidence.notificationClickBackflow.reminderId}`,
+        `mode=${evidence.notificationClickBackflow.mode}, supportingOnly=${String(evidence.notificationClickBackflow.supportingOnly)}`
+      );
+    }
+    if (evidence.notificationUiTest?.available) {
+      signals.push(
+        "真实系统通知点击录屏由 pnpm validate:ios-notification-ui-test 归档",
+        "ios_notification_ui_test_artifact",
+        `source=${evidence.notificationUiTest.source}, supportingOnly=${String(evidence.notificationUiTest.supportingOnly)}`
+      );
+    }
+    return signals;
   }
 
   if (item === "键盘输入" && evidence.nativeKeyboardInput?.available) {
@@ -4842,6 +4937,7 @@ async function main() {
   const keyboardUiTest = collectKeyboardUiTestEvidence();
   const voiceUiTest = collectVoiceUiTestEvidence();
   const voicePermissionUiTest = collectVoicePermissionUiTestEvidence();
+  const notificationUiTest = collectNotificationUiTestEvidence();
   const navigationUiTest = collectNavigationUiTestEvidence();
   const attachmentUiTest = collectAttachmentUiTestEvidence();
   const backendFactSnapshot = collectBackendFactSnapshot({
@@ -4892,6 +4988,9 @@ async function main() {
       ...(voicePermissionUiTest.available
         ? ["ios_voice_permission_ui_test_artifact"]
         : []),
+      ...(notificationUiTest.available
+        ? ["ios_notification_ui_test_artifact"]
+        : []),
       ...(navigationUiTest.available ? ["ios_navigation_ui_test_artifact"] : []),
       ...(attachmentUiTest.available ? ["ios_attachment_ui_test_artifact"] : []),
     ],
@@ -4941,6 +5040,7 @@ async function main() {
       ...notificationSyncBridge,
       commands: compactCommands(notificationSyncBridge.commands),
     },
+    notificationUiTest,
     nativeKeyboardInput: {
       ...nativeKeyboardInput,
       commands: compactCommands(nativeKeyboardInput.commands),

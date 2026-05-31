@@ -786,3 +786,21 @@ HEAD `a7a2241` 的 audit 把 `missingEvidenceCount` 收敛到 15 后，后续协
 - 附件业务链路证据和系统 UI 证据仍要分开看：`nativeAttachmentInputs` / H5 follow-up 证明 H5 与后端能处理附件 payload；`attachmentUiTest` 证明 Native 菜单和系统选择器入口可达。
 
 HEAD `180ce4c` 的正式 audit 后，`missingEvidenceCount=6`，附件三项的 `missingEvidence=无`。这代表候选材料已经齐，不代表人工验收完成；所有 item 仍为 `pending` 时，completion audit 必须保持 `not_complete`。下一步协作重点应转向语音权限弹窗和通知系统链路，尤其是 `notifications.reminders.sync`、通知权限弹窗、系统通知截图和系统通知点击录屏。
+
+## 系统通知 UI test 证据归档边界
+
+2026-06-01 的系统通知 UI test 把通知系统证据拆成三层：
+
+- `notificationSyncBridge` 证明 H5 已向 Native 发送 `notifications.reminders.sync`，并且目标 reminder 包含在同步 payload 中。
+- `notificationDelivery` / Native diagnostics 证明 pending / delivered notification 标识进入系统诊断。
+- `validate:ios-notification-ui-test` 证明系统通知 banner 可见、可截图，且用户点击通知后能回到 H5 reminders 视图并显示 `已从系统通知打开提醒`。
+
+协作边界：
+
+- `validate:ios-notification-ui-test` 不把通知权限首弹当作必然产物。当前 Simulator 环境可能在独立 bundle id 下直接得到通知授权或不展示首弹；如果首弹出现，XCTest 可以截图，但 review 不应要求 metadata 一定包含 `notificationPermissionPrompt`。
+- 系统通知截图和通知点击录屏可以由 UI test 预填到 `local_notification` 和 `notification_click_backflow`，但 item status 必须保持 `pending`，由人工最终复核。
+- H5 synthetic `native.viewChanged` 仍只能证明 H5 回流处理；只有系统通知 UI test 的 `system-notification-click.mp4` 和 xcresult 才能作为真实点击候选证据。
+- SpringBoard 通知 banner 的定位应优先按 button/staticText/`NotificationShortLookView` 查询，并用轮询重新获取元素；不要依赖一次性的 broad descendants `firstMatch`。
+- H5 执行结果文案可能随产品 UI 演进变化，通知 UI test 应等待用户可见事实文案（例如 `已执行：创建提醒`、`scheduled`、提醒标题），不要绑定旧的通用状态文案。
+
+后续 completion audit 仍要重新生成当前 HEAD 证据包，并绑定 `notificationUiTest.available=true` 的 review 记录；没有人工 `passed` 记录时，即使通知截图和录屏都齐，goal 也不能标记为 complete。

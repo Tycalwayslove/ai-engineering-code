@@ -44,7 +44,7 @@ test("manual evidence review fills objective evidence without passing items", ()
         recordings: [],
         apiSummaries: ["/reminders?conversationId=..."],
         bridgeMarkers: ["notifications.reminders.sync"],
-        systemArtifacts: ["iOS 通知权限弹窗截图或录屏"],
+        systemArtifacts: ["系统通知截图"],
       }),
       item("system_calendar_cleanup", "系统日历取消清理", {
         screenshots: ["H5 日程取消动作"],
@@ -362,7 +362,7 @@ test("manual evidence review keeps partial notification evidence when system del
         recordings: [],
         apiSummaries: ["/reminders?conversationId=..."],
         bridgeMarkers: ["notifications.reminders.sync"],
-        systemArtifacts: ["iOS 通知权限弹窗截图或录屏"],
+        systemArtifacts: ["系统通知截图"],
       }),
       item("notification_click_backflow", "通知点击回流", {
         screenshots: ["通知点击后 H5 reminders 视图", "高亮提醒行"],

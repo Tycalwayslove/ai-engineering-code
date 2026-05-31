@@ -5162,3 +5162,39 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把 v1 收口的显式缺口从 5 个降到 3 个。剩余缺口已经非常集中：通知权限弹窗、系统通知展示截图和系统通知点击录屏。后续应继续围绕真实系统通知 UI 采证推进，而不是再扩展 H5 synthetic 或普通业务链路证据。
+
+## 阶段 184：系统通知 UI test 证据归档
+
+问题背景：
+
+- HEAD `e5f591b` 的 audit 中，本地通知与通知点击回流还缺系统通知截图和真实点击录屏。
+- 既有 `notificationSyncBridge` 只能证明 H5 已通过 `notifications.reminders.sync` 把 scheduled 提醒同步给 Native，不能证明用户可见系统通知或点击回流。
+- iOS Simulator 在当前环境中不会稳定弹出通知权限首弹，因此本阶段不把权限弹窗作为这条 UI test 的必然产物。
+
+完成内容：
+
+- 新增 `pnpm validate:ios-notification-ui-test`。
+- 新增 XCTest `testNativeNotificationDeliveryAndClickCanBeCaptured`：创建“1 分钟后”的提醒确认卡，确认后等待 iOS 系统通知 banner，保存 `系统通知截图`，点击通知，再断言 H5 显示 `已从系统通知打开提醒` 并保存 `通知点击后 App 回流`。
+- 新脚本运行前用独立 bundle id `com.aiengineeringcode.shell.notificationuitest` 隔离通知测试状态，并用 `simctl recordVideo` 固定生成 `.tmp/ios-notification-ui-test/system-notification-click.mp4`。
+- 每次运行固定写出 `.tmp/ios-notification-ui-test/ios-notification-ui-test.log`、`.tmp/ios-notification-ui-test/ios-notification-ui-test.xcresult` 和 `notification-ui-test.json`。
+- `collect-ios-acceptance-evidence` 新增 `notificationUiTest` 读取路径，并把 `ios_notification_ui_test_artifact` 写入自动证据。
+- `manual-evidence-review` 会把 `系统通知截图`、`系统通知点击录屏`、log / xcresult 预填到本地通知和通知点击回流 review 候选证据，但仍保持 item `status=pending`。
+- `collect-v1-completion-audit` 的自动化命令清单加入 `validate:ios-notification-ui-test`。
+- 本地通知人工证据模板不再把“通知权限弹窗截图”列为这条自动链路的必填系统产物，改为以系统通知截图、通知权限状态诊断和人工复核结合判断。
+
+调试修复：
+
+- H5 当前真实执行结果文案是 `已执行：创建提醒：...`，原 UI test 等待旧文案 `已确认执行` 会误失败。
+- SpringBoard 系统通知 banner 的 accessibility 结构以 button/staticText/`NotificationShortLookView` 为主，不能只依赖一次 broad descendants wait；已改为按实际结构轮询。
+- 可选通知权限 alert 不再使用会产生失败记录的 `waitForExistence`，改为非断言式短轮询；如果权限弹窗出现就截图并允许，不出现则继续验证系统通知展示和点击回流。
+
+验证结果：
+
+- live UI test：`H5_DEV_SERVER_URL='http://127.0.0.1:3000/?native=ios&bridgeDebug=1' pnpm validate:ios-notification-ui-test` 通过 1 个 XCTest，生成系统通知截图、点击回流截图和 mp4 录屏。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 25 项测试。
+- 采证工具：`pnpm validate:ios-acceptance-evidence` 通过 29 项测试。
+- 护栏：`pnpm validate:native-shells`、`git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把系统通知展示和真实通知点击回流从纯人工缺口推进到可归档 UI test 候选证据。边界仍然清楚：它证明系统通知 banner 和点击回流可被自动捕获，不证明通知权限首弹一定出现，也不自动代表人工验收已通过。

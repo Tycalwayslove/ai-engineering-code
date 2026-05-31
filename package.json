@@ -30,6 +30,7 @@
     "validate:ios-attachment-ui-test": "node scripts/validate-ios-attachment-ui-test.mjs",
     "validate:ios-keyboard-ui-test": "node scripts/validate-ios-keyboard-ui-test.mjs",
     "validate:ios-navigation-ui-test": "node scripts/validate-ios-navigation-ui-test.mjs",
+    "validate:ios-notification-ui-test": "node scripts/validate-ios-notification-ui-test.mjs",
     "validate:ios-voice-ui-test": "node scripts/validate-ios-voice-ui-test.mjs",
     "validate:ios-voice-permission-ui-test": "node scripts/validate-ios-voice-permission-ui-test.mjs",
     "validate:ios-acceptance-evidence": "node --test scripts/http-retry.test.mjs scripts/ios-acceptance-predicates.test.mjs scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs",

@@ -513,6 +513,93 @@ test("collect iOS acceptance evidence reads voice permission UI test metadata", 
   );
 });
 
+test("collect iOS acceptance evidence reads notification UI test metadata", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-notification-ui-")
+  );
+  const artifactDir = path.join(outputDir, "notification-artifacts");
+  const logPath = path.join(artifactDir, "ios-notification-ui-test.log");
+  const metadataPath = path.join(artifactDir, "notification-ui-test.json");
+  const resultBundlePath = path.join(
+    artifactDir,
+    "ios-notification-ui-test.xcresult"
+  );
+  const videoPath = path.join(artifactDir, "system-notification-click.mp4");
+  fs.mkdirSync(resultBundlePath, { recursive: true });
+  fs.writeFileSync(logPath, "notification ui test log");
+  fs.writeFileSync(videoPath, "fake video");
+  fs.writeFileSync(
+    metadataPath,
+    `${JSON.stringify({
+      generatedAt: "2026-06-01T00:00:00.000Z",
+      logPath,
+      passed: true,
+      resultBundlePath,
+      screenshotAttachments: {
+        systemNotification: "系统通知截图",
+        notificationClickBackflow: "通知点击后 App 回流",
+      },
+      systemArtifacts: ["系统通知截图", "系统通知点击录屏"],
+      videoPath,
+    })}\n`
+  );
+
+  const result = spawnSync(
+    "node",
+    [scriptPath, "--dry-run", "--output-dir", outputDir],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_NOTIFICATION_UI_TEST_METADATA_PATH: metadataPath,
+      },
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manifest.json"), "utf8")
+  );
+  const review = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manual-evidence-record.review.json"), "utf8")
+  );
+  const notificationReviewItem = review.items.find(
+    (item) => item.id === "local_notification"
+  );
+  const clickReviewItem = review.items.find(
+    (item) => item.id === "notification_click_backflow"
+  );
+
+  assert.equal(evidence.notificationUiTest.available, true);
+  assert.equal(evidence.notificationUiTest.logPath, logPath);
+  assert.equal(evidence.notificationUiTest.resultBundlePath, resultBundlePath);
+  assert.equal(evidence.notificationUiTest.videoPath, videoPath);
+  assert.ok(
+    evidence.automatedEvidence.includes("ios_notification_ui_test_artifact")
+  );
+  assert.ok(
+    manifest.items
+      .find((item) => item.item === "本地通知")
+      .supportingEvidenceSignals.includes("ios_notification_ui_test_artifact")
+  );
+  assert.equal(notificationReviewItem.status, "pending");
+  assert.match(
+    notificationReviewItem.evidence.systemArtifacts.join("\n"),
+    /系统通知截图/
+  );
+  assert.equal(clickReviewItem.status, "pending");
+  assert.match(
+    clickReviewItem.evidence.systemArtifacts.join("\n"),
+    /系统通知点击录屏/
+  );
+  assert.match(clickReviewItem.evidence.systemArtifacts.join("\n"), /\.mp4/);
+});
+
 test("collect iOS acceptance evidence reads attachment UI test metadata", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-attachment-ui-")

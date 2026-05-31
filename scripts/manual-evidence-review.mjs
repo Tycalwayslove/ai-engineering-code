@@ -227,6 +227,27 @@ function evidenceSuggestionsForItem(item, evidence) {
           addUnique(suggestions.bridgeMarkers, "notifications.reminders.sync");
         }
       }
+      const notificationUiTest = evidence?.notificationUiTest;
+      if (notificationUiTest?.available) {
+        if (notificationUiTest.screenshotAttachments?.systemNotification) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `系统通知截图: ${notificationUiTest.screenshotAttachments.systemNotification} (${notificationUiTest.resultBundlePath})`
+          );
+        }
+        if (notificationUiTest.logPath || notificationUiTest.resultBundlePath) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `pnpm validate:ios-notification-ui-test 输出或 xcresult: log=${notificationUiTest.logPath ?? "未采集"}, xcresult=${notificationUiTest.resultBundlePath ?? "未采集"}`
+          );
+        }
+        if (notificationUiTest.notificationIdentifier) {
+          addUnique(
+            suggestions.bridgeMarkers,
+            `notifications.reminders.sync: ${notificationUiTest.notificationIdentifier}`
+          );
+        }
+      }
       break;
     }
     case "notification_click_backflow": {
@@ -263,6 +284,33 @@ function evidenceSuggestionsForItem(item, evidence) {
           suggestions.bridgeMarkers,
           `source=native.notifications.reminders.opened: reminderId=${backflow.reminderId}`
         );
+      }
+      const notificationUiTest = evidence?.notificationUiTest;
+      if (notificationUiTest?.available) {
+        if (notificationUiTest.screenshotAttachments?.notificationClickBackflow) {
+          addUnique(
+            suggestions.screenshots,
+            `通知点击后 App 回流: ${notificationUiTest.screenshotAttachments.notificationClickBackflow} (${notificationUiTest.resultBundlePath})`
+          );
+        }
+        if (notificationUiTest.videoPath) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `系统通知点击录屏: ${notificationUiTest.videoPath}`
+          );
+        }
+        if (notificationUiTest.logPath || notificationUiTest.resultBundlePath) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `pnpm validate:ios-notification-ui-test 输出或 xcresult: log=${notificationUiTest.logPath ?? "未采集"}, xcresult=${notificationUiTest.resultBundlePath ?? "未采集"}`
+          );
+        }
+        if (notificationUiTest.reminderId) {
+          addUnique(
+            suggestions.bridgeMarkers,
+            `source=native.notifications.reminders.opened: reminderId=${notificationUiTest.reminderId}`
+          );
+        }
       }
       break;
     }

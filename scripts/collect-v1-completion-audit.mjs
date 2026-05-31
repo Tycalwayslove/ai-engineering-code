@@ -67,6 +67,10 @@ export const requiredAutomatedCommands = [
     proves: "真实 iOS 语音 / 麦克风权限弹窗可触发并归档为 xcresult",
   },
   {
+    script: "validate:ios-notification-ui-test",
+    proves: "真实 iOS 系统通知展示和通知点击回流可归档为 xcresult / 录屏",
+  },
+  {
     script: "validate:ios-attachment-ui-test",
     proves: "Native 纸夹入口和照片 / 文件菜单选项可见",
   },
