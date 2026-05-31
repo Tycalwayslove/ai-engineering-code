@@ -19,6 +19,16 @@ private enum NativeRuntimeFlags {
             ProcessInfo.processInfo.environment["AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS"] == "1"
     }
 
+    static var disablesCalendarPermissionRequests: Bool {
+        disablesSystemPermissionRequests ||
+            ProcessInfo.processInfo.environment["AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS"] == "1"
+    }
+
+    static var disablesNotificationPermissionRequests: Bool {
+        disablesSystemPermissionRequests ||
+            ProcessInfo.processInfo.environment["AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS"] == "1"
+    }
+
     static var uiTestVoiceTranscript: String? {
         guard disablesSystemPermissionRequests else {
             return nil
@@ -863,7 +873,7 @@ struct HybridShellView: View {
     private func syncCalendarEvents(_ payloads: [[String: String]]) {
         let events = payloads.compactMap(NativeCalendarEvent.init(payload:))
 
-        if NativeRuntimeFlags.disablesSystemPermissionRequests {
+        if NativeRuntimeFlags.disablesCalendarPermissionRequests {
             let payload = [
                 "calendar.inputEventCount": "\(events.count)",
                 "calendar.lastSyncStatus": "skipped_for_ui_test",
@@ -1454,6 +1464,13 @@ private final class NativeReminderNotificationScheduler: NSObject, ObservableObj
                 .filter { $0.hasPrefix(self.identifierPrefix) }
             self.center.removePendingNotificationRequests(withIdentifiers: existingIdentifiers)
 
+            if NativeRuntimeFlags.disablesNotificationPermissionRequests {
+                DispatchQueue.main.async {
+                    onSynced(0, reminders.count)
+                }
+                return
+            }
+
             self.center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
                 guard granted else {
                     DispatchQueue.main.async {
@@ -1543,7 +1560,7 @@ private final class NativeReminderNotificationScheduler: NSObject, ObservableObj
             ]
 
             let components = Calendar.current.dateComponents(
-                [.year, .month, .day, .hour, .minute],
+                [.year, .month, .day, .hour, .minute, .second],
                 from: dueDate
             )
             let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)

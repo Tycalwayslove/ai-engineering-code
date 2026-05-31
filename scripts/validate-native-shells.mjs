@@ -315,6 +315,9 @@ assertIncludes(iosShellPath, iosShell, 'accessibilityIdentifier("ai-code.compose
 assertIncludes(iosShellPath, iosShell, "NativeReminderNotificationScheduler");
 assertIncludes(iosShellPath, iosShell, "UNUserNotificationCenter");
 assertIncludes(iosShellPath, iosShell, "UNUserNotificationCenterDelegate");
+assertIncludes(iosShellPath, iosShell, "AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS");
+assertIncludes(iosShellPath, iosShell, "AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS");
+assertIncludes(iosShellPath, iosShell, ".second");
 assertIncludes(iosShellPath, iosShell, "openReminderFromNotification");
 assertIncludes(iosShellPath, iosShell, "didReceive response");
 assertIncludes(iosShellPath, iosShell, "willPresent notification");
@@ -362,6 +365,8 @@ assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "带电脑");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "scheduled");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeVoiceComposerConfirmsReminderThroughBackend");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "AI_CODE_UI_TEST_VOICE_TRANSCRIPT");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS");
+assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "ai-code.composer.voice-button");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "source=native.composer.voice");
 assertIncludes(iosKeyboardUiTestPath, iosKeyboardUiTest, "testNativeAttachmentButtonPresentsAttachmentChoices");

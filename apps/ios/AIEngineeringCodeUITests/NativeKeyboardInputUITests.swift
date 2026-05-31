@@ -33,7 +33,11 @@ final class NativeKeyboardInputUITests: XCTestCase {
     }
 
     func testNativeVoicePermissionPromptCanBeCaptured() throws {
-        let app = launchAppForPermissionPrompt(conversationPrefix: "conversation_ui_voice_permission")
+        let app = launchAppForPermissionPrompt(
+            conversationPrefix: "conversation_ui_voice_permission",
+            disableCalendarPermissionRequests: true,
+            disableNotificationPermissionRequests: true
+        )
 
         let voiceButton = app.buttons["ai-code.composer.voice-button"]
         XCTAssertTrue(voiceButton.waitForExistence(timeout: 20), app.debugDescription)
@@ -66,7 +70,10 @@ final class NativeKeyboardInputUITests: XCTestCase {
 
     func testNativeNotificationDeliveryAndClickCanBeCaptured() throws {
         let inputText = "1分钟后提醒我查看系统通知"
-        let app = launchAppForPermissionPrompt(conversationPrefix: "conversation_ui_notification")
+        let app = launchAppForPermissionPrompt(
+            conversationPrefix: "conversation_ui_notification",
+            disableCalendarPermissionRequests: true
+        )
 
         submitKeyboardReminder(inputText, in: app)
         XCTAssertTrue(
@@ -309,10 +316,20 @@ final class NativeKeyboardInputUITests: XCTestCase {
         return app
     }
 
-    private func launchAppForPermissionPrompt(conversationPrefix: String) -> XCUIApplication {
+    private func launchAppForPermissionPrompt(
+        conversationPrefix: String,
+        disableCalendarPermissionRequests: Bool = false,
+        disableNotificationPermissionRequests: Bool = false
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["AI_CODE_UI_TEST_CONVERSATION_ID"] =
             "\(conversationPrefix)_\(UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased())"
+        if disableCalendarPermissionRequests {
+            app.launchEnvironment["AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS"] = "1"
+        }
+        if disableNotificationPermissionRequests {
+            app.launchEnvironment["AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS"] = "1"
+        }
         app.launch()
         return app
     }
