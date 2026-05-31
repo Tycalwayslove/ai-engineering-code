@@ -548,3 +548,15 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 2026-05-29 修复了费用 seed 的文案粘连问题：旧输入把金额写成 `58 元{seedRunId}`，可能让规划器进入费用金额追问；新输入把 seed 标记移到票据描述前，把金额保留为独立 `58 元`。测试已守住不再出现 `58 元seed_`。
 
 这个规则也适用于后续新增 seed 文案：可读标记应该放在标题或描述里，不要插入金额、日期、时间这类解析器依赖的结构中间。
+
+## 系统日历取消清理 review 分类
+
+2026-05-31 的补证治理把 `system_calendar_cleanup` 的“后端 canceled 状态”从截图要求修正为 API 摘要要求。原因是 canceled 状态来自后端取消接口、`calendarCleanupSeed.canceledEvent.status` 或 `postCancelStatus`，它证明的是业务读模型 / API 状态，不是用户界面截图。
+
+当前边界是：
+
+- `manual-evidence-record.template.json` 中，`system_calendar_cleanup.requiredEvidence.apiSummaries` 包含 `/calendar/events?conversationId=...` 和“后端 canceled 状态”。
+- `manual-evidence-review` 会自动预填 `后端 canceled 状态: eventId=..., status=canceled`，便于人工复核。
+- `screenshots` 仍只保留“`H5 日程取消动作`”，因为现有自动采证是直接 POST 取消，不证明用户真的在 H5 行内点击取消。
+- `systemArtifacts` 仍保留“`iOS 系统日历事件消失截图`”，来自 Calendar App 取消后辅助截图。
+- 该修正只减少错误分类造成的补证噪音，不会把 `system_calendar_cleanup` 自动标为 `passed`，也不会改变 completion audit 必须绑定人工通过记录的规则。

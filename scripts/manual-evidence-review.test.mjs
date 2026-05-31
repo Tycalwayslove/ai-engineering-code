@@ -32,6 +32,13 @@ test("manual evidence review fills objective evidence without passing items", ()
         bridgeMarkers: ["calendar.events.sync"],
         systemArtifacts: ["iOS 系统日历事件截图"],
       }),
+      item("system_calendar_cleanup", "系统日历取消清理", {
+        screenshots: ["H5 日程取消动作"],
+        recordings: [],
+        apiSummaries: ["/calendar/events?conversationId=...", "后端 canceled 状态"],
+        bridgeMarkers: ["calendar.events.sync", "status=canceled"],
+        systemArtifacts: ["iOS 系统日历事件消失截图"],
+      }),
       item("system_sync_degradation", "系统同步降级", {
         screenshots: ["权限拒绝"],
         recordings: [],
@@ -94,6 +101,19 @@ test("manual evidence review fills objective evidence without passing items", ()
       screenshotPath: "/tmp/system-calendar-app.png",
       targetEventId: "calendar_event_1",
     },
+    calendarCleanupSeed: {
+      available: true,
+      canceledEvent: {
+        id: "calendar_event_1",
+        status: "canceled",
+        title: "开会",
+      },
+      postCancelStatus: "canceled",
+      targetEventId: "calendar_event_1",
+      systemCalendarAppScreenshots: {
+        afterPath: "/tmp/calendar-cleanup-after.png",
+      },
+    },
     h5SurfaceScreenshots: {
       available: true,
       surfaces: {
@@ -142,6 +162,7 @@ test("manual evidence review fills objective evidence without passing items", ()
 
   const review = buildManualEvidenceReview(record, evidence);
   const calendarItem = review.items.find((candidate) => candidate.id === "system_calendar_write");
+  const cleanupItem = review.items.find((candidate) => candidate.id === "system_calendar_cleanup");
   const degradationItem = review.items.find((candidate) => candidate.id === "system_sync_degradation");
   const keyboardItem = review.items.find((candidate) => candidate.id === "keyboard_input");
   const navigationItem = review.items.find((candidate) => candidate.id === "navigation_surfaces");
@@ -152,9 +173,13 @@ test("manual evidence review fills objective evidence without passing items", ()
   assert.equal(review.generatedFromDraft, "manual-evidence-record.draft.json");
   assert.equal(review.acceptanceVerdict, "not_evaluated");
   assert.equal(calendarItem.status, "pending");
+  assert.equal(cleanupItem.status, "pending");
   assert.equal(degradationItem.status, "pending");
   assert.match(calendarItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件截图/);
   assert.match(calendarItem.evidence.bridgeMarkers.join("\n"), /calendar\.events\.sync/);
+  assert.match(cleanupItem.evidence.systemArtifacts.join("\n"), /iOS 系统日历事件消失截图/);
+  assert.match(cleanupItem.evidence.apiSummaries.join("\n"), /后端 canceled 状态: eventId=calendar_event_1, status=canceled/);
+  assert.match(cleanupItem.evidence.bridgeMarkers.join("\n"), /status=canceled/);
   assert.match(degradationItem.evidence.screenshots.join("\n"), /权限拒绝/);
   assert.match(degradationItem.evidence.bridgeMarkers.join("\n"), /native\.error/);
   assert.match(degradationItem.evidence.operatorNotes, /候选证据/);

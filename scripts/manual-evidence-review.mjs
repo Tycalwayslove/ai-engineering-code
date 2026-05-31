@@ -203,9 +203,18 @@ function evidenceSuggestionsForItem(item, evidence) {
     }
     case "system_calendar_cleanup": {
       if (evidence?.calendarCleanupSeed?.available) {
+        const canceledEvent = evidence.calendarCleanupSeed.canceledEvent;
+        const canceledEventId =
+          canceledEvent?.id ?? evidence.calendarCleanupSeed.targetEventId ?? "unknown";
+        const canceledStatus =
+          canceledEvent?.status ?? evidence.calendarCleanupSeed.postCancelStatus ?? "unknown";
         addUnique(
           suggestions.systemArtifacts,
           `iOS 系统日历事件消失截图: ${evidence.calendarCleanupSeed.systemCalendarAppScreenshots?.afterPath}`
+        );
+        addUnique(
+          suggestions.apiSummaries,
+          `后端 canceled 状态: eventId=${canceledEventId}, status=${canceledStatus}`
         );
         addUnique(
           suggestions.bridgeMarkers,

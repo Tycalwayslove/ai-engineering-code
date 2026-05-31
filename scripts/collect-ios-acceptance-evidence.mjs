@@ -221,9 +221,9 @@ const manualEvidenceGuides = {
     systemArtifacts: ["iOS 系统日历事件截图"],
   },
   系统日历取消清理: {
-    apiSummaries: ["/calendar/events?conversationId=..."],
+    apiSummaries: ["/calendar/events?conversationId=...", "后端 canceled 状态"],
     bridgeMarkers: ["calendar.events.sync", "status=canceled"],
-    screenshots: ["H5 日程取消动作", "后端 canceled 状态"],
+    screenshots: ["H5 日程取消动作"],
     systemArtifacts: ["iOS 系统日历事件消失截图"],
   },
   后端事实确认: {

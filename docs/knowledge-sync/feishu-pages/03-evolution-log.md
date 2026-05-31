@@ -4428,3 +4428,27 @@ Bridge 调试不能只依赖控制台或内部状态。凡是用户可触发的 
 阶段价值：
 
 这一阶段修复了自动采证链路的一个隐性不稳定点。后续完整当前 HEAD 采证时，三领域验收事实 seed 更可能全部成功，系统日历相关辅助证据也能继续生成，而不是被费用 seed 的追问路径误伤。
+
+## 阶段 161：系统日历取消清理 review 证据分类修正
+
+问题背景：
+
+- 最新 current HEAD 证据包中，`calendarCleanupSeed.available=true`，且已记录 `canceledEvent.status=canceled`、`postCancelStatus=canceled`、`calendar.removedEventIds` 和系统 Calendar 取消后截图。
+- 但 `manual-evidence-record.template.json` 把“后端 canceled 状态”放在 `screenshots` 要求里，导致 completion audit 的缺口报告把一个 API / 后端读模型事实误报为截图缺口。
+- 这会增加人工补证噪音，也让 `system_calendar_cleanup` 的剩余真实缺口不够清晰。
+
+完成内容：
+
+- 将“后端 canceled 状态”从 `system_calendar_cleanup.requiredEvidence.screenshots` 移到 `apiSummaries`。
+- `manual-evidence-review` 现在会从 `calendarCleanupSeed.canceledEvent.status` 或 `postCancelStatus` 预填 `后端 canceled 状态: eventId=..., status=canceled`。
+- `systemArtifacts` 仍保留 `iOS 系统日历事件消失截图`，`screenshots` 仍保留 `H5 日程取消动作`，避免把自动辅助证据误当作人工验收通过。
+
+验证结果：
+
+- 红灯：新增 `manual-evidence-review.test.mjs` 断言后，同一测试先因缺少 `后端 canceled 状态` API 摘要失败。
+- 绿灯：补齐 review 映射和模板分类后，`node --test scripts/manual-evidence-review.test.mjs` 通过。
+- 回归：`node --test scripts/collect-ios-acceptance-evidence.test.mjs` 通过 16 项测试。
+
+阶段价值：
+
+这一阶段没有改变人工验收边界，但把 completion audit 的缺口分类拉回真实语义：后端 canceled 是 API 摘要，H5 取消动作才是截图缺口。后续补证时可以更快聚焦真实需要人工操作的材料。
