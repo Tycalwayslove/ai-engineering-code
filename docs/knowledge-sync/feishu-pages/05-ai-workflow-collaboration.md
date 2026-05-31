@@ -715,3 +715,14 @@ AI_CODE_API_BASE_URL="http://${MAC_LAN_IP}:8000"
 - completion audit 的语音项应同时看两类材料：UI test 证明链路，人工截图 / 录屏证明系统权限和真实语音体验。
 
 后续如果继续补语音采证，应优先增加真实权限弹窗截图 / 录屏的采集入口，而不是放宽 `voice_input.requiredEvidence.systemArtifacts`。这能保持“自动化降低整理成本，人工验收决定发布结论”的边界。
+
+## audit 刷新后的下一步选择
+
+HEAD `a7a2241` 的 audit 把 `missingEvidenceCount` 收敛到 15 后，后续协作要按证据类型分流：
+
+- 已经能由 UI test 或 synthetic H5 bridge 证明的链路，不再重复堆同类证据。例如语音的 `识别文本`、`H5 确认卡`、`/reminders` 和 `source=native.composer.voice` 已经归档，下一步不应继续在这些字段上打转。
+- 仍缺真实系统选择器流程的附件项，可以继续尝试自动化或半自动化：PhotosPicker、Files picker、PDF 样本文本展示、附件后的费用确认卡 / 金额追问。这些缺口和 H5 / Native UI test 有明确落点。
+- 系统权限弹窗、系统通知 banner、通知点击录屏这类 OS 层证据，除非采证脚本能真实触发并截图 / 录屏，否则必须保持人工门槛。
+- 每次新增辅助证据后，都必须重新生成当前 HEAD 证据包和 completion audit，不能沿用旧 HEAD 的 review 记录。
+
+这个分流能避免两种偏差：一是把 synthetic bridge 截图冒充系统能力；二是在已有证据的字段上重复优化，却没有减少真正阻塞 v1 完成的缺口。

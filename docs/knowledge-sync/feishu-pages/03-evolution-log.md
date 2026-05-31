@@ -4802,3 +4802,41 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把语音输入从“UI test 能证明部分链路”推进到“证据包能引用这部分链路”。它仍不替代真实麦克风 / 语音识别权限弹窗、真实语音质量和人工验收记录；completion audit 仍必须保持未完成，直到人工 filled 记录和系统层证据补齐。
+
+## 阶段 173：HEAD a7a2241 语音证据 audit 刷新
+
+执行背景：
+
+- 提交 `a7a2241 test(ios): 归档原生语音证据` 后，需要用当前 HEAD 重跑正式辅助证据包，确认 completion audit 不再选择旧证据。
+- 本轮目标不是宣布 v1 完成，而是验证语音 UI test metadata 是否能真实收敛 `voice_input` 缺口。
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-a7a2241
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-a7a2241 --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-a7a2241`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-a7a2241`。
+- `verdict=not_complete`，`missingEvidenceCount=15`。
+- `voiceUiTest.available=true`，并被 review 预填为 `识别文本`、`H5 确认卡`、`/reminders?conversationId=...`、`source=native.composer.voice` 和 `pnpm validate:ios-voice-ui-test 输出或 xcresult`。
+- `voice_input` 的缺口收敛到 2 项：`麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏`。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 照片 / 文件 / PDF 仍缺真实系统选择器流程、权限截图和业务追问 / 确认卡等人工材料。
+- 本地通知仍缺 `notifications.reminders.sync`、通知权限弹窗、系统通知截图和系统通知点击录屏。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段证明语音 UI test 证据归档确实减少了 completion audit 缺口，但也再次确认自动化证据不能替代系统权限弹窗、系统通知和人工验收结论。下一步应优先处理仍可自动化的系统选择器 / 附件业务确认证据，同时保留真实系统权限和通知录屏的人工门槛。
