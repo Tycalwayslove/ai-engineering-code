@@ -23,6 +23,11 @@ final class NativeKeyboardInputUITests: XCTestCase {
         let voiceButton = app.buttons["ai-code.composer.voice-button"]
         XCTAssertTrue(voiceButton.waitForExistence(timeout: 20), app.debugDescription)
         voiceButton.tap()
+        XCTAssertTrue(
+            waitForStaticText(containing: inputText, in: app, timeout: 10),
+            app.debugDescription
+        )
+        attachScreenshot(named: "识别文本", in: app)
 
         confirmReminderFact(inputText, source: "source=native.composer.voice", in: app)
     }
@@ -161,6 +166,9 @@ final class NativeKeyboardInputUITests: XCTestCase {
             waitForStaticText(containing: "请确认执行计划", in: app, timeout: 30),
             app.debugDescription
         )
+        if source == "source=native.composer.voice" {
+            attachScreenshot(named: "H5 确认卡", in: app)
+        }
 
         let confirmButton = button(containing: "确认", in: app, timeout: 30)
         XCTAssertTrue(confirmButton.exists, app.debugDescription)

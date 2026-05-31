@@ -703,3 +703,15 @@ AI_CODE_API_BASE_URL="http://${MAC_LAN_IP}:8000"
 - 真实系统通知截图、通知权限弹窗和系统通知点击录屏仍必须由人工或系统级采证补齐，不能由 synthetic H5 回流代替。
 
 这个分层让 completion audit 更准确：系统层失败不会吞掉 H5 层已成立的证据，H5 层成立也不会冒充系统通知已投递或已点击。若局域网模式下持续无法观测 pending notification，下一步应修采证脚本的 Native notification sync 等待和诊断，而不是降低验收门槛。
+
+## 原生语音 UI test 证据归档
+
+2026-06-01 的语音 UI test 证据归档把键盘输入的模式扩展到语音输入，但边界必须更严格：
+
+- `validate:ios-voice-ui-test` 的 log、xcresult 和 `voice-ui-test.json` 只证明 UI test 路径下 Native 语音按钮、识别文本、H5 确认卡、后端提醒事实和 `source=native.composer.voice` bridge marker 可串起来。
+- XCTest attachment 应使用人工验收清单中的证据名，例如 `识别文本` 和 `H5 确认卡`，这样 `manual-evidence-review` 可以直接按 requiredEvidence 预填候选证据。
+- `collect-ios-acceptance-evidence` 只把语音 UI test 写为 `supportingOnly` 自动证据，不能把 `voice_input.status` 改成 `passed`。
+- 真实麦克风权限弹窗、语音识别权限弹窗、真实用户说话录屏和识别质量仍属于系统层 / 人工层证据，不能由 UI test 注入 transcript 代替。
+- completion audit 的语音项应同时看两类材料：UI test 证明链路，人工截图 / 录屏证明系统权限和真实语音体验。
+
+后续如果继续补语音采证，应优先增加真实权限弹窗截图 / 录屏的采集入口，而不是放宽 `voice_input.requiredEvidence.systemArtifacts`。这能保持“自动化降低整理成本，人工验收决定发布结论”的边界。

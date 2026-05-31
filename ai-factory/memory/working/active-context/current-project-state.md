@@ -1351,6 +1351,8 @@ pnpm validate:h5-runtime
 - 本次“HEAD 71aa8fe 键盘证据 audit 刷新”已更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“H5 局域网地址覆盖 review 映射”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 本次“通知辅助证据部分可用 review 映射”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
+- 2026-06-01 已补齐原生语音 UI test 证据归档：`validate:ios-voice-ui-test` 现在固定写出 `.tmp/ios-voice-ui-test/ios-voice-ui-test.log`、`.tmp/ios-voice-ui-test/ios-voice-ui-test.xcresult` 和 `voice-ui-test.json` metadata；`NativeKeyboardInputUITests.testNativeVoiceComposerConfirmsReminderThroughBackend` 会保存 `识别文本` 和 `H5 确认卡` screenshot attachment；`collect-ios-acceptance-evidence` 会读取 `voiceUiTest` 并加入 `ios_voice_ui_test_artifact`，`manual-evidence-review` 会预填语音输入的识别文本、H5 确认卡、`/reminders` 摘要、`source=native.composer.voice` 和 UI test log / xcresult。已在局域网 H5/API 存活状态下运行 `pnpm validate:ios-voice-ui-test`，1 个 XCTest 通过并生成 log / xcresult / metadata。该证据仍是 supporting-only，不替代真实麦克风 / 语音识别权限弹窗截图或人工 `passed` 记录。
+- 本次“原生语音 UI test 证据归档”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 飞书同步不是自动的；需要先更新 `docs/knowledge-sync/feishu-pages/` 源稿，再用 `lark-cli docs +update --api-version v2` 同步对应页面。
 - 如果新窗口没有执行 Obsidian 或飞书写入，就不能声称外部知识库已经更新。
 

@@ -128,6 +128,10 @@ assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "NativeKeyboardIn
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "testNativeVoiceComposerConfirmsReminderThroughBackend");
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "CODE_SIGNING_ALLOWED=NO");
 assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "Executed");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "-resultBundlePath");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "voice-ui-test.json");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "ios-voice-ui-test.log");
+assertIncludes(iosVoiceUiTestScriptPath, iosVoiceUiTestScript, "ios-voice-ui-test.xcresult");
 
 const iosAttachmentUiTestScriptPath = "scripts/validate-ios-attachment-ui-test.mjs";
 const iosAttachmentUiTestScript = readRequired(iosAttachmentUiTestScriptPath);

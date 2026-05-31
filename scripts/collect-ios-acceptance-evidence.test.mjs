@@ -50,6 +50,10 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
           outputDir,
           "missing-keyboard-ui-test.json"
         ),
+        AI_CODE_IOS_VOICE_UI_TEST_METADATA_PATH: path.join(
+          outputDir,
+          "missing-voice-ui-test.json"
+        ),
       },
     }
   );
@@ -174,6 +178,11 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(
     evidence.keyboardUiTest.metadataPath,
     /missing-keyboard-ui-test\.json$/
+  );
+  assert.equal(evidence.voiceUiTest.available, false);
+  assert.match(
+    evidence.voiceUiTest.metadataPath,
+    /missing-voice-ui-test\.json$/
   );
   assert.equal(evidence.h5SurfaceScreenshots.available, false);
   assert.equal(evidence.h5SurfaceScreenshots.conversationId, null);
@@ -346,6 +355,76 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(manualChecklist, /## 后端事实确认/);
   assert.match(manualChecklist, /api_summary: \/reminders\?conversationId=\.\.\./);
   assert.match(manualChecklist, /system_artifact: iOS 系统日历事件截图/);
+});
+
+test("collect iOS acceptance evidence reads voice UI test metadata", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-voice-ui-")
+  );
+  const artifactDir = path.join(outputDir, "voice-artifacts");
+  const logPath = path.join(artifactDir, "ios-voice-ui-test.log");
+  const metadataPath = path.join(artifactDir, "voice-ui-test.json");
+  const resultBundlePath = path.join(artifactDir, "ios-voice-ui-test.xcresult");
+  fs.mkdirSync(resultBundlePath, { recursive: true });
+  fs.writeFileSync(logPath, "voice ui test log");
+  fs.writeFileSync(
+    metadataPath,
+    `${JSON.stringify({
+      generatedAt: "2026-06-01T00:00:00.000Z",
+      logPath,
+      passed: true,
+      resultBundlePath,
+      screenshotAttachments: {
+        confirmationCard: "H5 确认卡",
+        recognizedText: "识别文本",
+      },
+      sourceMarkers: ["source=native.composer.voice"],
+    })}\n`
+  );
+
+  const result = spawnSync(
+    "node",
+    [scriptPath, "--dry-run", "--output-dir", outputDir],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AI_CODE_IOS_VOICE_UI_TEST_METADATA_PATH: metadataPath,
+      },
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manifest.json"), "utf8")
+  );
+  const review = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manual-evidence-record.review.json"), "utf8")
+  );
+  const voiceReviewItem = review.items.find((item) => item.id === "voice_input");
+
+  assert.equal(evidence.voiceUiTest.available, true);
+  assert.equal(evidence.voiceUiTest.logPath, logPath);
+  assert.equal(evidence.voiceUiTest.resultBundlePath, resultBundlePath);
+  assert.equal(evidence.voiceUiTest.screenshotAttachments.recognizedText, "识别文本");
+  assert.ok(evidence.automatedEvidence.includes("ios_voice_ui_test_artifact"));
+  assert.ok(
+    manifest.items
+      .find((item) => item.item === "语音输入")
+      .supportingEvidenceSignals.includes("ios_voice_ui_test_artifact")
+  );
+  assert.equal(voiceReviewItem.status, "pending");
+  assert.match(voiceReviewItem.evidence.screenshots.join("\n"), /识别文本/);
+  assert.match(voiceReviewItem.evidence.screenshots.join("\n"), /H5 确认卡/);
+  assert.match(voiceReviewItem.evidence.apiSummaries.join("\n"), /reminders/);
+  assert.match(voiceReviewItem.evidence.bridgeMarkers.join("\n"), /source=native\.composer\.voice/);
+  assert.match(voiceReviewItem.evidence.systemArtifacts.join("\n"), /ios-voice-ui-test\.log/);
+  assert.match(voiceReviewItem.evidence.systemArtifacts.join("\n"), /ios-voice-ui-test\.xcresult/);
 });
 
 test("collect iOS acceptance evidence can opt into notification click backflow support", () => {

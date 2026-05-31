@@ -4773,3 +4773,32 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段没有把系统通知失败伪装成成功，而是把“后端提醒事实 / H5 reminders 展示 / synthetic backflow UI 行为”和“真实系统通知 pending / delivered / 点击录屏”拆开记录。completion audit 的缺口因此更准确：自动可证明的部分不会丢，必须人工补的系统层材料也不会被吞掉。
+
+## 阶段 172：原生语音 UI test 证据归档
+
+问题背景：
+
+- `voice_input` 已有 Native 语音按钮到 H5 / 后端提醒事实的 UI test，但校验命令此前没有固定归档 log、xcresult 和 metadata。
+- `collect-ios-acceptance-evidence` 不能读取语音 UI test 结果，`manual-evidence-review` 也不能把“识别文本”“H5 确认卡”和 `source=native.composer.voice` 作为候选证据预填。
+- 这会让 completion audit 把可自动证明的 Native 语音输入链路和必须人工补的系统麦克风 / 语音权限弹窗混在一起。
+
+完成内容：
+
+- `validate:ios-voice-ui-test` 固定写出 `.tmp/ios-voice-ui-test/ios-voice-ui-test.log`、`.tmp/ios-voice-ui-test/ios-voice-ui-test.xcresult` 和 `voice-ui-test.json`。
+- `NativeKeyboardInputUITests.testNativeVoiceComposerConfirmsReminderThroughBackend` 在识别文本展示后保存 `识别文本` screenshot attachment，并在语音来源确认卡出现时保存 `H5 确认卡` attachment。
+- `collect-ios-acceptance-evidence` 新增 `voiceUiTest` 证据对象，并在 metadata 可用时加入 `ios_voice_ui_test_artifact`。
+- `manual-evidence-review` 会把语音 UI test metadata 预填到 `voice_input` 的候选证据：识别文本、H5 确认卡、`/reminders` 摘要、`source=native.composer.voice` 以及 UI test log / xcresult。
+- `validate-native-shells` 新增护栏，要求语音 UI test 脚本保留 result bundle、log 和 metadata 输出。
+
+验证结果：
+
+- 红灯：新增 `voice UI test metadata` 测试后，`node --test --test-name-pattern "voice UI test metadata|dry-run output" scripts/collect-ios-acceptance-evidence.test.mjs` 先因缺少 `voiceUiTest` 字段失败。
+- 绿灯：补齐 voice UI test metadata、collect 读取和 review 映射后，同一测试通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 21 项测试。
+- 静态检查：`node --check scripts/validate-ios-voice-ui-test.mjs`、`node --check scripts/collect-ios-acceptance-evidence.mjs`、`node --check scripts/manual-evidence-review.mjs` 和 `git diff --check` 通过。
+- 护栏：`pnpm validate:native-shells`、`pnpm validate:context-sync` 通过。
+- 真实 UI test：`pnpm validate:ios-voice-ui-test` 通过 1 个 XCTest，生成 `.tmp/ios-voice-ui-test/ios-voice-ui-test.log`、`.tmp/ios-voice-ui-test/ios-voice-ui-test.xcresult` 和 `voice-ui-test.json`，并在 xcodebuild 日志中看到 `Added attachment named '识别文本'` 与 `Added attachment named 'H5 确认卡'`。
+
+阶段价值：
+
+这一阶段把语音输入从“UI test 能证明部分链路”推进到“证据包能引用这部分链路”。它仍不替代真实麦克风 / 语音识别权限弹窗、真实语音质量和人工验收记录；completion audit 仍必须保持未完成，直到人工 filled 记录和系统层证据补齐。

@@ -273,6 +273,38 @@ function evidenceSuggestionsForItem(item, evidence) {
       }
       break;
     }
+    case "voice_input": {
+      const voiceUiTest = evidence?.voiceUiTest;
+      if (voiceUiTest?.available) {
+        if (voiceUiTest.screenshotAttachments?.recognizedText) {
+          addUnique(
+            suggestions.screenshots,
+            `识别文本: ${voiceUiTest.screenshotAttachments.recognizedText} (${voiceUiTest.resultBundlePath})`
+          );
+        }
+        if (voiceUiTest.screenshotAttachments?.confirmationCard) {
+          addUnique(
+            suggestions.screenshots,
+            `H5 确认卡: ${voiceUiTest.screenshotAttachments.confirmationCard} (${voiceUiTest.resultBundlePath})`
+          );
+        }
+        addUnique(
+          suggestions.apiSummaries,
+          `/reminders?conversationId=...: validate:ios-voice-ui-test`
+        );
+        addUnique(
+          suggestions.bridgeMarkers,
+          "source=native.composer.voice: validate:ios-voice-ui-test"
+        );
+        if (voiceUiTest.logPath || voiceUiTest.resultBundlePath) {
+          addUnique(
+            suggestions.systemArtifacts,
+            `pnpm validate:ios-voice-ui-test 输出或 xcresult: log=${voiceUiTest.logPath ?? "未采集"}, xcresult=${voiceUiTest.resultBundlePath ?? "未采集"}`
+          );
+        }
+      }
+      break;
+    }
     case "photo_attachment":
     case "file_attachment":
     case "pdf_text_extraction": {
