@@ -209,7 +209,7 @@ pnpm validate:ios-voice-ui-test
 pnpm validate:ios-attachment-ui-test
 ```
 
-该命令通过 Xcode UI test 真实点击 `ai-code.composer.attachment-button`，并断言系统菜单展示“选择附件”“选择照片”“选择文件”和“取消”。它只证明附件入口可点击和菜单选项可见，不替代 PhotosPicker、fileImporter、系统权限弹窗、安全作用域文件读取、Vision OCR 或 PDFKit 抽取质量验收。
+该命令通过 Xcode UI test 真实点击 `ai-code.composer.attachment-button`，断言系统菜单展示“选择附件”“选择照片”“选择文件”和“取消”，并继续打开照片 / 文件入口，保存 `附件菜单`、`PhotosPicker 选择流程`、`fileImporter 选择流程` 和 `PDF 选择流程` screenshot attachment。每次运行会固定写出 `.tmp/ios-attachment-ui-test/ios-attachment-ui-test.log`、`.tmp/ios-attachment-ui-test/ios-attachment-ui-test.xcresult` 和 `attachment-ui-test.json`，供 completion audit 作为 supporting-only 候选证据。它不替代真实选中文件、PhotosPicker / fileImporter 权限弹窗、安全作用域文件读取、Vision OCR 或 PDFKit 抽取质量验收。
 
 系统权限和真机体验不能只靠自动 smoke 判断。第一版发布前需要按仓库清单执行人工验收：
 

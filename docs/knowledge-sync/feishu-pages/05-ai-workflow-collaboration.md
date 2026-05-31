@@ -746,3 +746,15 @@ HEAD `a7a2241` 的 audit 把 `missingEvidenceCount` 收敛到 15 后，后续协
 - `manual-evidence-review` 只能预填 `pdf_text_extraction` 的“后续追问或确认卡”和“PDF 样本文本摘要截图”，不得把 item status 改成 `passed`。
 
 正式 audit 使用 HEAD `ebb9eb2` 的证据包后，`missingEvidenceCount=11`，说明 PDF 业务后续证据已经从缺口中移出；但 v1 completion 仍阻塞在人工验收状态和系统 UI 证据上。后续协作应把精力放到真实 PhotosPicker / fileImporter / PDF 选择器、语音权限弹窗、通知权限弹窗和系统通知点击录屏，而不是继续堆 synthetic bridge 截图。
+
+## 附件选择器 UI test 证据归档边界
+
+2026-06-01 的附件选择器 UI test 证据归档把“真实 Native 控件路径”继续向系统选择器入口推进：
+
+- `validate:ios-attachment-ui-test` 必须固定输出 log、xcresult 和 `attachment-ui-test.json`，让 completion audit 可以按路径引用证据，而不是依赖临时终端输出。
+- XCTest screenshot attachment 名称要贴合人工验收清单：`附件菜单`、`PhotosPicker 选择流程`、`fileImporter 选择流程` 和 `PDF 选择流程`。
+- `collect-ios-acceptance-evidence` 只把这些材料记录为 `supportingOnly` 自动证据；`manual-evidence-review` 只预填候选材料，不修改 `photo_attachment`、`file_attachment` 或 `pdf_text_extraction` 的 item status。
+- UI test 点击选择器入口可以减少“流程截图”类缺口，但不能证明用户真实选中文件、授权权限、Vision OCR 质量、PDFKit 文本抽取质量或业务确认质量。
+- 附件业务链路证据和系统 UI 证据仍要分开看：`nativeAttachmentInputs` / H5 follow-up 证明 H5 与后端能处理附件 payload；`attachmentUiTest` 证明 Native 菜单和系统选择器入口可达。
+
+HEAD `180ce4c` 的正式 audit 后，`missingEvidenceCount=6`，附件三项的 `missingEvidence=无`。这代表候选材料已经齐，不代表人工验收完成；所有 item 仍为 `pending` 时，completion audit 必须保持 `not_complete`。下一步协作重点应转向语音权限弹窗和通知系统链路，尤其是 `notifications.reminders.sync`、通知权限弹窗、系统通知截图和系统通知点击录屏。

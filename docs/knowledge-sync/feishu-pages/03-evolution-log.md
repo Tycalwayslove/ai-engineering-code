@@ -4967,3 +4967,67 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把 PDF 的业务后续证据从 completion audit 缺口中移出，使附件类剩余缺口更准确地聚焦到真实系统选择器层。下一步应优先补真实 PhotosPicker / fileImporter / PDF 选择流程，以及通知和语音权限弹窗这类系统 UI 证据。
+
+## 阶段 178：附件选择器 UI test 证据归档
+
+问题背景：
+
+- HEAD `ebb9eb2` 的 audit 中，照片 / 文件 / PDF 附件业务链路已经有 H5 / 后端候选证据，但系统选择器流程仍是显式缺口。
+- 既有 `pnpm validate:ios-attachment-ui-test` 只证明纸夹入口和菜单选项可见，没有把运行日志、xcresult 和截图 attachment 结构化沉淀给 completion audit。
+- 为了减少人工整理成本，需要把附件菜单、PhotosPicker 入口、fileImporter 入口和 PDF 选择入口按人工验收证据名归档。
+
+完成内容：
+
+- `validate:ios-attachment-ui-test` 固定写出 `.tmp/ios-attachment-ui-test/ios-attachment-ui-test.log`、`.tmp/ios-attachment-ui-test/ios-attachment-ui-test.xcresult` 和 `attachment-ui-test.json`。
+- iOS UI test 会打开附件菜单并保存 `附件菜单` screenshot attachment。
+- UI test 会分别点击“选择照片”和“选择文件”，保存 `PhotosPicker 选择流程`、`fileImporter 选择流程` 和 `PDF 选择流程` screenshot attachment。
+- `collect-ios-acceptance-evidence` 新增 `attachmentUiTest` 读取路径，并把 `ios_attachment_ui_test_artifact` 写入自动证据。
+- `manual-evidence-review` 会把附件 UI test metadata 预填到 `photo_attachment`、`file_attachment` 和 `pdf_text_extraction` 的系统 UI 候选证据里。
+
+验证结果：
+
+- 红灯：新增测试后，`collect iOS acceptance evidence reads attachment UI test metadata` 先因 `attachmentUiTest` 缺失失败；manual review 断言也因缺少 `PhotosPicker 选择流程` 失败。
+- 绿灯：补齐 metadata 读取和 review 映射后，targeted 测试通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 22 项测试。
+- 语法：`node --check scripts/collect-ios-acceptance-evidence.mjs && node --check scripts/manual-evidence-review.mjs && node --check scripts/validate-ios-attachment-ui-test.mjs` 通过。
+- 护栏：`pnpm validate:native-shells`、`git diff --check` 通过。
+- live UI test：`H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' pnpm validate:ios-attachment-ui-test` 通过 1 个 XCTest，并生成 `附件菜单`、`PhotosPicker 选择流程`、`fileImporter 选择流程` 和 `PDF 选择流程` attachment。
+
+阶段价值：
+
+这一阶段把附件类剩余缺口从“缺少选择器流程截图”推进到“已有 UI test 候选证据，等待人工复核”。它仍不证明真实选中文件内容、PhotosPicker 权限弹窗、Files 安全作用域读取、Vision OCR 或 PDFKit 质量；completion audit 也不会因为 UI test metadata 自动把人工项改为 `passed`。
+
+## 阶段 179：HEAD 180ce4c 附件选择器 audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-180ce4c
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-180ce4c --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-180ce4c`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-180ce4c`。
+- `attachmentUiTest.available=true`，自动证据包含 `ios_attachment_ui_test_artifact`。
+- `verdict=not_complete`，`missingEvidenceCount=6`。
+- `photo_attachment.missingEvidence=无`，已预填 `PhotosPicker 选择流程`、`PhotosPicker 权限与选择器截图`、业务费用确认和 `/expenses?conversationId=...` 候选证据。
+- `file_attachment.missingEvidence=无`，已预填 `fileImporter 选择流程`、`Files 选择器截图`、`/attachments?conversationId=...` 和附件来源摘要。
+- `pdf_text_extraction.missingEvidence=无`，已预填 `PDF 选择流程`、PDF 文本摘要和日程 follow-up 候选证据。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 语音仍缺真实麦克风 / 语音识别权限弹窗截图或录屏。
+- 本地通知仍缺 `notifications.reminders.sync`、通知权限弹窗、系统通知截图和系统通知点击录屏。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段把附件类可自动整理的系统 UI 候选证据从 completion audit 缺口中移出，当前剩余缺口已经集中到语音权限与通知系统链路。下一步应优先补通知 sync / 权限 / banner / 点击录屏，或者补真实语音权限弹窗截图，而不是继续在附件 synthetic bridge 上堆证据。
