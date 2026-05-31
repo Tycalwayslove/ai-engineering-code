@@ -726,3 +726,12 @@ HEAD `a7a2241` 的 audit 把 `missingEvidenceCount` 收敛到 15 后，后续协
 - 每次新增辅助证据后，都必须重新生成当前 HEAD 证据包和 completion audit，不能沿用旧 HEAD 的 review 记录。
 
 这个分流能避免两种偏差：一是把 synthetic bridge 截图冒充系统能力；二是在已有证据的字段上重复优化，却没有减少真正阻塞 v1 完成的缺口。
+
+## 附件证据的两层边界
+
+2026-06-01 的照片费用证据归档明确了附件验收的两层边界：
+
+- 业务链路层可以自动化：H5 收到附件、附件写入 `/attachments`、点击“作为费用票据处理”、出现费用确认卡、确认后写入 `/expenses`，这些都属于产品业务闭环，可以由 Playwright + API 摘要生成候选证据。
+- 系统选择器层不能被 synthetic bridge 替代：PhotosPicker / Files picker 的选择流程、系统权限弹窗、系统选择器截图必须来自真实 iOS 系统 UI 或人工录屏。
+
+因此，review 映射可以为 `photo_attachment` 预填 `费用确认卡或金额追问` 和 `/expenses?conversationId=...`，但不能因此预填 `PhotosPicker 选择流程` 或 `PhotosPicker 权限与选择器截图`。后续补文件和 PDF 时也应沿用这个原则：能自动化业务后续链路，但不能把 synthetic `native.inputSubmitted` 当成真实系统选择器。

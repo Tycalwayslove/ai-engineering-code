@@ -4840,3 +4840,65 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段证明语音 UI test 证据归档确实减少了 completion audit 缺口，但也再次确认自动化证据不能替代系统权限弹窗、系统通知和人工验收结论。下一步应优先处理仍可自动化的系统选择器 / 附件业务确认证据，同时保留真实系统权限和通知录屏的人工门槛。
+
+## 阶段 174：照片附件费用证据归档
+
+问题背景：
+
+- HEAD `a7a2241` 的 audit 中，`photo_attachment` 仍缺“费用确认卡或金额追问”和 `/expenses?conversationId=...`。
+- 这两项属于 H5 / 后端业务链路证据，不是系统 PhotosPicker 层证据，可以继续自动化补齐。
+- 既有 `nativeAttachmentInputs` 只证明 synthetic `native.inputSubmitted` 附件能写入 `/attachments`，没有继续点击 H5 附件 quick reply，也没有确认费用计划。
+
+完成内容：
+
+- `seedNativeAttachmentInputs` 在 photo seed 写入附件后，会点击 H5 quick reply `把 {receipt.jpg} 作为费用票据处理`。
+- H5 出现费用确认卡时，采证脚本保存 `native-attachment-photo-expense-follow-up.png`。
+- 采证脚本随后点击确认，等待 H5 状态栏显示执行完成，再查询 `/expenses?conversationId=...`，把 `expenseRecordId` 写入 photo sample 的 `expenseFollowUp`。
+- `manual-evidence-review` 在 `photo_attachment` 中预填“费用确认卡或金额追问”和 `/expenses?conversationId=...` 摘要。
+- dry-run 也会暴露 `photo.expenseFollowUp` 结构，避免证据 schema 在无 live 环境时缺字段。
+
+验证结果：
+
+- 红灯：新增测试后，`node --test --test-name-pattern "native attachment inputs|manual evidence" scripts/collect-ios-acceptance-evidence.test.mjs scripts/manual-evidence-review.test.mjs` 先因缺少 `expenseFollowUp` 和 review 映射失败。
+- 绿灯：补齐采证和 review 映射后，同一测试通过。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 21 项测试。
+- 护栏：`pnpm validate:native-shells`、`git diff --check` 通过。
+- live 采证：`.tmp/ios-acceptance-evidence/worktree-photo-expense-followup-20260601` 显示 `nativeAttachmentInputs.available=true`、`photo.expenseFollowUp.available=true`，并生成 `expenseRecordId=expense_record_29dfc49936944013b8aa8f98d541021a`。
+
+阶段价值：
+
+这一阶段把照片附件从“附件已入库”推进到“附件可读文本能驱动费用确认卡并写入费用记录”。它仍不替代真实 PhotosPicker 选择流程和权限截图；这些系统层证据继续保留为人工验收门槛。
+
+## 阶段 175：HEAD 09a35d1 照片费用 audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-09a35d1
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-09a35d1 --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-09a35d1`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-09a35d1`。
+- `verdict=not_complete`，`missingEvidenceCount=13`。
+- `photo_attachment` 已预填 `H5 附件摘要卡`、`费用确认卡或金额追问`、`/attachments?conversationId=...`、`/expenses?conversationId=...`、`source=native.composer.attachment.photo` 和 `attachmentKind=image`。
+- `photo_attachment` 剩余缺口只剩 `PhotosPicker 选择流程` 和 `PhotosPicker 权限与选择器截图`。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 语音仍缺真实麦克风 / 语音识别权限弹窗截图或录屏。
+- 文件 / PDF 仍缺真实系统选择器流程；PDF 还缺后续追问或确认卡和文本摘要截图。
+- 本地通知仍缺 `notifications.reminders.sync`、通知权限弹窗、系统通知截图和系统通知点击录屏。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段把自动可证明的照片附件业务链路从 completion audit 缺口中移出，使剩余 `photo_attachment` 缺口更准确地聚焦到系统 PhotosPicker 层。下一步同类高收益任务是补 PDF 后续追问 / 确认卡和 PDF 文本摘要候选证据。
