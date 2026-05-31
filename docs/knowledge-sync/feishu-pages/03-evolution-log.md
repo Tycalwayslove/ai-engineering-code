@@ -5094,3 +5094,71 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 阶段价值：
 
 这一阶段把剩余自动可补的通知 Bridge marker 从 completion audit 缺口中移出，使 v1 收口剩余项更清楚地聚焦到真实系统 UI 证据。下一步应优先补真实语音权限弹窗、通知权限弹窗、系统通知截图和系统通知点击录屏；不能把 H5 outbound bridge 截图冒充系统通知投递或点击完成。
+
+## 阶段 182：语音权限弹窗 UI test 证据归档
+
+问题背景：
+
+- HEAD `36f786f` 的 audit 中，语音输入只剩麦克风 / 语音识别权限弹窗和系统权限截图这类系统 UI 证据。
+- 既有 `validate:ios-voice-ui-test` 为了稳定验证语音入口到后端事实闭环，使用 UI test transcript 并关闭系统权限请求；它不能证明真实权限弹窗。
+- 这类证据可以由 XCTest + SpringBoard 截图归档，但仍不能替代人工对真实语音质量的判断。
+
+完成内容：
+
+- 新增 `pnpm validate:ios-voice-permission-ui-test`。
+- 命令运行前对目标 App 执行 `xcrun simctl privacy booted reset microphone com.aiengineeringcode.shell` 和 `xcrun simctl privacy booted reset all com.aiengineeringcode.shell`，尽量恢复权限弹窗。
+- 新增 XCTest `testNativeVoicePermissionPromptCanBeCaptured`，不使用 `--ai-code-ui-test-disable-system-permission-requests`，真实点击 `ai-code.composer.voice-button` 后从 SpringBoard alert 保存截图。
+- XCTest attachment 使用人工验收证据名：`麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏`。
+- 命令固定写出 `.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.log`、`.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.xcresult` 和 `voice-permission-ui-test.json`。
+- `collect-ios-acceptance-evidence` 新增 `voicePermissionUiTest` 读取路径，并把 `ios_voice_permission_ui_test_artifact` 写入自动证据。
+- `manual-evidence-review` 会把权限弹窗截图和 xcresult 预填到 `voice_input` 的截图 / 系统证据字段，但仍保持 `status=pending`。
+- `collect-v1-completion-audit` 的自动化命令清单加入 `validate:ios-voice-permission-ui-test`，避免正式 completion audit 漏跑这条新门禁。
+
+验证结果：
+
+- 红灯：新增 `collect iOS acceptance evidence reads voice permission UI test metadata` 后，证据包读取 `voicePermissionUiTest.available` 失败。
+- 绿灯：补齐 metadata 读取、review 映射、package script、native-shells 护栏和 completion audit 命令清单后，targeted 测试通过。
+- live UI test：`H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' pnpm validate:ios-voice-permission-ui-test` 通过 1 个 XCTest，并生成 `麦克风 / 语音识别权限弹窗` 与 `iOS 权限弹窗截图或录屏` attachment。
+- 回归：`node --test scripts/manual-evidence-review.test.mjs scripts/collect-ios-acceptance-evidence.test.mjs` 通过 24 项测试。
+- 采证工具：`pnpm validate:ios-acceptance-evidence` 通过 28 项测试。
+- 护栏：`pnpm validate:native-shells`、`git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把语音输入的系统权限弹窗从纯人工缺口推进到可归档 UI test 候选证据。边界仍然清楚：它证明系统权限弹窗可被触发和截图，不证明真实用户语音质量、识别准确率或人工验收结论。
+
+## 阶段 183：HEAD e5f591b 语音权限 audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' pnpm validate:ios-voice-permission-ui-test
+
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-e5f591b
+
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/current-best-final-20260601-e5f591b --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-e5f591b`。
+- audit 路径：`.tmp/v1-completion-audit/current-best-final-20260601-e5f591b`。
+- `voicePermissionUiTest.available=true`，并记录 `ios-voice-permission-ui-test.log`、`ios-voice-permission-ui-test.xcresult` 和 `麦克风 / 语音识别权限弹窗` attachment。
+- `notificationSyncBridge.available=true`，`targetReminderIncluded=true`。
+- `verdict=not_complete`，`missingEvidenceCount=3`。
+- `voice_input` 已不再缺权限弹窗证据。
+
+仍未完成：
+
+- 所有 14 个人工验收 item 仍是 `pending`，`acceptanceVerdict` 仍是 `not_evaluated`。
+- 本地通知仍缺 `iOS 通知权限弹窗截图` 和 `系统通知截图`。
+- 通知点击回流仍缺 `系统通知点击录屏`。
+- 外部知识库状态仍为 `not_synced`。
+
+阶段价值：
+
+这一阶段把 v1 收口的显式缺口从 5 个降到 3 个。剩余缺口已经非常集中：通知权限弹窗、系统通知展示截图和系统通知点击录屏。后续应继续围绕真实系统通知 UI 采证推进，而不是再扩展 H5 synthetic 或普通业务链路证据。

@@ -730,6 +730,20 @@ HEAD `36f786f` 的正式证据包显示 `notificationSyncBridge.available=true`�
 
 后续如果继续补语音采证，应优先增加真实权限弹窗截图 / 录屏的采集入口，而不是放宽 `voice_input.requiredEvidence.systemArtifacts`。这能保持“自动化降低整理成本，人工验收决定发布结论”的边界。
 
+## 语音权限弹窗 UI test 采证规则
+
+2026-06-01 的语音权限弹窗 UI test 把语音证据拆成两条互补链路：
+
+- `validate:ios-voice-ui-test` 继续负责业务闭环：Native 语音按钮、UI test transcript、`source=native.composer.voice`、H5 确认卡和后端提醒事实。
+- `validate:ios-voice-permission-ui-test` 只负责系统权限弹窗：重置目标 App 权限，真实点击语音按钮，从 SpringBoard alert 归档 `麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏`。
+
+协作边界：
+
+- 权限弹窗 UI test 不能注入 transcript，也不应该点击确认卡或创建后端事实；它只证明权限弹窗可触发、可截图、可在 xcresult 中复查。
+- `voicePermissionUiTest.available=true` 可以预填 `voice_input` 的截图和系统证据，但 item status 仍必须保持 `pending`，由人工最终判断是否通过。
+- 正式 completion audit 的自动化命令清单应包含 `pnpm validate:ios-voice-permission-ui-test`，否则“自动命令全通过”这句话不完整。
+- HEAD `e5f591b` 的 audit 显示 `missingEvidenceCount=3`，说明语音权限弹窗已从显式缺口中移出；剩余缺口应继续聚焦系统通知 UI。
+
 ## audit 刷新后的下一步选择
 
 HEAD `a7a2241` 的 audit 把 `missingEvidenceCount` 收敛到 15 后，后续协作要按证据类型分流：

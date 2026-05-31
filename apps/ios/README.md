@@ -203,6 +203,14 @@ pnpm validate:ios-voice-ui-test
 
 该命令通过 Xcode UI test 真实点击 `ai-code.composer.voice-button`，并通过 UI test 专用的 `AI_CODE_UI_TEST_VOICE_TRANSCRIPT` 注入识别文本，随后断言 H5 Bridge Debug 出现 `source=native.composer.voice`，点击 H5 确认卡，并看到 `已创建提醒`、`scheduled` 和“带电脑”提醒事实。该注入只在 `AI_CODE_UI_TEST_DISABLE_SYSTEM_PERMISSION_REQUESTS=1` 时生效，不影响普通 App 的真实 Speech / Microphone 路径；它不能替代麦克风权限弹窗、真实录音和中文识别质量的人工验收。
 
+如果要归档语音 / 麦克风系统权限弹窗候选证据，可以运行：
+
+```bash
+pnpm validate:ios-voice-permission-ui-test
+```
+
+该命令会先对 booted Simulator 中的 `com.aiengineeringcode.shell` 执行 `simctl privacy reset microphone/all`，再通过 Xcode UI test 真实点击 `ai-code.composer.voice-button`，从 SpringBoard 权限弹窗保存 `麦克风 / 语音识别权限弹窗` 和 `iOS 权限弹窗截图或录屏` screenshot attachment。每次运行会固定写出 `.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.log`、`.tmp/ios-voice-permission-ui-test/ios-voice-permission-ui-test.xcresult` 和 `voice-permission-ui-test.json`，供 completion audit 作为 supporting-only 候选证据。它不替代真实语音识别质量或人工验收结论。
+
 如果要验证 Native 纸夹入口能打开附件菜单，可以运行：
 
 ```bash
