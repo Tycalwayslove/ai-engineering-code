@@ -1392,6 +1392,8 @@ pnpm validate:h5-runtime
 - 本次“HEAD 0e25651 full audit 刷新”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 2026-06-01 已新增 completion audit 的 docs-only 新鲜度规则：当人工记录 HEAD 与当前 HEAD 不一致时，`collect-v1-completion-audit` 会检查 `git diff --name-only <recordHead>..<currentHead>`；如果后续变更仅包含 `docs/`、`ai-factory/memory/` 或少量文档入口文件，则 `packageFreshness.status=current_with_docs_only_changes`，用于避免“记录 audit 结果”本身制造 stale 循环。触及 `scripts/`、`apps/`、`python/`、`packages/`、`package.json` 等产品或采证代码仍会保持 `stale`；该状态也不绕过人工验收，review / draft 记录仍不能被当作 passed。
 - 本次“docs-only audit 新鲜度规则”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`、v1 readiness 审计和当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
+- 2026-06-01 已用 HEAD `b9d4fc5` 和局域网地址重跑当前正式证据包、Review Pack 与 full completion audit：证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260601-b9d4fc5-lan` 显示 `manifest.headSha=b9d4fc5`，review 记录 `headSha=b9d4fc5`、14 个 item 全部 `pending`，且 `missingEvidenceCount=0`；Review Pack 已写入同目录 `manual-evidence-review-pack.md`。full audit `.tmp/v1-completion-audit/current-full-final-20260601-b9d4fc5-lan` 使用 `--run-automated-commands` 后 21 个自动化命令全部 `passed`，`packageFreshness.status=current`，`recordHeadSha=b9d4fc5`，`currentHeadSha=b9d4fc5`，最终仍为 `verdict=not_complete`。剩余阻塞仍是 14 个人工验收 item 全部 `pending`、`acceptanceVerdict=not_evaluated`，以及外部知识库 `not_synced`。不能把 goal 标记为 complete。
+- 本次“HEAD b9d4fc5 full audit 刷新”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 飞书同步不是自动的；需要先更新 `docs/knowledge-sync/feishu-pages/` 源稿，再用 `lark-cli docs +update --api-version v2` 同步对应页面。
 - 如果新窗口没有执行 Obsidian 或飞书写入，就不能声称外部知识库已经更新。
 

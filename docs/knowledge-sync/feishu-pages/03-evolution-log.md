@@ -5502,3 +5502,38 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把“生成 audit -> 记录 audit -> audit 立刻 stale”的尾部循环收束成可审计规则。它让文档记录不再制造虚假的代码 stale，同时保持真实代码变更必须重新采证 / 审计的边界。
+
+## 阶段 195：HEAD b9d4fc5 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-b9d4fc5-lan
+
+pnpm prepare:ios-manual-review-pack -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-b9d4fc5-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-b9d4fc5-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-b9d4fc5-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-b9d4fc5-lan`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-b9d4fc5-lan/manual-evidence-review-pack.md`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-b9d4fc5-lan`。
+- `manifest.headSha=b9d4fc5`，`manual-evidence-record.review.json.headSha=b9d4fc5`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=b9d4fc5`，`currentHeadSha=b9d4fc5`。
+- 21 个自动化命令全部 `passed`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 docs-only 新鲜度规则这次脚本变更后的最新 HEAD 重新拉回 current evidence / current audit 状态。新规则没有降低验收门槛：人工记录仍必须由真实操作者签署，外部知识库未同步也必须继续披露。
