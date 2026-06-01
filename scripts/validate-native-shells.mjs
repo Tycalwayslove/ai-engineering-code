@@ -80,6 +80,8 @@ assertIncludes(packageJsonPath, packageJson, '"collect:v1-completion-audit"');
 assertIncludes(packageJsonPath, packageJson, "scripts/collect-v1-completion-audit.mjs");
 assertIncludes(packageJsonPath, packageJson, '"prepare:ios-manual-review-pack"');
 assertIncludes(packageJsonPath, packageJson, "scripts/generate-ios-manual-review-pack.mjs");
+assertIncludes(packageJsonPath, packageJson, '"prepare:ios-manual-handoff"');
+assertIncludes(packageJsonPath, packageJson, "scripts/prepare-ios-manual-acceptance-handoff.mjs");
 
 const iosManualReviewPackScriptPath = "scripts/generate-ios-manual-review-pack.mjs";
 const iosManualReviewPackScript = readRequired(iosManualReviewPackScriptPath);
@@ -105,6 +107,22 @@ assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "HTML manua
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "packageFreshness: `stale`");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "docs-only changes");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "--reviewed-item voice_input");
+
+const iosManualHandoffScriptPath = "scripts/prepare-ios-manual-acceptance-handoff.mjs";
+const iosManualHandoffScript = readRequired(iosManualHandoffScriptPath);
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "buildManualAcceptanceHandoff");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "manual-acceptance-handoff.md");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "HTML Review Pack");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "replace(/\\.md$/i, \".html\")");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "manual-evidence-reviewed-items.json");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "--reviewed-items-file");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "collect:v1-completion-audit");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "本文件不代表验收通过");
+
+const iosManualHandoffTestPath = "scripts/prepare-ios-manual-acceptance-handoff.test.mjs";
+const iosManualHandoffTest = readRequired(iosManualHandoffTestPath);
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "manual acceptance handoff keeps review, sign and audit commands together");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HEAD-bound reviewed item list");
 
 const iosManualEvidenceFillScriptPath = "scripts/fill-ios-manual-evidence-record.mjs";
 const iosManualEvidenceFillScript = readRequired(iosManualEvidenceFillScriptPath);

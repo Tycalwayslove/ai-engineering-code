@@ -46,7 +46,8 @@
     "validate:v1-readiness": "node scripts/validate-v1-readiness.mjs",
     "format": "prettier --write .",
     "prepare:ios-manual-evidence-record": "node --test scripts/fill-ios-manual-evidence-record.test.mjs && node scripts/fill-ios-manual-evidence-record.mjs",
-    "prepare:ios-manual-review-pack": "node --test scripts/generate-ios-manual-review-pack.test.mjs && node scripts/generate-ios-manual-review-pack.mjs"
+    "prepare:ios-manual-review-pack": "node --test scripts/generate-ios-manual-review-pack.test.mjs && node scripts/generate-ios-manual-review-pack.mjs",
+    "prepare:ios-manual-handoff": "node --test scripts/prepare-ios-manual-acceptance-handoff.test.mjs && node scripts/prepare-ios-manual-acceptance-handoff.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
