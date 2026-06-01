@@ -163,6 +163,40 @@ test("CLI writes filled draft without changing review statuses", () => {
   assert.equal(filled.items[0].status, "pending");
 });
 
+test("CLI mark-passed accepts reviewed item ids from file", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "manual-evidence-fill-"));
+  const reviewPath = path.join(tmpDir, "manual-evidence-record.review.json");
+  const reviewedItemsPath = path.join(tmpDir, "manual-evidence-reviewed-items.json");
+  const filledPath = path.join(tmpDir, "manual-evidence-record.filled.json");
+  fs.writeFileSync(reviewPath, `${JSON.stringify(completeReviewRecord(), null, 2)}\n`);
+  fs.writeFileSync(reviewedItemsPath, `${JSON.stringify(["voice_input"], null, 2)}\n`);
+
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/fill-ios-manual-evidence-record.mjs",
+      "--",
+      "--record",
+      reviewPath,
+      "--output",
+      filledPath,
+      "--mark-passed",
+      "--operator",
+      "QA",
+      "--confirmed-at",
+      "2026-06-01T08:00:00.000Z",
+      "--reviewed-items-file",
+      reviewedItemsPath,
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const filled = JSON.parse(fs.readFileSync(filledPath, "utf8"));
+  assert.equal(filled.acceptanceVerdict, "passed");
+  assert.deepEqual(filled.operatorSignoff.reviewedItemIds, ["voice_input"]);
+});
+
 test("package exposes manual evidence fill command", () => {
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(rootDir, "package.json"), "utf8")

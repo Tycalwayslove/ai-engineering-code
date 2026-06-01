@@ -53,6 +53,25 @@ function assertReviewedItemIds(record, reviewedItemIds) {
   return expectedItemIds;
 }
 
+function parseReviewedItemIdsFile(filePath) {
+  const content = fs.readFileSync(filePath, "utf8").trim();
+  if (!content) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    if (Array.isArray(parsed?.reviewedItemIds)) {
+      return parsed.reviewedItemIds;
+    }
+  } catch {
+    return content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  }
+  throw new Error("--reviewed-items-file must contain a JSON array or reviewedItemIds array");
+}
+
 function buildInstructions(markPassed) {
   if (markPassed) {
     return [
@@ -143,6 +162,9 @@ function parseArgs(argv) {
       args.reviewedItemIds = args.reviewedItemIds ?? [];
       args.reviewedItemIds.push(argv[index + 1]);
       index += 1;
+    } else if (arg === "--reviewed-items-file") {
+      args.reviewedItemsFilePath = argv[index + 1];
+      index += 1;
     } else if (arg === "--mark-passed") {
       args.markPassed = true;
     } else if (arg === "--help" || arg === "-h") {
@@ -158,10 +180,11 @@ function printUsage() {
   console.log(`Usage:
   node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> [--output <filled.json>]
   node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> --output <filled.json> --mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-item <item-id>...
+  node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> --output <filled.json> --mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-items-file <json-or-lines>
 
 Default behavior writes a filled draft and keeps pending/not_evaluated statuses.
 Use --mark-passed only after an operator has manually reviewed every evidence item.
-The --reviewed-item list must exactly match the record items.`);
+The --reviewed-item or --reviewed-items-file list must exactly match the record items.`);
 }
 
 function runCli() {
@@ -197,11 +220,17 @@ function runCli() {
 
   let filledRecord;
   try {
+    const reviewedItemIds = [
+      ...(args.reviewedItemIds ?? []),
+      ...(args.reviewedItemsFilePath
+        ? parseReviewedItemIdsFile(path.resolve(rootDir, args.reviewedItemsFilePath))
+        : []),
+    ];
     filledRecord = buildFilledManualEvidenceRecord(record, {
       confirmedAt: args.confirmedAt,
       markPassed: args.markPassed,
       operator: args.operator,
-      reviewedItemIds: args.reviewedItemIds,
+      reviewedItemIds,
       sourcePath: path.relative(rootDir, recordPath),
     });
   } catch (error) {

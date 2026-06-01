@@ -117,16 +117,22 @@ test("CLI writes manual review pack next to the record by default", () => {
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   const outputPath = path.join(tmpDir, "manual-evidence-review-pack.md");
   const htmlOutputPath = path.join(tmpDir, "manual-evidence-review-pack.html");
+  const reviewedItemsPath = path.join(tmpDir, "manual-evidence-reviewed-items.json");
   const markdown = fs.readFileSync(outputPath, "utf8");
   const html = fs.readFileSync(htmlOutputPath, "utf8");
+  const reviewedItems = JSON.parse(fs.readFileSync(reviewedItemsPath, "utf8"));
   assert.match(markdown, /# iOS 人工验收 Review Pack/);
+  assert.match(markdown, /--reviewed-items-file .*manual-evidence-reviewed-items\.json/);
   assert.match(html, /<title>iOS 人工验收 Review Pack<\/title>/);
   assert.match(html, /本文件不代表验收通过/);
+  assert.match(html, /--reviewed-items-file .*manual-evidence-reviewed-items\.json/);
   assert.match(html, /statusCounts/);
   assert.match(html, /href="\/tmp\/voice-text\.png"/);
   assert.match(html, /缺少候选证据：screenshots: 系统通知截图/);
+  assert.deepEqual(reviewedItems, ["voice_input", "local_notification"]);
   assert.match(result.stdout, /manual review pack written/);
   assert.match(result.stdout, /manual review HTML pack written/);
+  assert.match(result.stdout, /manual reviewed item list written/);
 });
 
 test("HTML manual review pack renders evidence links without passing pending items", () => {

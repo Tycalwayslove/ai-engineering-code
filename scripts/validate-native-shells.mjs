@@ -92,7 +92,10 @@ assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "postRe
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "本文件不代表验收通过");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--mark-passed --operator");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--reviewed-item");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--reviewed-items-file");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual-evidence-reviewed-items.json");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual review HTML pack written");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual reviewed item list written");
 
 const iosManualReviewPackTestPath = "scripts/generate-ios-manual-review-pack.test.mjs";
 const iosManualReviewPackTest = readRequired(iosManualReviewPackTestPath);
@@ -105,8 +108,10 @@ assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "--reviewed
 const iosManualEvidenceFillScriptPath = "scripts/fill-ios-manual-evidence-record.mjs";
 const iosManualEvidenceFillScript = readRequired(iosManualEvidenceFillScriptPath);
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "assertReviewedItemIds");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "parseReviewedItemIdsFile");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewedItemIds");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--reviewed-item is required");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--reviewed-items-file");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewed item ids must exactly match record item ids");
 
 const iosManualEvidenceFillTestPath = "scripts/fill-ios-manual-evidence-record.test.mjs";

@@ -171,6 +171,14 @@ function reviewedItemArgs(items) {
     .join(" ");
 }
 
+function reviewedItemIds(items) {
+  return asArray(items).map((item) => item?.id).filter(Boolean);
+}
+
+function reviewedItemsFileArg(reviewedItemsPath) {
+  return reviewedItemsPath ? `--reviewed-items-file ${reviewedItemsPath}` : null;
+}
+
 function pushRequiredEvidenceSection(lines, item) {
   const summaries = requiredEvidenceSummary(item);
   lines.push("- 必需证据：");
@@ -195,7 +203,8 @@ export function buildManualReviewPack(record, options = {}) {
     options.currentHeadSha,
     options.postRecordChangedFiles
   );
-  const reviewedArgs = reviewedItemArgs(items);
+  const reviewedArgs =
+    reviewedItemsFileArg(options.reviewedItemsPath) ?? reviewedItemArgs(items);
   const lines = [
     "# iOS 人工验收 Review Pack",
     "",
@@ -293,7 +302,8 @@ export function buildManualReviewHtmlPack(record, options = {}) {
     options.postRecordChangedFiles
   );
   const filledPath = path.join(path.dirname(recordPath), "manual-evidence-record.filled.json");
-  const reviewedArgs = reviewedItemArgs(items);
+  const reviewedArgs =
+    reviewedItemsFileArg(options.reviewedItemsPath) ?? reviewedItemArgs(items);
   const changedFilesHtml =
     freshness.changedFiles.length > 0
       ? `<p>postRecordChangedFiles:</p><ul>${freshness.changedFiles
@@ -453,6 +463,10 @@ function runCli() {
     args.outputPath ?? path.join(path.dirname(recordPath), "manual-evidence-review-pack.md")
   );
   const htmlOutputPath = outputPath.replace(/\.md$/i, ".html");
+  const reviewedItemsPath = path.join(
+    path.dirname(outputPath),
+    "manual-evidence-reviewed-items.json"
+  );
 
   let record;
   try {
@@ -475,18 +489,25 @@ function runCli() {
     outputPath: path.relative(rootDir, outputPath),
     postRecordChangedFiles,
     recordPath: path.relative(rootDir, recordPath),
+    reviewedItemsPath: path.relative(rootDir, reviewedItemsPath),
   });
   const html = buildManualReviewHtmlPack(record, {
     currentHeadSha,
     outputPath: path.relative(rootDir, htmlOutputPath),
     postRecordChangedFiles,
     recordPath: path.relative(rootDir, recordPath),
+    reviewedItemsPath: path.relative(rootDir, reviewedItemsPath),
   });
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, markdown);
   fs.writeFileSync(htmlOutputPath, html);
+  fs.writeFileSync(
+    reviewedItemsPath,
+    `${JSON.stringify(reviewedItemIds(record?.items), null, 2)}\n`
+  );
   console.log(`iOS manual review pack written to ${outputPath}`);
   console.log(`iOS manual review HTML pack written to ${htmlOutputPath}`);
+  console.log(`iOS manual reviewed item list written to ${reviewedItemsPath}`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
