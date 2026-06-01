@@ -6006,3 +6006,65 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 Handoff 入口提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。自动化和候选证据已经继续齐备；最终完成仍需要真实操作者打开 Handoff / HTML Review Pack 逐项复核并签署 filled 记录。
+
+## 阶段 211：HTML 人工验收 Handoff
+
+背景：
+
+- `ad63244` 已经生成 Markdown Handoff，但操作者仍需要在 Markdown 中复制路径，再打开 HTML Review Pack。
+- 最后验收动作更适合用一个可点击入口承接：先打开 Handoff HTML，再点击 Review Pack，再复制签署 / 校验 / audit 命令。
+
+实现：
+
+- `prepare-ios-manual-acceptance-handoff` 新增 `buildManualAcceptanceHtmlHandoff()`。
+- `pnpm prepare:ios-manual-handoff` 现在同时写出 `manual-acceptance-handoff.md` 和 `manual-acceptance-handoff.html`。
+- HTML Handoff 的 Review Pack 链接使用相对 href，便于从同目录直接点击；命令块仍使用仓库根目录相对路径，便于复制到终端执行。
+- `validate:native-shells` 增加 `buildManualAcceptanceHtmlHandoff` 和 HTML handoff 输出文案护栏。
+
+验证：
+
+- 先新增测试并观察失败：脚本没有导出 `buildManualAcceptanceHtmlHandoff`。
+- 实现后 `node --test scripts/prepare-ios-manual-acceptance-handoff.test.mjs scripts/validate-native-shells.test.mjs` 通过。
+- `pnpm validate:native-shells` 通过。
+- `git diff --check` 通过。
+- `pnpm prepare:ios-manual-handoff -- --record .tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-evidence-record.review.json` 通过，并写出 `manual-acceptance-handoff.html`。
+
+阶段价值：
+
+这一阶段把人工验收入口从“Markdown 交接说明”推进为“可点击的本地 HTML 工作台”。它仍不改变人工签署边界，只降低操作者打开材料和复制命令的成本。
+
+## 阶段 212：HEAD 121a330 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-121a330-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan`。
+- Markdown Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-acceptance-handoff.md`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-acceptance-handoff.html`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-121a330-lan`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=121a330`，`currentHeadSha=121a330`。
+- 21 个自动化命令全部 `passed`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 HTML Handoff 提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。工程侧自动化继续全绿，当前唯一产品完成阻塞仍是真实操作者逐项复核签署。

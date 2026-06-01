@@ -964,9 +964,12 @@ HEAD `a118819` 进一步把确认列表文件绑定到人工记录 HEAD：`.tmp/
 2026-06-01 起，人工验收收口可以优先使用 `pnpm prepare:ios-manual-handoff`。这个入口解决的是“操作者从哪里开始、按什么顺序签署和复验”的问题，不改变验收标准。
 
 - `pnpm prepare:ios-manual-handoff -- --record <path|best|latest>` 会生成 `manual-acceptance-handoff.md`，并刷新同目录的 Markdown / HTML Review Pack 和 `manual-evidence-reviewed-items.json`。
+- 同一命令也会生成 `manual-acceptance-handoff.html`；HTML Handoff 应提供可点击的 Review Pack 链接，并保留可从仓库根目录复制执行的签署、校验和 audit 命令。
 - Handoff 文件必须集中展示 HTML Review Pack 打开命令、`--mark-passed` 签署命令、`validate-ios-manual-evidence-record --require-complete` 命令和正式 `collect:v1-completion-audit --run-automated-commands` 命令。
 - Handoff 必须明确写出“本文件不代表验收通过”，并继续要求真实操作者逐项复核。
 - `manual-evidence-reviewed-items.json` 仍必须带 `recordHeadSha`，签署脚本仍必须拒绝跨 HEAD 文件。
-- `validate:native-shells` 必须守住 handoff 根命令、脚本、测试和关键边界文案，防止验收入口回退为散落命令。
+- `validate:native-shells` 必须守住 handoff 根命令、Markdown / HTML 生成函数、测试和关键边界文案，防止验收入口回退为散落命令。
 
 HEAD `ad63244` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-acceptance-handoff.md` 是当前人工收口入口，`.tmp/v1-completion-audit/current-full-final-20260601-ad63244-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
+HEAD `121a330` 在此基础上生成 HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-acceptance-handoff.html` 可直接打开并跳转到同目录的 HTML Review Pack；full audit `.tmp/v1-completion-audit/current-full-final-20260601-121a330-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。

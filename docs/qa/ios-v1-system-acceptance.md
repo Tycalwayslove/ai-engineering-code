@@ -111,7 +111,7 @@ pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/<ru
 pnpm prepare:ios-manual-handoff -- --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.review.json
 ```
 
-该命令会生成 `manual-acceptance-handoff.md`，并刷新同目录的 Markdown / HTML Review Pack 和 `manual-evidence-reviewed-items.json`。Handoff 会给出 HTML 打开命令、`--mark-passed` 签署命令、`--require-complete` 校验命令和正式 completion audit 命令；它仍不代表验收通过，只有真实操作者逐项复核后才能运行签署命令。
+该命令会生成 `manual-acceptance-handoff.md` 和 `manual-acceptance-handoff.html`，并刷新同目录的 Markdown / HTML Review Pack 和 `manual-evidence-reviewed-items.json`。HTML Handoff 可以直接点击打开 HTML Review Pack；命令块仍保留可从仓库根目录复制执行的路径。Handoff 会给出 HTML 打开命令、`--mark-passed` 签署命令、`--require-complete` 校验命令和正式 completion audit 命令；它仍不代表验收通过，只有真实操作者逐项复核后才能运行签署命令。
 
 证据包默认输出到 `.tmp/ios-acceptance-evidence/<timestamp>/`，包含 `manifest.json`、`acceptance-evidence.json`、`summary.md`、`manual-checklist.todo.md`、`manual-evidence-record.template.json`、`manual-evidence-record.draft.json`、`manual-evidence-record.review.json` 和 `simulator-launch.png`。常用参数：
 
