@@ -91,6 +91,7 @@ assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "curren
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "postRecordChangedFilesBetweenHeads");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "本文件不代表验收通过");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--mark-passed --operator");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--reviewed-item");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual review HTML pack written");
 
 const iosManualReviewPackTestPath = "scripts/generate-ios-manual-review-pack.test.mjs";
@@ -99,6 +100,20 @@ assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "manual rev
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "HTML manual review pack renders evidence links");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "packageFreshness: `stale`");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "docs-only changes");
+assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "--reviewed-item voice_input");
+
+const iosManualEvidenceFillScriptPath = "scripts/fill-ios-manual-evidence-record.mjs";
+const iosManualEvidenceFillScript = readRequired(iosManualEvidenceFillScriptPath);
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "assertReviewedItemIds");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewedItemIds");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--reviewed-item is required");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewed item ids must exactly match record item ids");
+
+const iosManualEvidenceFillTestPath = "scripts/fill-ios-manual-evidence-record.test.mjs";
+const iosManualEvidenceFillTest = readRequired(iosManualEvidenceFillTestPath);
+assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "mark-passed refuses missing or unknown reviewed item ids");
+assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "reviewedItemIds");
+assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "--reviewed-item is required");
 
 const v1CompletionAuditScriptPath = "scripts/collect-v1-completion-audit.mjs";
 const v1CompletionAuditScript = readRequired(v1CompletionAuditScriptPath);

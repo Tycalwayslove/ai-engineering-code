@@ -23,6 +23,36 @@ function assertMarkPassedOptions(options) {
   }
 }
 
+function itemIdsForRecord(record) {
+  return (record?.items ?? []).map((item) => item?.id).filter(Boolean);
+}
+
+function assertReviewedItemIds(record, reviewedItemIds) {
+  const expectedItemIds = itemIdsForRecord(record);
+  const reviewedIds = Array.isArray(reviewedItemIds) ? reviewedItemIds : [];
+  if (reviewedIds.length === 0) {
+    throw new Error("--reviewed-item is required when --mark-passed is used");
+  }
+
+  const expected = new Set(expectedItemIds);
+  const reviewed = new Set(reviewedIds);
+  const missing = expectedItemIds.filter((itemId) => !reviewed.has(itemId));
+  const unknown = reviewedIds.filter((itemId) => !expected.has(itemId));
+  if (missing.length > 0 || unknown.length > 0 || reviewed.size !== reviewedIds.length) {
+    throw new Error(
+      [
+        "reviewed item ids must exactly match record item ids",
+        missing.length > 0 ? `missing: ${missing.join(", ")}` : null,
+        unknown.length > 0 ? `unknown: ${unknown.join(", ")}` : null,
+      ]
+        .filter(Boolean)
+        .join("; ")
+    );
+  }
+
+  return expectedItemIds;
+}
+
 function buildInstructions(markPassed) {
   if (markPassed) {
     return [
@@ -46,6 +76,9 @@ export function buildFilledManualEvidenceRecord(record, options = {}) {
   if (markPassed) {
     assertMarkPassedOptions(options);
   }
+  const reviewedItemIds = markPassed
+    ? assertReviewedItemIds(record, options.reviewedItemIds)
+    : [];
 
   nextRecord.generatedAt = generatedAt;
   nextRecord.generatedFromReview = sourcePath;
@@ -54,6 +87,7 @@ export function buildFilledManualEvidenceRecord(record, options = {}) {
     confirmedAt: markPassed ? options.confirmedAt : null,
     mode: markPassed ? "mark-passed" : "draft",
     operator: markPassed ? options.operator : null,
+    reviewedItemIds: markPassed ? reviewedItemIds : [],
   };
 
   if (markPassed) {
@@ -105,6 +139,10 @@ function parseArgs(argv) {
     } else if (arg === "--confirmed-at") {
       args.confirmedAt = argv[index + 1];
       index += 1;
+    } else if (arg === "--reviewed-item") {
+      args.reviewedItemIds = args.reviewedItemIds ?? [];
+      args.reviewedItemIds.push(argv[index + 1]);
+      index += 1;
     } else if (arg === "--mark-passed") {
       args.markPassed = true;
     } else if (arg === "--help" || arg === "-h") {
@@ -119,10 +157,11 @@ function parseArgs(argv) {
 function printUsage() {
   console.log(`Usage:
   node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> [--output <filled.json>]
-  node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> --output <filled.json> --mark-passed --operator <name> --confirmed-at <iso8601>
+  node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> --output <filled.json> --mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-item <item-id>...
 
 Default behavior writes a filled draft and keeps pending/not_evaluated statuses.
-Use --mark-passed only after an operator has manually reviewed every evidence item.`);
+Use --mark-passed only after an operator has manually reviewed every evidence item.
+The --reviewed-item list must exactly match the record items.`);
 }
 
 function runCli() {
@@ -162,6 +201,7 @@ function runCli() {
       confirmedAt: args.confirmedAt,
       markPassed: args.markPassed,
       operator: args.operator,
+      reviewedItemIds: args.reviewedItemIds,
       sourcePath: path.relative(rootDir, recordPath),
     });
   } catch (error) {

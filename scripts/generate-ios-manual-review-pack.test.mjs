@@ -94,6 +94,7 @@ test("manual review pack summarizes pending statuses and evidence without passin
   assert.match(markdown, /## 2\. 本地通知/);
   assert.match(markdown, /缺少候选证据：`screenshots: 系统通知截图`/);
   assert.match(markdown, /--mark-passed --operator/);
+  assert.match(markdown, /--reviewed-item voice_input --reviewed-item local_notification/);
   assert.doesNotMatch(markdown, /status: `passed`/);
 });
 
@@ -143,6 +144,7 @@ test("HTML manual review pack renders evidence links without passing pending ite
   assert.match(html, /href="\/tmp\/voice-text\.png"/);
   assert.match(html, /source=native\.composer\.voice/);
   assert.match(html, /缺少候选证据：screenshots: 系统通知截图/);
+  assert.match(html, /--reviewed-item voice_input --reviewed-item local_notification/);
   assert.doesNotMatch(html, /status: <code>passed<\/code>/);
 });
 

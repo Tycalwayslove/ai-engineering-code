@@ -163,6 +163,14 @@ function requiredEvidenceSummary(item) {
   return summaries;
 }
 
+function reviewedItemArgs(items) {
+  return asArray(items)
+    .map((item) => item?.id)
+    .filter(Boolean)
+    .map((itemId) => `--reviewed-item ${itemId}`)
+    .join(" ");
+}
+
 function pushRequiredEvidenceSection(lines, item) {
   const summaries = requiredEvidenceSummary(item);
   lines.push("- 必需证据：");
@@ -187,6 +195,7 @@ export function buildManualReviewPack(record, options = {}) {
     options.currentHeadSha,
     options.postRecordChangedFiles
   );
+  const reviewedArgs = reviewedItemArgs(items);
   const lines = [
     "# iOS 人工验收 Review Pack",
     "",
@@ -220,7 +229,7 @@ export function buildManualReviewPack(record, options = {}) {
     "- 真实复核通过后，使用下方命令生成签署记录：",
     "",
     "```bash",
-    `pnpm prepare:ios-manual-evidence-record -- --record ${recordPath} --output ${path.join(path.dirname(recordPath), "manual-evidence-record.filled.json")} --mark-passed --operator <name> --confirmed-at <iso8601>`,
+    `pnpm prepare:ios-manual-evidence-record -- --record ${recordPath} --output ${path.join(path.dirname(recordPath), "manual-evidence-record.filled.json")} --mark-passed --operator <name> --confirmed-at <iso8601> ${reviewedArgs}`.trim(),
     "node scripts/validate-ios-manual-evidence-record.mjs --record <filled-path> --require-complete --report <report-path>",
     "pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path> --external-knowledge-status not_synced",
     "```",
@@ -284,6 +293,7 @@ export function buildManualReviewHtmlPack(record, options = {}) {
     options.postRecordChangedFiles
   );
   const filledPath = path.join(path.dirname(recordPath), "manual-evidence-record.filled.json");
+  const reviewedArgs = reviewedItemArgs(items);
   const changedFilesHtml =
     freshness.changedFiles.length > 0
       ? `<p>postRecordChangedFiles:</p><ul>${freshness.changedFiles
@@ -370,7 +380,7 @@ export function buildManualReviewHtmlPack(record, options = {}) {
     <h2>操作者签署边界</h2>
     <p>逐项打开截图、录屏、API 摘要、Bridge marker 和系统证据后，再决定每项是 <code>passed</code>、<code>failed</code> 还是 <code>blocked</code>。</p>
     <p>真实复核通过后，再生成签署记录并运行 completion audit。</p>
-    <pre><code>pnpm prepare:ios-manual-evidence-record -- --record ${escapeHtml(recordPath)} --output ${escapeHtml(filledPath)} --mark-passed --operator &lt;name&gt; --confirmed-at &lt;iso8601&gt;
+    <pre><code>pnpm prepare:ios-manual-evidence-record -- --record ${escapeHtml(recordPath)} --output ${escapeHtml(filledPath)} --mark-passed --operator &lt;name&gt; --confirmed-at &lt;iso8601&gt; ${escapeHtml(reviewedArgs)}
 node scripts/validate-ios-manual-evidence-record.mjs --record &lt;filled-path&gt; --require-complete --report &lt;report-path&gt;
 pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record &lt;filled-path&gt; --external-knowledge-status not_synced</code></pre>
   </section>

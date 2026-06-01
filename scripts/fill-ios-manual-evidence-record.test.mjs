@@ -63,6 +63,7 @@ test("filled record draft preserves pending statuses by default", () => {
     confirmedAt: null,
     mode: "draft",
     operator: null,
+    reviewedItemIds: [],
   });
   assert.match(record.instructions, /不会自动代表人工验收通过/);
 });
@@ -80,6 +81,15 @@ test("mark-passed requires explicit operator and timestamp", () => {
       }),
     /--confirmed-at is required/
   );
+  assert.throws(
+    () =>
+      buildFilledManualEvidenceRecord(completeReviewRecord(), {
+        confirmedAt: "2026-06-01T08:00:00.000Z",
+        markPassed: true,
+        operator: "QA",
+      }),
+    /--reviewed-item is required/
+  );
 });
 
 test("mark-passed signs complete evidence and appends operator note", () => {
@@ -87,6 +97,7 @@ test("mark-passed signs complete evidence and appends operator note", () => {
     confirmedAt: "2026-06-01T08:00:00.000Z",
     markPassed: true,
     operator: "QA",
+    reviewedItemIds: ["voice_input"],
     sourcePath: "manual-evidence-record.review.json",
   });
 
@@ -94,7 +105,21 @@ test("mark-passed signs complete evidence and appends operator note", () => {
   assert.equal(record.items[0].status, "passed");
   assert.equal(record.operatorSignoff.mode, "mark-passed");
   assert.equal(record.operatorSignoff.operator, "QA");
+  assert.deepEqual(record.operatorSignoff.reviewedItemIds, ["voice_input"]);
   assert.match(record.items[0].evidence.operatorNotes, /人工复核：QA/);
+});
+
+test("mark-passed refuses missing or unknown reviewed item ids", () => {
+  assert.throws(
+    () =>
+      buildFilledManualEvidenceRecord(completeReviewRecord(), {
+        confirmedAt: "2026-06-01T08:00:00.000Z",
+        markPassed: true,
+        operator: "QA",
+        reviewedItemIds: ["unknown_item"],
+      }),
+    /reviewed item ids must exactly match record item ids/
+  );
 });
 
 test("mark-passed refuses records that are still missing required evidence", () => {
@@ -107,6 +132,7 @@ test("mark-passed refuses records that are still missing required evidence", () 
         confirmedAt: "2026-06-01T08:00:00.000Z",
         markPassed: true,
         operator: "QA",
+        reviewedItemIds: ["voice_input"],
       }),
     /cannot mark record as passed/
   );
