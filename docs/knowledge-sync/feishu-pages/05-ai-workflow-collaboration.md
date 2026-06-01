@@ -929,3 +929,22 @@ HEAD `aad07e7` 的 full audit 显示 21 个自动化命令全部 `passed`，`val
 - Review Pack 的“必需证据”展示只能帮助操作者核对材料，不能把 review 记录自动升级为 filled / passed。
 - 如果继续推进 completion，下一步应让真实操作者打开 `.tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan/manual-evidence-review-pack.html` 逐项复核，再生成 filled 记录。
 - 未执行飞书 / Obsidian 真实同步前，外部同步仍必须保持 `not_synced`，最终回复继续披露“仓库已更新，外部知识库未同步”。
+
+## Review Pack 新鲜度规则
+
+Review Pack 的 `packageFreshness` 必须与 completion audit 保持一致：
+
+- `recordHeadSha === currentHeadSha` 时显示 `current`。
+- record HEAD 之后如果仅包含 `docs/`、`ai-factory/memory/`、`README.md` 或 `AGENTS.md` 变更，显示 `current_with_docs_only_changes`，并列出 `postRecordChangedFiles`。
+- record HEAD 之后只要触及 `scripts/`、`apps/`、`python/`、`packages/`、`package.json` 等产品、采证或门禁代码，仍必须显示 `stale`，并要求重新采证 / 审计。
+- `current_with_docs_only_changes` 只说明“文档记录提交没有让证据失效”，不说明人工验收已经完成；`pending` / `not_evaluated` 仍然不能进入 complete 结论。
+- native-shells 护栏要检查 Review Pack 的 docs-only freshness 行为，避免 Review Pack 和 completion audit 后续再次出现 freshness 判断分裂。
+
+## 人工签署防误操作优先级
+
+子任务复核指出，当前 `--mark-passed` 已要求 `--operator` 和 `--confirmed-at`，并且会校验证据字段完整性，但它仍会把所有 item 一次性改成 `passed`。在机器候选证据缺口已经为 0 的阶段，下一类更高价值改进不是继续补截图，而是降低误签风险：
+
+- 后续可以要求 `--mark-passed` 同时传入完整 item id 确认列表，例如 `--reviewed-item ...` 或 `--reviewed-items-file <json>`。
+- 脚本应校验确认列表与 `record.items[].id` 完全一致后，才允许全量 passed，并把 `reviewedItemIds` 写入 `operatorSignoff`。
+- Review Pack 应展示可复制的 item id 列表，便于操作者逐项核对后再签署。
+- 这类闸门不替代人工判断，但能防止“候选证据齐了，所以直接一键全绿”的人为失误。

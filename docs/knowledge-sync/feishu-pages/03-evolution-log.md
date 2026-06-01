@@ -5687,3 +5687,66 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 iOS 权限与通知门禁修复后的最新 HEAD 重新拉回 current evidence / current audit 状态。工程门禁已经全绿，机器可见候选证据缺口为 0；剩余阻塞仍是人工复核签署，而不是代码或自动化失败。
+
+## 阶段 201：Review Pack docs-only 新鲜度对齐
+
+背景：
+
+- completion audit 已支持 `current_with_docs_only_changes`，避免“记录 audit 结果”的文档提交让刚生成的证据包变成 `stale`。
+- Review Pack 仍只比较 `recordHeadSha === currentHeadSha`，因此在 docs-only 提交之后重新生成人工复核包时，会把可继承的证据误标为 `stale`。
+- 这会给操作者造成不必要疑虑，降低签署效率，也与 completion audit 的权威判断不一致。
+
+实现：
+
+- `generate-ios-manual-review-pack` 的 `packageFreshness` 新增 docs-only 规则。
+- 当 record HEAD 与当前 HEAD 不一致，但两者之间只包含 `docs/`、`ai-factory/memory/`、`README.md` 或 `AGENTS.md` 变更时，Markdown / HTML Review Pack 显示 `current_with_docs_only_changes`。
+- Review Pack 会展示 `postRecordChangedFiles`，让操作者知道继承 freshness 的原因。
+- CLI 会通过 `git diff --name-only <recordHead>..<currentHead>` 自动计算变更文件；单元测试可通过 `postRecordChangedFiles` 注入固定场景。
+- native-shells 护栏新增 `current_with_docs_only_changes` 和 `postRecordChangedFilesBetweenHeads` 检查。
+
+验证：
+
+- 先新增 `manual review pack treats docs-only changes as current enough for review` 测试并观察失败：旧逻辑仍输出 `packageFreshness: stale`。
+- 实现后 `node --test scripts/generate-ios-manual-review-pack.test.mjs` 通过。
+- `node --test scripts/validate-native-shells.test.mjs` 先红后绿。
+- `pnpm validate:native-shells` 通过。
+- `git diff --check` 通过。
+- 用 `.tmp/ios-acceptance-evidence/current-head-final-20260601-aad07e7-lan/manual-evidence-record.review.json` 重新生成 Review Pack，在当前 docs HEAD 下输出 `packageFreshness: current_with_docs_only_changes`。
+
+阶段价值：
+
+这一阶段减少了人工复核的虚假阻塞：文档记录提交不再让 Review Pack 和 completion audit 对证据新鲜度给出冲突信号。它不放宽产品或脚本变更后的重新采证要求，也不改变人工 item 必须签署的 completion 边界。
+
+## 阶段 202：HEAD 59c7bdb full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-59c7bdb-lan
+
+pnpm prepare:ios-manual-review-pack -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-59c7bdb-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-59c7bdb-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-59c7bdb-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-59c7bdb-lan`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-59c7bdb-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-59c7bdb-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-59c7bdb-lan`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=59c7bdb`，`currentHeadSha=59c7bdb`。
+- 21 个自动化命令全部 `passed`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 Review Pack 新鲜度脚本变更后的最新 HEAD 重新拉回 current evidence / current audit 状态。当前工程侧可自动证明的内容仍全部通过；下一步若继续推进 completion，应优先处理人工签署防误操作和真实 operator sign-off，而不是继续补同类自动证据。
