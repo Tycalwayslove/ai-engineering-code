@@ -5878,3 +5878,67 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把确认列表文件提交后的最新 HEAD 重新拉回 current evidence / current audit 状态。工程门禁和候选证据继续全绿；当前剩余工作仍是由真实操作者完成人工复核签署，而不是让 AI 自动改 passed。
+
+## 阶段 207：签署确认列表 HEAD 绑定
+
+背景：
+
+- `754098e` 已经把 14 个 `--reviewed-item` 参数收拢成 `manual-evidence-reviewed-items.json`，降低签署命令复制成本。
+- 但如果确认列表文件只包含 item id，而 item id 长期稳定，操作者仍可能误拿旧证据包生成的文件签署当前 HEAD。
+- 人工签署防线不应该只校验“item id 是否完整”，还应该校验“确认列表是否来自当前要签署的 record”。
+
+实现：
+
+- `generate-ios-manual-review-pack` 生成的 `manual-evidence-reviewed-items.json` 改为对象结构，包含 `schemaVersion`、`recordHeadSha` 和 `reviewedItemIds`。
+- `fill-ios-manual-evidence-record` 读取 `--reviewed-items-file` 时，如果文件带有 `recordHeadSha`，会与当前 `manual-evidence-record.review.json` 的 `headSha` 比较；不一致时直接失败。
+- 仍保留 JSON 数组和逐行文本兼容入口，方便旧工具或手工场景使用；但 Review Pack 默认生成的是可校验 HEAD 的对象结构。
+- `validate:native-shells` 增加 `recordHeadSha` 和 `recordHeadSha does not match` 护栏，防止未来回退。
+
+验证：
+
+- 先新增 CLI 测试并观察失败：旧实现会接受另一个 record HEAD 的 reviewed-items 文件。
+- 实现后 `node --test scripts/fill-ios-manual-evidence-record.test.mjs` 通过，覆盖 mismatched `recordHeadSha` 拒绝。
+- `node --test scripts/generate-ios-manual-review-pack.test.mjs` 通过，覆盖 reviewed-items 文件对象结构。
+- `node --test scripts/validate-native-shells.test.mjs` 通过。
+- `pnpm validate:native-shells` 通过。
+- `node --test scripts/fill-ios-manual-evidence-record.test.mjs scripts/generate-ios-manual-review-pack.test.mjs scripts/validate-native-shells.test.mjs` 通过，15 个测试全部 passed。
+- `git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把人工签署确认列表从“完整 item id 清单”升级为“绑定具体人工证据记录的确认清单”。它继续不替代人工验收判断，但能减少拿旧证据包签当前代码的误操作。
+
+## 阶段 208：HEAD a118819 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan
+
+pnpm prepare:ios-manual-review-pack -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-a118819-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan/manual-evidence-review-pack.html`。
+- reviewed items 文件：`.tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan/manual-evidence-reviewed-items.json`，写入 `recordHeadSha=a118819` 和 14 个 item id。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-a118819-lan`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=a118819`，`currentHeadSha=a118819`。
+- 21 个自动化命令全部 `passed`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把签署确认列表 HEAD 绑定后的最新代码重新拉回 current evidence / current audit 状态。工程侧自动化已经继续全绿，机器候选证据也齐备；剩余阻塞没有变化，仍必须由真实操作者逐项复核并签署 passed filled 记录。

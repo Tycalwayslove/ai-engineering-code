@@ -946,12 +946,15 @@ Review Pack 的 `packageFreshness` 必须与 completion audit 保持一致：
 
 - `pnpm prepare:ios-manual-evidence-record -- --mark-passed` 必须同时传入完整 `--reviewed-item <item-id>` 列表。
 - `pnpm prepare:ios-manual-review-pack` 会生成 `manual-evidence-reviewed-items.json`，签署时可以用 `--reviewed-items-file <path>` 代替 14 个重复参数，降低复制漏项风险。
+- `manual-evidence-reviewed-items.json` 默认必须带 `recordHeadSha`；签署脚本读取该文件时会与当前人工记录 `headSha` 比较，防止拿旧证据包的确认列表签当前 HEAD。
 - 脚本必须校验确认列表与 `record.items[].id` 完全一致后，才允许全量 passed；缺项、未知项或重复项都应失败。
 - `operatorSignoff.reviewedItemIds` 必须写入最终签署记录，draft 模式保留空数组。
 - Review Pack 的 Markdown / HTML 签署命令必须引用确认列表文件或自动展开全部 item id，方便操作者逐项打开截图、录屏、API 摘要、bridge marker 和系统 artifact 后再复制运行。
-- `validate:native-shells` 必须守住 `reviewedItemIds`、`--reviewed-item`、`--reviewed-items-file` 和 `manual-evidence-reviewed-items.json` 护栏，避免未来重构把逐项确认退化成单按钮全绿。
+- `validate:native-shells` 必须守住 `reviewedItemIds`、`--reviewed-item`、`--reviewed-items-file`、`manual-evidence-reviewed-items.json` 和 `recordHeadSha` 护栏，避免未来重构把逐项确认退化成单按钮全绿或跨 HEAD 误签。
 - 即使 21 个自动化命令全部通过、`missingEvidenceCount=0`、`packageFreshness=current`，只要 14 个 item 仍是 `pending` 或 `acceptanceVerdict=not_evaluated`，completion audit 就必须保持 `not_complete`。
 
 HEAD `e91c303` 的 full audit 已按该规则重新归档：`.tmp/v1-completion-audit/current-full-final-20260601-e91c303-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
 
 HEAD `754098e` 在此基础上增加确认列表文件入口：`.tmp/ios-acceptance-evidence/current-head-final-20260601-754098e-lan/manual-evidence-reviewed-items.json` 包含 14 个 item id，Review Pack 的签署命令使用 `--reviewed-items-file`；full audit `.tmp/v1-completion-audit/current-full-final-20260601-754098e-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
+HEAD `a118819` 进一步把确认列表文件绑定到人工记录 HEAD：`.tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan/manual-evidence-reviewed-items.json` 写入 `recordHeadSha=a118819` 和 14 个 item id，签署脚本会拒绝 `recordHeadSha` 与当前 review 记录不一致的文件；full audit `.tmp/v1-completion-audit/current-full-final-20260601-a118819-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
