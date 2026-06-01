@@ -119,6 +119,13 @@ assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "replace(/\\.
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "manual-evidence-reviewed-items.json");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "--reviewed-items-file");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "collect:v1-completion-audit");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "reviewedItemChecklistHtml");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "data-item-id");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "operator-name");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "confirmed-at");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "generated-sign-command");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function updateSignCommand");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "allItemsReviewed");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "本文件不代表验收通过");
 
 const iosManualHandoffTestPath = "scripts/prepare-ios-manual-acceptance-handoff.test.mjs";
@@ -126,6 +133,8 @@ const iosManualHandoffTest = readRequired(iosManualHandoffTestPath);
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "manual acceptance handoff keeps review, sign and audit commands together");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HTML handoff renders clickable review links");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HEAD-bound reviewed item list");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "generated-sign-command");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "allItemsReviewed");
 
 const iosManualEvidenceFillScriptPath = "scripts/fill-ios-manual-evidence-record.mjs";
 const iosManualEvidenceFillScript = readRequired(iosManualEvidenceFillScriptPath);

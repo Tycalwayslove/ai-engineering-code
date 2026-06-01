@@ -29,6 +29,13 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /manual review HTML pack written/);
   assert.match(validator, /manual acceptance HTML handoff written/);
   assert.match(validator, /manual-acceptance-handoff\.md/);
+  assert.match(validator, /reviewedItemChecklistHtml/);
+  assert.match(validator, /data-item-id/);
+  assert.match(validator, /operator-name/);
+  assert.match(validator, /confirmed-at/);
+  assert.match(validator, /generated-sign-command/);
+  assert.match(validator, /function updateSignCommand/);
+  assert.match(validator, /allItemsReviewed/);
   assert.match(validator, /HTML manual review pack renders evidence links/);
   assert.match(validator, /current_with_docs_only_changes/);
   assert.match(validator, /postRecordChangedFilesBetweenHeads/);

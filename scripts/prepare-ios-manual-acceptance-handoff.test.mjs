@@ -194,6 +194,13 @@ test("HTML handoff renders clickable review links and command blocks", () => {
   assert.match(html, /open .tmp\/run\/manual-evidence-review-pack\.html/);
   assert.match(html, /acceptanceVerdict: <code>not_evaluated<\/code>/);
   assert.match(html, /statusCounts: <code>passed=0, pending=2, failed=0, blocked=0, other=0<\/code>/);
+  assert.match(html, /data-item-id="keyboard_input"/);
+  assert.match(html, /data-item-id="local_notification"/);
+  assert.match(html, /id="operator-name"/);
+  assert.match(html, /id="confirmed-at"/);
+  assert.match(html, /id="generated-sign-command"/);
+  assert.match(html, /function updateSignCommand/);
+  assert.match(html, /allItemsReviewed/);
   assert.match(html, /--reviewed-items-file .tmp\/run\/manual-evidence-reviewed-items\.json/);
   assert.match(html, /collect:v1-completion-audit/);
 });

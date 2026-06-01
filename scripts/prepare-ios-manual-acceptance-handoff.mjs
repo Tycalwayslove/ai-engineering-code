@@ -115,6 +115,19 @@ function handoffContext(record, options = {}) {
   };
 }
 
+function reviewedItemChecklistHtml(items) {
+  if (items.length === 0) {
+    return "<li>无验收项目</li>";
+  }
+  return items
+    .map((item, index) => {
+      const itemId = item?.id ?? "";
+      const title = item?.title ?? item?.item ?? itemId ?? `项目 ${index + 1}`;
+      return `<li><label><input type="checkbox" class="reviewed-item" data-item-id="${escapeHtml(itemId)}"> ${index + 1}. ${escapeHtml(title)} <code>${escapeHtml(itemId)}</code></label></li>`;
+    })
+    .join("\n");
+}
+
 export function buildManualAcceptanceHandoff(record, options = {}) {
   const context = handoffContext(record, options);
   const commands = commandSet(context);
@@ -192,6 +205,10 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     pre { background: #17201b; color: #f7f8f5; padding: 14px; border-radius: 8px; overflow-x: auto; }
     .warning { border: 1px solid #b45309; background: #fff7ed; padding: 14px 16px; border-radius: 8px; }
     .panel { background: #fff; border: 1px solid #dde2da; border-radius: 8px; padding: 18px; margin: 18px 0; }
+    .field-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+    .field-row label { display: grid; gap: 4px; min-width: 260px; }
+    input[type="text"] { border: 1px solid #cdd5ca; border-radius: 6px; padding: 8px 10px; font: inherit; }
+    textarea { border: 1px solid #cdd5ca; border-radius: 6px; padding: 10px; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 104px; width: 100%; box-sizing: border-box; }
     a { color: #0f766e; }
     li { margin: 6px 0; overflow-wrap: anywhere; }
   </style>
@@ -229,6 +246,21 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     <pre><code>${escapeHtml(commands.runCompletionAudit)}</code></pre>
   </section>
   <section class="panel">
+    <h2>签署命令生成器</h2>
+    <p>逐项打开 Review Pack 证据并确认通过后，勾选对应项目；填入操作者和时间后，下方会生成签署命令。</p>
+    <ul>${reviewedItemChecklistHtml(context.items)}</ul>
+    <div class="field-row">
+      <label>operator
+        <input id="operator-name" type="text" placeholder="例如 QA 或你的名字">
+      </label>
+      <label>confirmedAt
+        <input id="confirmed-at" type="text" placeholder="2026-06-01T09:00:00.000Z">
+      </label>
+    </div>
+    <p id="sign-command-status">请先逐项勾选全部验收项目，并填写 operator 与 confirmedAt。</p>
+    <textarea id="generated-sign-command" readonly></textarea>
+  </section>
+  <section class="panel">
     <h2>边界</h2>
     <ul>
       <li>只有真实操作者逐项复核后，才允许运行 <code>--mark-passed</code>。</li>
@@ -236,6 +268,45 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
       <li>如果 filled 记录或 completion audit 未通过，继续根据 <code>manual-evidence-gaps.md</code> 补证。</li>
     </ul>
   </section>
+  <script>
+    const signCommandParts = {
+      record: ${JSON.stringify(context.manualRecordPath)},
+      output: ${JSON.stringify(context.filledRecordPath)},
+      reviewedItemsFile: ${JSON.stringify(context.reviewedItemsPath)}
+    };
+    function shellQuote(value) {
+      return "'" + String(value).replaceAll("'", "'\\\\''") + "'";
+    }
+    function updateSignCommand() {
+      const reviewedItems = Array.from(document.querySelectorAll(".reviewed-item"));
+      const allItemsReviewed = reviewedItems.length > 0 && reviewedItems.every((item) => item.checked);
+      const operator = document.getElementById("operator-name").value.trim();
+      const confirmedAt = document.getElementById("confirmed-at").value.trim();
+      const output = document.getElementById("generated-sign-command");
+      const status = document.getElementById("sign-command-status");
+      if (!allItemsReviewed || !operator || !confirmedAt) {
+        output.value = "";
+        status.textContent = "请先逐项勾选全部验收项目，并填写 operator 与 confirmedAt。";
+        return;
+      }
+      output.value = [
+        "pnpm prepare:ios-manual-evidence-record --",
+        "--record", shellQuote(signCommandParts.record),
+        "--output", shellQuote(signCommandParts.output),
+        "--mark-passed",
+        "--operator", shellQuote(operator),
+        "--confirmed-at", shellQuote(confirmedAt),
+        "--reviewed-items-file", shellQuote(signCommandParts.reviewedItemsFile)
+      ].join(" ");
+      status.textContent = "签署命令已生成。运行前请确认每项证据已经人工复核。";
+    }
+    for (const element of document.querySelectorAll(".reviewed-item, #operator-name, #confirmed-at")) {
+      element.addEventListener("input", updateSignCommand);
+      element.addEventListener("change", updateSignCommand);
+    }
+    document.getElementById("confirmed-at").value = new Date().toISOString();
+    updateSignCommand();
+  </script>
 </body>
 </html>
 `;
