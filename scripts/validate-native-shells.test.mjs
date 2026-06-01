@@ -24,6 +24,8 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /requiredEvidenceSummary/);
   assert.match(validator, /manual review HTML pack written/);
   assert.match(validator, /HTML manual review pack renders evidence links/);
+  assert.match(validator, /current_with_docs_only_changes/);
+  assert.match(validator, /postRecordChangedFilesBetweenHeads/);
   assert.match(validator, /AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS/);
   assert.match(validator, /AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS/);
   assert.match(validator, /\.second/);

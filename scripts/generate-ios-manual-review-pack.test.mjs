@@ -146,6 +146,30 @@ test("HTML manual review pack renders evidence links without passing pending ite
   assert.doesNotMatch(html, /status: <code>passed<\/code>/);
 });
 
+test("manual review pack treats docs-only changes as current enough for review", () => {
+  const markdown = buildManualReviewPack(reviewRecord(), {
+    currentHeadSha: "def5678",
+    postRecordChangedFiles: [
+      "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+      "ai-factory/memory/working/active-context/current-project-state.md",
+    ],
+    recordPath: ".tmp/run/manual-evidence-record.review.json",
+  });
+  const html = buildManualReviewHtmlPack(reviewRecord(), {
+    currentHeadSha: "def5678",
+    postRecordChangedFiles: [
+      "docs/knowledge-sync/feishu-pages/03-evolution-log.md",
+      "ai-factory/memory/working/active-context/current-project-state.md",
+    ],
+    recordPath: ".tmp/run/manual-evidence-record.review.json",
+  });
+
+  assert.match(markdown, /packageFreshness: `current_with_docs_only_changes`/);
+  assert.match(markdown, /docs\/knowledge-sync\/feishu-pages\/03-evolution-log\.md/);
+  assert.match(html, /packageFreshness: <code>current_with_docs_only_changes<\/code>/);
+  assert.match(html, /ai-factory\/memory\/working\/active-context\/current-project-state\.md/);
+});
+
 test("package exposes manual review pack command", () => {
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(rootDir, "package.json"), "utf8")

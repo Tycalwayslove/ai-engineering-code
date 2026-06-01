@@ -87,6 +87,8 @@ assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "buildM
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "buildManualReviewHtmlPack");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "requiredEvidenceSummary");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "packageFreshness");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "current_with_docs_only_changes");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "postRecordChangedFilesBetweenHeads");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "本文件不代表验收通过");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--mark-passed --operator");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual review HTML pack written");
@@ -96,6 +98,7 @@ const iosManualReviewPackTest = readRequired(iosManualReviewPackTestPath);
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "manual review pack summarizes pending statuses");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "HTML manual review pack renders evidence links");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "packageFreshness: `stale`");
+assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "docs-only changes");
 
 const v1CompletionAuditScriptPath = "scripts/collect-v1-completion-audit.mjs";
 const v1CompletionAuditScript = readRequired(v1CompletionAuditScriptPath);

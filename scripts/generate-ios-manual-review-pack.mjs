@@ -12,6 +12,9 @@ const evidenceCategories = [
   ["systemArtifacts", "系统证据"],
 ];
 
+const docsOnlyFreshnessPathPrefixes = ["ai-factory/memory/", "docs/"];
+const docsOnlyFreshnessPaths = new Set(["README.md", "AGENTS.md"]);
+
 function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -74,11 +77,52 @@ function formatStatusCounts(items) {
   };
 }
 
-function packageFreshness(recordHeadSha, currentHeadSha) {
-  if (!recordHeadSha || !currentHeadSha) {
-    return "unknown";
+function isDocsOnlyFreshnessPath(filePath) {
+  return (
+    docsOnlyFreshnessPaths.has(filePath) ||
+    docsOnlyFreshnessPathPrefixes.some((prefix) => filePath.startsWith(prefix))
+  );
+}
+
+function docsOnlyFreshnessStatusForChangedFiles(changedFiles) {
+  if (!Array.isArray(changedFiles) || changedFiles.length === 0) {
+    return null;
   }
-  return recordHeadSha === currentHeadSha ? "current" : "stale";
+  return changedFiles.every(isDocsOnlyFreshnessPath)
+    ? "current_with_docs_only_changes"
+    : null;
+}
+
+function packageFreshness(recordHeadSha, currentHeadSha, postRecordChangedFiles) {
+  if (!recordHeadSha || !currentHeadSha) {
+    return { changedFiles: [], status: "unknown" };
+  }
+  if (recordHeadSha === currentHeadSha) {
+    return { changedFiles: [], status: "current" };
+  }
+  const changedFiles = Array.isArray(postRecordChangedFiles) ? postRecordChangedFiles : [];
+  return {
+    changedFiles,
+    status: docsOnlyFreshnessStatusForChangedFiles(postRecordChangedFiles) ?? "stale",
+  };
+}
+
+function postRecordChangedFilesBetweenHeads(rootDir, recordHeadSha, currentHeadSha) {
+  if (!recordHeadSha || !currentHeadSha || recordHeadSha === currentHeadSha) {
+    return [];
+  }
+  const result = spawnSync(
+    "git",
+    ["diff", "--name-only", `${recordHeadSha}..${currentHeadSha}`],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+    }
+  );
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout.split("\n").map((line) => line.trim()).filter(Boolean);
 }
 
 function missingEvidence(item) {
@@ -138,7 +182,11 @@ export function buildManualReviewPack(record, options = {}) {
   const statusCounts = formatStatusCounts(items);
   const recordHeadSha = record?.headSha ?? "unknown";
   const currentHeadSha = options.currentHeadSha ?? "unknown";
-  const freshness = packageFreshness(record?.headSha, options.currentHeadSha);
+  const freshness = packageFreshness(
+    record?.headSha,
+    options.currentHeadSha,
+    options.postRecordChangedFiles
+  );
   const lines = [
     "# iOS 人工验收 Review Pack",
     "",
@@ -150,12 +198,20 @@ export function buildManualReviewPack(record, options = {}) {
     `- output: \`${outputPath}\``,
     `- recordHeadSha: \`${recordHeadSha}\``,
     `- currentHeadSha: \`${currentHeadSha}\``,
-    `- packageFreshness: \`${freshness}\``,
+    `- packageFreshness: \`${freshness.status}\``,
     `- acceptanceVerdict: \`${record?.acceptanceVerdict ?? "missing"}\``,
     `- manualAcceptanceRequired: \`${record?.manualAcceptanceRequired ?? "missing"}\``,
     `- automationCanReplaceManualAcceptance: \`${record?.automationCanReplaceManualAcceptance ?? "missing"}\``,
     `- totalItems: \`${items.length}\``,
     `- statusCounts: \`${statusCounts.text}\``,
+  ];
+  if (freshness.changedFiles.length > 0) {
+    lines.push("- postRecordChangedFiles:");
+    for (const changedFile of freshness.changedFiles) {
+      lines.push(`  - ${changedFile}`);
+    }
+  }
+  lines.push(
     "",
     "## 操作者签署边界",
     "",
@@ -170,8 +226,8 @@ export function buildManualReviewPack(record, options = {}) {
     "```",
     "",
     "## 逐项复核",
-    "",
-  ];
+    ""
+  );
 
   items.forEach((item, index) => {
     const missing = missingEvidence(item);
@@ -222,8 +278,18 @@ export function buildManualReviewHtmlPack(record, options = {}) {
   const statusCounts = formatStatusCounts(items);
   const recordHeadSha = record?.headSha ?? "unknown";
   const currentHeadSha = options.currentHeadSha ?? "unknown";
-  const freshness = packageFreshness(record?.headSha, options.currentHeadSha);
+  const freshness = packageFreshness(
+    record?.headSha,
+    options.currentHeadSha,
+    options.postRecordChangedFiles
+  );
   const filledPath = path.join(path.dirname(recordPath), "manual-evidence-record.filled.json");
+  const changedFilesHtml =
+    freshness.changedFiles.length > 0
+      ? `<p>postRecordChangedFiles:</p><ul>${freshness.changedFiles
+          .map((filePath) => `<li>${escapeHtml(filePath)}</li>`)
+          .join("\n")}</ul>`
+      : "";
   const itemSections = items
     .map((item, index) => {
       const missing = missingEvidence(item);
@@ -292,12 +358,13 @@ export function buildManualReviewHtmlPack(record, options = {}) {
     <p>output: <code>${escapeHtml(outputPath)}</code></p>
     <p>recordHeadSha: <code>${escapeHtml(recordHeadSha)}</code></p>
     <p>currentHeadSha: <code>${escapeHtml(currentHeadSha)}</code></p>
-    <p>packageFreshness: <code>${escapeHtml(freshness)}</code></p>
+    <p>packageFreshness: <code>${escapeHtml(freshness.status)}</code></p>
     <p>acceptanceVerdict: <code>${escapeHtml(record?.acceptanceVerdict ?? "missing")}</code></p>
     <p>manualAcceptanceRequired: <code>${escapeHtml(record?.manualAcceptanceRequired ?? "missing")}</code></p>
     <p>automationCanReplaceManualAcceptance: <code>${escapeHtml(record?.automationCanReplaceManualAcceptance ?? "missing")}</code></p>
     <p>totalItems: <code>${items.length}</code></p>
     <p>statusCounts: <code>${escapeHtml(statusCounts.text)}</code></p>
+    ${changedFilesHtml}
   </section>
   <section class="panel">
     <h2>操作者签署边界</h2>
@@ -387,14 +454,22 @@ function runCli() {
     process.exit(1);
   }
 
+  const currentHeadSha = currentGitHeadSha(rootDir);
+  const postRecordChangedFiles = postRecordChangedFilesBetweenHeads(
+    rootDir,
+    record?.headSha,
+    currentHeadSha
+  );
   const markdown = buildManualReviewPack(record, {
-    currentHeadSha: currentGitHeadSha(rootDir),
+    currentHeadSha,
     outputPath: path.relative(rootDir, outputPath),
+    postRecordChangedFiles,
     recordPath: path.relative(rootDir, recordPath),
   });
   const html = buildManualReviewHtmlPack(record, {
-    currentHeadSha: currentGitHeadSha(rootDir),
+    currentHeadSha,
     outputPath: path.relative(rootDir, htmlOutputPath),
+    postRecordChangedFiles,
     recordPath: path.relative(rootDir, recordPath),
   });
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
