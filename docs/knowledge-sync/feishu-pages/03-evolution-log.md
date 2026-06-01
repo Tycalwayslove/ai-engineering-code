@@ -5942,3 +5942,67 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把签署确认列表 HEAD 绑定后的最新代码重新拉回 current evidence / current audit 状态。工程侧自动化已经继续全绿，机器候选证据也齐备；剩余阻塞没有变化，仍必须由真实操作者逐项复核并签署 passed filled 记录。
+
+## 阶段 209：人工验收 Handoff 入口
+
+背景：
+
+- Review Pack、reviewed-items 文件、filled 记录生成和 completion audit 已经具备，但操作者仍需要在多个文档之间找路径和命令。
+- 当前最后阻塞是人工复核签署，不是继续补自动证据；因此下一步优化应降低人工收口操作成本，同时继续守住“AI 不代签”的边界。
+
+实现：
+
+- 新增 `scripts/prepare-ios-manual-acceptance-handoff.mjs` 和根命令 `pnpm prepare:ios-manual-handoff`。
+- 该命令默认支持 `--record <path|best|latest>` 和 `--manual-record-root <dir>`，会基于人工 evidence record 生成 `manual-acceptance-handoff.md`。
+- Handoff 会同时刷新 `manual-evidence-review-pack.md`、`manual-evidence-review-pack.html` 和带 `recordHeadSha` 的 `manual-evidence-reviewed-items.json`。
+- Handoff 集中展示 record 路径、Review Pack 路径、filled 输出路径、gaps report 路径、当前 `packageFreshness`、`statusCounts`、HTML 打开命令、签署命令、`--require-complete` 校验命令和正式 completion audit 命令。
+- `validate:native-shells` 增加 handoff 根命令、脚本、测试和关键边界文案护栏，防止后续重构丢失该入口。
+
+验证：
+
+- 先新增 `prepare-ios-manual-acceptance-handoff.test.mjs` 并观察失败：新脚本不存在。
+- 实现后 `node --test scripts/prepare-ios-manual-acceptance-handoff.test.mjs` 通过。
+- `pnpm prepare:ios-manual-handoff -- --record .tmp/ios-acceptance-evidence/current-head-final-20260601-a118819-lan/manual-evidence-record.review.json` 通过，并写出 `manual-acceptance-handoff.md`。
+- `node --test scripts/prepare-ios-manual-acceptance-handoff.test.mjs scripts/generate-ios-manual-review-pack.test.mjs scripts/fill-ios-manual-evidence-record.test.mjs scripts/validate-native-shells.test.mjs` 通过，18 个测试全部 passed。
+- `pnpm validate:native-shells` 通过。
+- `git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把最后一公里的人工验收从“阅读多份文档并拼命令”收敛为“打开 handoff 文件按顺序复核、签署、校验、审计”。它仍不替代人工判断，也不改变 completion audit 的 passed 条件。
+
+## 阶段 210：HEAD ad63244 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-ad63244-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan`。
+- Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-acceptance-handoff.md`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-evidence-review-pack.html`。
+- reviewed items 文件：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-evidence-reviewed-items.json`，写入 `recordHeadSha=ad63244` 和 14 个 item id。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-ad63244-lan`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=ad63244`，`currentHeadSha=ad63244`。
+- 21 个自动化命令全部 `passed`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 Handoff 入口提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。自动化和候选证据已经继续齐备；最终完成仍需要真实操作者打开 Handoff / HTML Review Pack 逐项复核并签署 filled 记录。

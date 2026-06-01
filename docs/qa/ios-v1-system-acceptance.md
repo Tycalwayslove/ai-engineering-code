@@ -105,6 +105,14 @@ pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/<ru
 
 该命令会同时生成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`。两种格式都会按 item 展示 required evidence 和已预填候选证据；HTML 版还会把截图、录屏、日志、JSON、xcresult 等候选证据路径渲染为可点击链接，便于逐项打开材料复核；它仍不代表验收通过。
 
+如果要把人工复核、签署、校验和最终 audit 命令集中到一个入口，可以运行：
+
+```bash
+pnpm prepare:ios-manual-handoff -- --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.review.json
+```
+
+该命令会生成 `manual-acceptance-handoff.md`，并刷新同目录的 Markdown / HTML Review Pack 和 `manual-evidence-reviewed-items.json`。Handoff 会给出 HTML 打开命令、`--mark-passed` 签署命令、`--require-complete` 校验命令和正式 completion audit 命令；它仍不代表验收通过，只有真实操作者逐项复核后才能运行签署命令。
+
 证据包默认输出到 `.tmp/ios-acceptance-evidence/<timestamp>/`，包含 `manifest.json`、`acceptance-evidence.json`、`summary.md`、`manual-checklist.todo.md`、`manual-evidence-record.template.json`、`manual-evidence-record.draft.json`、`manual-evidence-record.review.json` 和 `simulator-launch.png`。常用参数：
 
 - `AI_CODE_IOS_ACCEPTANCE_RESET_APP=1` 或 `--reset-app`：重新安装并启动 App，减少旧权限或旧 UI 状态干扰。
