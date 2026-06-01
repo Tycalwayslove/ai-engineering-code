@@ -5,7 +5,10 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
-import { buildManualAcceptanceHandoff } from "./prepare-ios-manual-acceptance-handoff.mjs";
+import {
+  buildManualAcceptanceHandoff,
+  buildManualAcceptanceHtmlHandoff,
+} from "./prepare-ios-manual-acceptance-handoff.mjs";
 
 const rootDir = process.cwd();
 
@@ -132,10 +135,12 @@ test("CLI writes handoff, review packs and HEAD-bound reviewed item list", () =>
 
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   const handoffPath = path.join(runDir, "manual-acceptance-handoff.md");
+  const htmlHandoffPath = path.join(runDir, "manual-acceptance-handoff.html");
   const reviewPackPath = path.join(runDir, "manual-evidence-review-pack.md");
   const htmlReviewPackPath = path.join(runDir, "manual-evidence-review-pack.html");
   const reviewedItemsPath = path.join(runDir, "manual-evidence-reviewed-items.json");
   assert.ok(fs.existsSync(handoffPath));
+  assert.ok(fs.existsSync(htmlHandoffPath));
   assert.ok(fs.existsSync(reviewPackPath));
   assert.ok(fs.existsSync(htmlReviewPackPath));
   assert.deepEqual(JSON.parse(fs.readFileSync(reviewedItemsPath, "utf8")), {
@@ -144,10 +149,53 @@ test("CLI writes handoff, review packs and HEAD-bound reviewed item list", () =>
     schemaVersion: 1,
   });
   const handoff = fs.readFileSync(handoffPath, "utf8");
+  const htmlHandoff = fs.readFileSync(htmlHandoffPath, "utf8");
   assert.match(handoff, /manual-evidence-review-pack\.html/);
+  assert.match(htmlHandoff, /<title>iOS 人工验收 Handoff<\/title>/);
+  assert.match(htmlHandoff, /href="manual-evidence-review-pack\.html"/);
+  assert.match(htmlHandoff, /pnpm prepare:ios-manual-evidence-record/);
+  assert.match(htmlHandoff, /本文件不代表验收通过/);
   assert.match(handoff, /manual-evidence-record\.filled\.json/);
   assert.match(handoff, /manual-evidence-gaps\.md/);
   assert.match(result.stdout, /iOS manual acceptance handoff written/);
+  assert.match(result.stdout, /iOS manual acceptance HTML handoff written/);
+});
+
+test("HTML handoff renders clickable review links and command blocks", () => {
+  const html = buildManualAcceptanceHtmlHandoff(reviewRecord(), {
+    audit: {
+      verdict: "not_complete",
+      manualEvidence: {
+        packageFreshness: {
+          status: "current",
+          currentHeadSha: "abc1234",
+          recordHeadSha: "abc1234",
+        },
+        missingEvidenceCount: 0,
+        statusCounts: {
+          passed: 0,
+          pending: 2,
+          failed: 0,
+          blocked: 0,
+          other: 0,
+        },
+      },
+    },
+    filledRecordPath: ".tmp/run/manual-evidence-record.filled.json",
+    gapsReportPath: ".tmp/run/manual-evidence-gaps.md",
+    htmlReviewPackHref: "manual-evidence-review-pack.html",
+    htmlReviewPackPath: ".tmp/run/manual-evidence-review-pack.html",
+    manualRecordPath: ".tmp/run/manual-evidence-record.review.json",
+    reviewedItemsPath: ".tmp/run/manual-evidence-reviewed-items.json",
+  });
+
+  assert.match(html, /<title>iOS 人工验收 Handoff<\/title>/);
+  assert.match(html, /href="manual-evidence-review-pack\.html"/);
+  assert.match(html, /open .tmp\/run\/manual-evidence-review-pack\.html/);
+  assert.match(html, /acceptanceVerdict: <code>not_evaluated<\/code>/);
+  assert.match(html, /statusCounts: <code>passed=0, pending=2, failed=0, blocked=0, other=0<\/code>/);
+  assert.match(html, /--reviewed-items-file .tmp\/run\/manual-evidence-reviewed-items\.json/);
+  assert.match(html, /collect:v1-completion-audit/);
 });
 
 test("package exposes manual acceptance handoff command", () => {

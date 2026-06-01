@@ -111,7 +111,9 @@ assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "--reviewed
 const iosManualHandoffScriptPath = "scripts/prepare-ios-manual-acceptance-handoff.mjs";
 const iosManualHandoffScript = readRequired(iosManualHandoffScriptPath);
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "buildManualAcceptanceHandoff");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "buildManualAcceptanceHtmlHandoff");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "manual-acceptance-handoff.md");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "manual acceptance HTML handoff written");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "HTML Review Pack");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "replace(/\\.md$/i, \".html\")");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "manual-evidence-reviewed-items.json");
@@ -122,6 +124,7 @@ assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "本文件不
 const iosManualHandoffTestPath = "scripts/prepare-ios-manual-acceptance-handoff.test.mjs";
 const iosManualHandoffTest = readRequired(iosManualHandoffTestPath);
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "manual acceptance handoff keeps review, sign and audit commands together");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HTML handoff renders clickable review links");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HEAD-bound reviewed item list");
 
 const iosManualEvidenceFillScriptPath = "scripts/fill-ios-manual-evidence-record.mjs";

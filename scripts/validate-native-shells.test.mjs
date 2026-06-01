@@ -24,8 +24,10 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /scripts\/prepare-ios-manual-acceptance-handoff\.mjs/);
   assert.match(validator, /buildManualReviewHtmlPack/);
   assert.match(validator, /buildManualAcceptanceHandoff/);
+  assert.match(validator, /buildManualAcceptanceHtmlHandoff/);
   assert.match(validator, /requiredEvidenceSummary/);
   assert.match(validator, /manual review HTML pack written/);
+  assert.match(validator, /manual acceptance HTML handoff written/);
   assert.match(validator, /manual-acceptance-handoff\.md/);
   assert.match(validator, /HTML manual review pack renders evidence links/);
   assert.match(validator, /current_with_docs_only_changes/);
