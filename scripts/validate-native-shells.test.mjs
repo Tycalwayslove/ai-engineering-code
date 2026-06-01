@@ -30,6 +30,7 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /--reviewed-item/);
   assert.match(validator, /--reviewed-items-file/);
   assert.match(validator, /manual-evidence-reviewed-items\.json/);
+  assert.match(validator, /recordHeadSha/);
   assert.match(validator, /AI_CODE_UI_TEST_DISABLE_CALENDAR_PERMISSION_REQUESTS/);
   assert.match(validator, /AI_CODE_UI_TEST_DISABLE_NOTIFICATION_PERMISSION_REQUESTS/);
   assert.match(validator, /\.second/);

@@ -53,21 +53,34 @@ function assertReviewedItemIds(record, reviewedItemIds) {
   return expectedItemIds;
 }
 
-function parseReviewedItemIdsFile(filePath) {
+function parseReviewedItemIdsFile(filePath, record) {
   const content = fs.readFileSync(filePath, "utf8").trim();
   if (!content) {
     return [];
   }
+  let parsed;
   try {
-    const parsed = JSON.parse(content);
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-    if (Array.isArray(parsed?.reviewedItemIds)) {
-      return parsed.reviewedItemIds;
-    }
+    parsed = JSON.parse(content);
   } catch {
     return content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  }
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+  if (Array.isArray(parsed?.reviewedItemIds)) {
+    if (
+      parsed.recordHeadSha &&
+      record?.headSha &&
+      parsed.recordHeadSha !== record.headSha
+    ) {
+      throw new Error(
+        `--reviewed-items-file recordHeadSha does not match record headSha: ${parsed.recordHeadSha} !== ${record.headSha}`
+      );
+    }
+    return parsed.reviewedItemIds;
+  }
+  if (parsed?.recordHeadSha && !Array.isArray(parsed?.reviewedItemIds)) {
+    throw new Error("--reviewed-items-file with recordHeadSha must include reviewedItemIds array");
   }
   throw new Error("--reviewed-items-file must contain a JSON array or reviewedItemIds array");
 }
@@ -223,7 +236,7 @@ function runCli() {
     const reviewedItemIds = [
       ...(args.reviewedItemIds ?? []),
       ...(args.reviewedItemsFilePath
-        ? parseReviewedItemIdsFile(path.resolve(rootDir, args.reviewedItemsFilePath))
+        ? parseReviewedItemIdsFile(path.resolve(rootDir, args.reviewedItemsFilePath), record)
         : []),
     ];
     filledRecord = buildFilledManualEvidenceRecord(record, {

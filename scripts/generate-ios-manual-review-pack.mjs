@@ -503,7 +503,15 @@ function runCli() {
   fs.writeFileSync(htmlOutputPath, html);
   fs.writeFileSync(
     reviewedItemsPath,
-    `${JSON.stringify(reviewedItemIds(record?.items), null, 2)}\n`
+    `${JSON.stringify(
+      {
+        recordHeadSha: record?.headSha ?? null,
+        reviewedItemIds: reviewedItemIds(record?.items),
+        schemaVersion: 1,
+      },
+      null,
+      2
+    )}\n`
   );
   console.log(`iOS manual review pack written to ${outputPath}`);
   console.log(`iOS manual review HTML pack written to ${htmlOutputPath}`);

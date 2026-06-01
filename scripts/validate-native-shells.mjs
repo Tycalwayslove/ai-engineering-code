@@ -94,6 +94,7 @@ assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--mark
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--reviewed-item");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "--reviewed-items-file");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual-evidence-reviewed-items.json");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "recordHeadSha");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual review HTML pack written");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual reviewed item list written");
 
@@ -112,6 +113,7 @@ assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "pa
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewedItemIds");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--reviewed-item is required");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--reviewed-items-file");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "recordHeadSha does not match");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewed item ids must exactly match record item ids");
 
 const iosManualEvidenceFillTestPath = "scripts/fill-ios-manual-evidence-record.test.mjs";

@@ -14,6 +14,7 @@ const rootDir = process.cwd();
 function completeReviewRecord() {
   return {
     schemaVersion: 1,
+    headSha: "abc1234",
     acceptanceVerdict: "not_evaluated",
     manualAcceptanceRequired: true,
     automationCanReplaceManualAcceptance: false,
@@ -169,7 +170,14 @@ test("CLI mark-passed accepts reviewed item ids from file", () => {
   const reviewedItemsPath = path.join(tmpDir, "manual-evidence-reviewed-items.json");
   const filledPath = path.join(tmpDir, "manual-evidence-record.filled.json");
   fs.writeFileSync(reviewPath, `${JSON.stringify(completeReviewRecord(), null, 2)}\n`);
-  fs.writeFileSync(reviewedItemsPath, `${JSON.stringify(["voice_input"], null, 2)}\n`);
+  fs.writeFileSync(
+    reviewedItemsPath,
+    `${JSON.stringify(
+      { recordHeadSha: "abc1234", reviewedItemIds: ["voice_input"] },
+      null,
+      2
+    )}\n`
+  );
 
   const result = spawnSync(
     "node",
@@ -195,6 +203,45 @@ test("CLI mark-passed accepts reviewed item ids from file", () => {
   const filled = JSON.parse(fs.readFileSync(filledPath, "utf8"));
   assert.equal(filled.acceptanceVerdict, "passed");
   assert.deepEqual(filled.operatorSignoff.reviewedItemIds, ["voice_input"]);
+});
+
+test("CLI mark-passed refuses reviewed item file from another record head", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "manual-evidence-fill-"));
+  const reviewPath = path.join(tmpDir, "manual-evidence-record.review.json");
+  const reviewedItemsPath = path.join(tmpDir, "manual-evidence-reviewed-items.json");
+  const filledPath = path.join(tmpDir, "manual-evidence-record.filled.json");
+  fs.writeFileSync(reviewPath, `${JSON.stringify(completeReviewRecord(), null, 2)}\n`);
+  fs.writeFileSync(
+    reviewedItemsPath,
+    `${JSON.stringify(
+      { recordHeadSha: "different", reviewedItemIds: ["voice_input"] },
+      null,
+      2
+    )}\n`
+  );
+
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/fill-ios-manual-evidence-record.mjs",
+      "--",
+      "--record",
+      reviewPath,
+      "--output",
+      filledPath,
+      "--mark-passed",
+      "--operator",
+      "QA",
+      "--confirmed-at",
+      "2026-06-01T08:00:00.000Z",
+      "--reviewed-items-file",
+      reviewedItemsPath,
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /recordHeadSha does not match/);
 });
 
 test("package exposes manual evidence fill command", () => {

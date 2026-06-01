@@ -129,7 +129,11 @@ test("CLI writes manual review pack next to the record by default", () => {
   assert.match(html, /statusCounts/);
   assert.match(html, /href="\/tmp\/voice-text\.png"/);
   assert.match(html, /缺少候选证据：screenshots: 系统通知截图/);
-  assert.deepEqual(reviewedItems, ["voice_input", "local_notification"]);
+  assert.deepEqual(reviewedItems, {
+    recordHeadSha: "abc1234",
+    reviewedItemIds: ["voice_input", "local_notification"],
+    schemaVersion: 1,
+  });
   assert.match(result.stdout, /manual review pack written/);
   assert.match(result.stdout, /manual review HTML pack written/);
   assert.match(result.stdout, /manual reviewed item list written/);
