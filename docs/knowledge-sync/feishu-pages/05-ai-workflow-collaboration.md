@@ -940,11 +940,15 @@ Review Pack 的 `packageFreshness` 必须与 completion audit 保持一致：
 - `current_with_docs_only_changes` 只说明“文档记录提交没有让证据失效”，不说明人工验收已经完成；`pending` / `not_evaluated` 仍然不能进入 complete 结论。
 - native-shells 护栏要检查 Review Pack 的 docs-only freshness 行为，避免 Review Pack 和 completion audit 后续再次出现 freshness 判断分裂。
 
-## 人工签署防误操作优先级
+## 人工签署逐项确认规则
 
-子任务复核指出，当前 `--mark-passed` 已要求 `--operator` 和 `--confirmed-at`，并且会校验证据字段完整性，但它仍会把所有 item 一次性改成 `passed`。在机器候选证据缺口已经为 0 的阶段，下一类更高价值改进不是继续补截图，而是降低误签风险：
+2026-06-01 起，人工验收 passed filled 记录必须带逐项确认闸门。这个规则的目标是防止“候选证据齐了，所以直接一键全绿”的误签，而不是替代操作者判断。
 
-- 后续可以要求 `--mark-passed` 同时传入完整 item id 确认列表，例如 `--reviewed-item ...` 或 `--reviewed-items-file <json>`。
-- 脚本应校验确认列表与 `record.items[].id` 完全一致后，才允许全量 passed，并把 `reviewedItemIds` 写入 `operatorSignoff`。
-- Review Pack 应展示可复制的 item id 列表，便于操作者逐项核对后再签署。
-- 这类闸门不替代人工判断，但能防止“候选证据齐了，所以直接一键全绿”的人为失误。
+- `pnpm prepare:ios-manual-evidence-record -- --mark-passed` 必须同时传入完整 `--reviewed-item <item-id>` 列表。
+- 脚本必须校验确认列表与 `record.items[].id` 完全一致后，才允许全量 passed；缺项、未知项或重复项都应失败。
+- `operatorSignoff.reviewedItemIds` 必须写入最终签署记录，draft 模式保留空数组。
+- Review Pack 的 Markdown / HTML 签署命令必须自动展开全部 item id，方便操作者逐项打开截图、录屏、API 摘要、bridge marker 和系统 artifact 后再复制运行。
+- `validate:native-shells` 必须守住 `reviewedItemIds` 和 `--reviewed-item` 护栏，避免未来重构把逐项确认退化成单按钮全绿。
+- 即使 21 个自动化命令全部通过、`missingEvidenceCount=0`、`packageFreshness=current`，只要 14 个 item 仍是 `pending` 或 `acceptanceVerdict=not_evaluated`，completion audit 就必须保持 `not_complete`。
+
+HEAD `e91c303` 的 full audit 已按该规则重新归档：`.tmp/v1-completion-audit/current-full-final-20260601-e91c303-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。

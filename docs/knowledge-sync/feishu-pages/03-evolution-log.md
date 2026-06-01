@@ -5750,3 +5750,67 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 Review Pack 新鲜度脚本变更后的最新 HEAD 重新拉回 current evidence / current audit 状态。当前工程侧可自动证明的内容仍全部通过；下一步若继续推进 completion，应优先处理人工签署防误操作和真实 operator sign-off，而不是继续补同类自动证据。
+
+## 阶段 203：人工签署逐项确认闸门
+
+背景：
+
+- 当前证据包的 `missingEvidenceCount=0` 已表示机器可见候选材料齐全，但 14 个人工验收 item 仍是 `pending`。
+- 原 `--mark-passed` 已要求 `--operator` 和 `--confirmed-at`，也会校验证据完整性，但操作者仍可能在没有逐项核对 item id 的情况下把全部 item 一次性标为 passed。
+- 在当前阶段，最大的风险不是缺少更多自动截图，而是误把 review 候选材料当作人工验收结论。
+
+实现：
+
+- `fill-ios-manual-evidence-record` 新增 `--reviewed-item <item-id>` 参数，可重复传入。
+- 当使用 `--mark-passed` 时，脚本要求 `--reviewed-item` 列表与 `record.items[].id` 完全一致；缺项、未知项或重复项都会失败。
+- `operatorSignoff` 新增 `reviewedItemIds`，draft 模式写入空数组，passed 模式按 record 顺序写入操作者确认过的 item id。
+- `generate-ios-manual-review-pack` 的 Markdown / HTML 签署命令会自动展开全部 item id，便于操作者逐项复核后复制运行。
+- `validate:native-shells` 增加 `reviewedItemIds` 和 `--reviewed-item` 护栏，防止后续重构移除签署闸门。
+
+验证：
+
+- `node --test scripts/fill-ios-manual-evidence-record.test.mjs` 通过，覆盖缺少 `--reviewed-item`、未知 item、证据缺失和 signoff 记录。
+- `node --test scripts/generate-ios-manual-review-pack.test.mjs` 通过，覆盖 Markdown / HTML 展示 `--reviewed-item` 列表。
+- `node --test scripts/validate-native-shells.test.mjs` 先红后绿。
+- `pnpm validate:native-shells` 通过。
+- `node scripts/fill-ios-manual-evidence-record.mjs --record .tmp/ios-acceptance-evidence/current-head-final-20260601-59c7bdb-lan/manual-evidence-record.review.json --output /tmp/should-not-pass.json --mark-passed --operator QA --confirmed-at 2026-06-01T08:00:00.000Z` 按预期失败，错误为 `--reviewed-item is required when --mark-passed is used`。
+- `git diff --check` 通过。
+
+阶段价值：
+
+这一阶段把“证据字段齐全”与“操作者逐项确认”明确拆开。脚本仍不会代替人工判断，但会要求操作者在签署时明确确认每一个验收 item，减少一键误签的风险。
+
+## 阶段 204：HEAD e91c303 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-e91c303-lan
+
+pnpm prepare:ios-manual-review-pack -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-e91c303-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-e91c303-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-e91c303-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-e91c303-lan`。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-e91c303-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-e91c303-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-e91c303-lan`。
+- Review Pack 签署命令包含 14 个 `--reviewed-item`：`h5_address_override`、`conversation_persistence`、`navigation_surfaces`、`keyboard_input`、`voice_input`、`photo_attachment`、`file_attachment`、`pdf_text_extraction`、`local_notification`、`notification_click_backflow`、`system_calendar_write`、`system_calendar_cleanup`、`backend_fact_confirmation`、`system_sync_degradation`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=e91c303`，`currentHeadSha=e91c303`。
+- 21 个自动化命令全部 `passed`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把逐项签署闸门提交后的最新 HEAD 重新拉回 current evidence / current audit 状态。自动化门禁和机器候选证据都已经到位，当前唯一产品完成阻塞仍是真实人工复核签署；AI 不能自行把 review 记录标为 passed。
