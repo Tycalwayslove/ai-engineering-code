@@ -492,6 +492,101 @@ test("v1 completion audit best prefers current head evidence over stale candidat
   assert.equal(audit.manualEvidence.selection.selectedRecordFreshnessStatus, "current");
 });
 
+test("v1 completion audit best treats docs-only newer head as a fresh candidate", () => {
+  const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
+  const oldFilledDir = path.join(recordRoot, "current-head-final-20260601-44574d1-lan");
+  const latestReviewDir = path.join(recordRoot, "current-head-final-20260608-9e3c418-lan");
+  fs.mkdirSync(oldFilledDir, { recursive: true });
+  fs.mkdirSync(latestReviewDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(oldFilledDir, "manual-evidence-record.filled.json"),
+    `${JSON.stringify({ ...passedManualRecord(), headSha: "44574d1" }, null, 2)}\n`
+  );
+  fs.writeFileSync(
+    path.join(latestReviewDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(
+      { ...incompleteManualRecord(), headSha: "9e3c418" },
+      null,
+      2
+    )}\n`
+  );
+
+  const audit = buildV1CompletionAudit({
+    currentHeadSha: "c712c80",
+    manualRecordPath: "best",
+    manualRecordRoot: recordRoot,
+    postRecordChangedFilesByRecordHead: {
+      "44574d1": ["scripts/collect-ios-acceptance-evidence.mjs"],
+      "9e3c418": [
+        "ai-factory/memory/working/active-context/current-project-state.md",
+        "docs/qa/v1-readiness-audit.md",
+      ],
+    },
+  });
+
+  assert.equal(
+    audit.manualEvidence.recordPath,
+    path.relative(
+      rootDir,
+      path.join(latestReviewDir, "manual-evidence-record.review.json")
+    )
+  );
+  assert.equal(
+    audit.manualEvidence.packageFreshness.status,
+    "current_with_docs_only_changes"
+  );
+  assert.equal(
+    audit.manualEvidence.selection.selectedRecordFreshnessStatus,
+    "current_with_docs_only_changes"
+  );
+  assert.deepEqual(audit.manualEvidence.packageFreshness.changedFiles, [
+    "ai-factory/memory/working/active-context/current-project-state.md",
+    "docs/qa/v1-readiness-audit.md",
+  ]);
+});
+
+test("v1 completion audit latest selects the newest record by mtime", () => {
+  const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
+  const oldFilledDir = path.join(recordRoot, "older-filled-run");
+  const latestReviewDir = path.join(recordRoot, "latest-review-run");
+  fs.mkdirSync(oldFilledDir, { recursive: true });
+  fs.mkdirSync(latestReviewDir, { recursive: true });
+  const oldRecordPath = path.join(oldFilledDir, "manual-evidence-record.filled.json");
+  const latestRecordPath = path.join(latestReviewDir, "manual-evidence-record.review.json");
+
+  fs.writeFileSync(
+    oldRecordPath,
+    `${JSON.stringify({ ...passedManualRecord(), headSha: "old1234" }, null, 2)}\n`
+  );
+  fs.writeFileSync(
+    latestRecordPath,
+    `${JSON.stringify(
+      { ...incompleteManualRecord(), headSha: "new5678" },
+      null,
+      2
+    )}\n`
+  );
+  fs.utimesSync(oldRecordPath, new Date("2026-06-01T00:00:00.000Z"), new Date("2026-06-01T00:00:00.000Z"));
+  fs.utimesSync(latestRecordPath, new Date("2026-06-08T00:00:00.000Z"), new Date("2026-06-08T00:00:00.000Z"));
+
+  const audit = buildV1CompletionAudit({
+    currentHeadSha: "new5678",
+    manualRecordPath: "latest",
+    manualRecordRoot: recordRoot,
+  });
+
+  assert.equal(
+    audit.manualEvidence.recordPath,
+    path.relative(rootDir, latestRecordPath)
+  );
+  assert.equal(audit.manualEvidence.selection.strategy, "latest");
+  assert.equal(
+    audit.manualEvidence.selection.selectedRecordHeadSha,
+    "new5678"
+  );
+});
+
 test("v1 completion audit CLI ignores invalid manual evidence record candidates", () => {
   const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "v1-completion-audit-"));
   const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
