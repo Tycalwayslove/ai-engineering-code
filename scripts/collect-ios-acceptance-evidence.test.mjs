@@ -106,12 +106,17 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
     fs.readFileSync(manualEvidenceReviewPath, "utf8")
   );
   assert.equal(evidence.mode, "dry-run");
+  assert.equal(evidence.serviceHealth.h5NativeUrlKind, "loopback");
   assert.equal(evidence.serviceHealth.h5NativeTargetMarkerFound, false);
   assert.match(
     evidence.serviceHealth.h5NativeTargetUrl,
     /^http:\/\/127\.0\.0\.1:3000/
   );
   assert.equal(evidence.ios.resetApp, true);
+  assert.equal(evidence.ios.h5DevServerUrlKind, "loopback");
+  assert.equal(evidence.ios.formalReadiness.requireLanH5, false);
+  assert.equal(evidence.ios.formalReadiness.ready, true);
+  assert.deepEqual(evidence.ios.formalReadiness.failures, []);
   assert.equal(evidence.ios.h5DevServerTargetMarkerFound, false);
   assert.equal(evidence.ios.h5DevServerTargetUrl, null);
   assert.equal(evidence.ios.commands.h5DevServerDocument.ok, true);
@@ -226,6 +231,9 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.equal(evidence.replacesManualAcceptance, false);
   assert.equal(manifest.manualAcceptanceRequired, true);
   assert.equal(manifest.acceptanceVerdict, "not_evaluated");
+  assert.equal(manifest.formalReadiness.ready, true);
+  assert.equal(manifest.formalReadiness.h5DevServerUrlKind, "loopback");
+  assert.equal(manifest.formalReadiness.requireLanH5, false);
   assert.equal(manifest.automationCanReplaceManualAcceptance, false);
   assert.equal(manifest.manualEvidenceRecordTemplate, "manual-evidence-record.template.json");
   assert.equal(manifest.manualEvidenceRecordDraft, "manual-evidence-record.draft.json");
@@ -368,6 +376,80 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
   assert.match(manualChecklist, /## 后端事实确认/);
   assert.match(manualChecklist, /api_summary: \/reminders\?conversationId=\.\.\./);
   assert.match(manualChecklist, /system_artifact: iOS 系统日历事件截图/);
+});
+
+test("collect iOS acceptance evidence can require a LAN H5 URL before formal collection", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-require-lan-")
+  );
+
+  const result = spawnSync(
+    "node",
+    [scriptPath, "--dry-run", "--require-lan-h5", "--output-dir", outputDir],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: testEnv(),
+    }
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /requires a private LAN H5 URL/);
+  assert.equal(fs.existsSync(path.join(outputDir, "acceptance-evidence.json")), true);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manifest.json"), "utf8")
+  );
+
+  assert.equal(evidence.ios.h5DevServerUrlKind, "loopback");
+  assert.equal(evidence.ios.formalReadiness.requireLanH5, true);
+  assert.equal(evidence.ios.formalReadiness.ready, false);
+  assert.deepEqual(evidence.ios.formalReadiness.failures, [
+    "H5DevServerURL must use a private LAN host when --require-lan-h5 is set.",
+  ]);
+  assert.equal(manifest.formalReadiness.ready, false);
+  assert.equal(manifest.formalReadiness.h5DevServerUrlKind, "loopback");
+  assert.equal(manifest.formalReadiness.requireLanH5, true);
+});
+
+test("collect iOS acceptance evidence recognizes private LAN H5 URL overrides", () => {
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ios-acceptance-evidence-lan-url-")
+  );
+
+  const result = spawnSync(
+    "node",
+    [scriptPath, "--dry-run", "--require-lan-h5", "--output-dir", outputDir],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: testEnv({
+        H5_DEV_SERVER_URL: "http://192.168.1.238:3000/?native=ios&bridgeDebug=1",
+        AI_CODE_H5_NATIVE_BASE_URL: "http://192.168.1.238:3000",
+      }),
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "acceptance-evidence.json"), "utf8")
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outputDir, "manifest.json"), "utf8")
+  );
+
+  assert.equal(evidence.serviceHealth.h5NativeUrlKind, "private_lan");
+  assert.equal(evidence.ios.h5DevServerUrlKind, "private_lan");
+  assert.equal(evidence.ios.formalReadiness.requireLanH5, true);
+  assert.equal(evidence.ios.formalReadiness.ready, true);
+  assert.deepEqual(evidence.ios.formalReadiness.failures, []);
+  assert.equal(manifest.formalReadiness.ready, true);
+  assert.equal(manifest.formalReadiness.h5DevServerUrlKind, "private_lan");
+  assert.equal(manifest.formalReadiness.requireLanH5, true);
 });
 
 test("collect iOS acceptance evidence reads voice UI test metadata", () => {

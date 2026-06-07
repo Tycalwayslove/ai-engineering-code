@@ -1053,3 +1053,27 @@ HEAD `1bb9d83` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/curre
 - `validate:ios-acceptance-evidence` 必须能在 LAN full audit 环境下通过，不能要求调用者先手动 unset URL 变量。
 
 HEAD `d9618d8` 已按该规则修复并归档：在 LAN 环境下单独运行 `pnpm validate:ios-acceptance-evidence` 通过 29 个测试；full audit `.tmp/v1-completion-audit/current-full-final-20260608-d9618d8-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
+## 正式 iOS 采证 LAN 前置校验规则
+
+2026-06-08 起，正式 iOS 验收证据包应在采集入口显式要求局域网 H5 地址，避免用 loopback 环境生成看似完整但不满足正式验收条件的证据包。
+
+- 正式 LAN full audit 前的 `collect:ios-acceptance-evidence` 命令应带 `--require-lan-h5`，或设置 `AI_CODE_IOS_ACCEPTANCE_REQUIRE_LAN_H5=1`。
+- 采证脚本必须记录 `serviceHealth.h5NativeUrlKind`、`ios.h5DevServerUrlKind`、`ios.formalReadiness` 和 `manifest.formalReadiness`。
+- `loopback` 包括 `localhost`、`127.*` 和 `::1`，不能用于正式 LAN 采证。
+- `private_lan` 包括 `10/8`、`172.16/12`、`192.168/16` 和 `169.254/16`。
+- 开启 `--require-lan-h5` 后，如果 `H5DevServerURL` 不是 `private_lan`，采证脚本必须快速失败并写出 `acceptance-evidence.json` / `manifest.json`，便于定位错误环境。
+- 快速失败不能生成 passed 或人工签署材料；它只说明采证入口配置不满足正式验收条件。
+- `validate:native-shells` 必须守住 `--require-lan-h5`、`AI_CODE_IOS_ACCEPTANCE_REQUIRE_LAN_H5`、`formalReadiness`、`h5NativeUrlKind`、`h5DevServerUrlKind`、`private_lan` 和失败文案，防止该门禁被移除。
+
+已验证：
+
+```bash
+node --test scripts/collect-ios-acceptance-evidence.test.mjs
+node --check scripts/collect-ios-acceptance-evidence.mjs
+node --test scripts/validate-native-shells.test.mjs
+pnpm validate:ios-acceptance-evidence
+pnpm validate:native-shells
+```
+
+该规则只前移环境校验，不改变 completion 结论：即使正式 LAN 采证通过，14 个人工验收 item 仍必须由真实操作者逐项复核并签署后，completion audit 才可能进入 complete。

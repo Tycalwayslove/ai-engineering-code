@@ -57,6 +57,16 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /manualEvidenceReportPath/);
   assert.match(validator, /externalKnowledgeSync/);
   assert.match(validator, /external-knowledge-status/);
+  assert.match(validator, /--require-lan-h5/);
+  assert.match(validator, /AI_CODE_IOS_ACCEPTANCE_REQUIRE_LAN_H5/);
+  assert.match(validator, /formalReadiness/);
+  assert.match(validator, /h5NativeUrlKind/);
+  assert.match(validator, /h5DevServerUrlKind/);
+  assert.match(validator, /private_lan/);
+  assert.match(
+    validator,
+    /H5DevServerURL must use a private LAN host when --require-lan-h5 is set\./
+  );
   assert.match(validator, /manual-record-root/);
   assert.match(validator, /manual-record best/);
   assert.match(validator, /人工证据记录选择/);

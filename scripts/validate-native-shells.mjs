@@ -306,6 +306,22 @@ assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "no
 assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "automationCanReplaceManualAcceptance");
 assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "manual_required");
 assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "不能替代真实人工验收");
+assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "--require-lan-h5");
+assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "AI_CODE_IOS_ACCEPTANCE_REQUIRE_LAN_H5");
+assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "formalReadiness");
+assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "h5NativeUrlKind");
+assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "h5DevServerUrlKind");
+assertIncludes(iosAcceptanceEvidenceScriptPath, iosAcceptanceEvidenceScript, "private_lan");
+assertIncludes(
+  iosAcceptanceEvidenceScriptPath,
+  iosAcceptanceEvidenceScript,
+  "H5DevServerURL must use a private LAN host when --require-lan-h5 is set."
+);
+assertIncludes(
+  iosAcceptanceEvidenceScriptPath,
+  iosAcceptanceEvidenceScript,
+  "Formal iOS acceptance requires a private LAN H5 URL."
+);
 
 const iosManualAcceptancePath = "docs/qa/ios-v1-system-acceptance.md";
 const iosManualAcceptance = readRequired(iosManualAcceptancePath);

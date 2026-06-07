@@ -321,6 +321,7 @@ function parseArgs(argv) {
     captureCalendarSystemApp:
       process.env.AI_CODE_IOS_ACCEPTANCE_CAPTURE_CALENDAR_APP === "1" ||
       seedSupportedSystemEvidence,
+    requireLanH5: process.env.AI_CODE_IOS_ACCEPTANCE_REQUIRE_LAN_H5 === "1",
     skipBuild: process.env.AI_CODE_IOS_ACCEPTANCE_SKIP_BUILD === "1",
     screenshotDelayMs: Number(
       process.env.AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS ?? "3000"
@@ -357,6 +358,8 @@ function parseArgs(argv) {
       args.seedAttachmentInputs = true;
     } else if (value === "--capture-calendar-system-app") {
       args.captureCalendarSystemApp = true;
+    } else if (value === "--require-lan-h5") {
+      args.requireLanH5 = true;
     } else if (value === "--skip-build") {
       args.skipBuild = true;
     } else if (value === "--screenshot-delay-ms") {
@@ -447,6 +450,66 @@ function collectGitState({ dryRun }) {
   };
 }
 
+function parseUrlHost(value) {
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function isPrivateLanHost(host) {
+  const match = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (!match) {
+    return false;
+  }
+  const octets = match.slice(1).map(Number);
+  const [first, second] = octets;
+  if (octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+  return (
+    first === 10 ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168) ||
+    (first === 169 && second === 254)
+  );
+}
+
+function classifyH5Url(value) {
+  const host = parseUrlHost(value);
+  if (!host) {
+    return "invalid";
+  }
+  if (
+    host === "localhost" ||
+    host === "::1" ||
+    host === "[::1]" ||
+    host.startsWith("127.")
+  ) {
+    return "loopback";
+  }
+  if (isPrivateLanHost(host)) {
+    return "private_lan";
+  }
+  return "other";
+}
+
+function buildFormalReadiness({ h5DevServerUrlKind, requireLanH5 }) {
+  const failures = [];
+  if (requireLanH5 && h5DevServerUrlKind !== "private_lan") {
+    failures.push(
+      "H5DevServerURL must use a private LAN host when --require-lan-h5 is set."
+    );
+  }
+  return {
+    ready: failures.length === 0,
+    requireLanH5,
+    h5DevServerUrlKind,
+    failures,
+  };
+}
+
 function checkH5TargetDocument({ dryRun, url }) {
   const trimmedUrl = typeof url === "string" ? url.trim() : "";
   const isHttpUrl = /^https?:\/\//.test(trimmedUrl);
@@ -515,6 +578,7 @@ function collectServiceHealth({ dryRun }) {
   });
   return {
     apiHealthStatus: api.stdout.trim(),
+    h5NativeUrlKind: classifyH5Url(h5Target.url ?? `${h5NativeBaseUrl}/`),
     h5NativeTargetMarkerFound: h5Target.markerFound,
     h5NativeTargetUrl: h5Target.url,
     h5NativeStatus: h5.stdout.trim(),
@@ -4014,6 +4078,10 @@ function collectBuildAndLaunch({
         stderr: `Info.plist not found at ${infoPlist}`,
       };
   const h5DevServerUrl = commands.h5DevServerUrl.stdout.trim();
+  const h5DevServerUrlForReadiness = /^https?:\/\//.test(h5DevServerUrl)
+    ? h5DevServerUrl
+    : process.env.H5_DEV_SERVER_URL ??
+      "http://127.0.0.1:3000/?native=ios&bridgeDebug=1";
   const h5DevServerTarget = checkH5TargetDocument({
     dryRun,
     url: h5DevServerUrl,
@@ -4062,6 +4130,7 @@ function collectBuildAndLaunch({
     h5DevServerTargetMarkerFound: h5DevServerTarget.markerFound,
     h5DevServerTargetUrl: h5DevServerTarget.url,
     h5DevServerUrl,
+    h5DevServerUrlKind: classifyH5Url(h5DevServerUrlForReadiness),
     screenshotPath,
     screenshotDelayMs,
     conversationPersistence: {
@@ -4112,6 +4181,12 @@ function buildManifest(evidence) {
     branch: evidence.git.branch,
     headSha: evidence.git.commit,
     acceptanceVerdict: "not_evaluated",
+    formalReadiness: evidence.ios.formalReadiness ?? {
+      ready: true,
+      requireLanH5: false,
+      h5DevServerUrlKind: evidence.ios.h5DevServerUrlKind ?? "unknown",
+      failures: [],
+    },
     manualAcceptanceRequired: true,
     manualEvidenceRecordTemplate: "manual-evidence-record.template.json",
     manualEvidenceRecordDraft: "manual-evidence-record.draft.json",
@@ -4371,8 +4446,14 @@ function writeSummary(evidence, outputDir) {
     "",
     `- API health HTTP 状态：${evidence.serviceHealth.apiHealthStatus || "未采集"}`,
     `- H5 native HTTP 状态：${evidence.serviceHealth.h5NativeStatus || "未采集"}`,
+    `- H5 native URL 类型：${evidence.serviceHealth.h5NativeUrlKind || "未采集"}`,
     `- H5 native 目标页面识别：${evidence.serviceHealth.h5NativeTargetMarkerFound ? "是" : "否"}`,
     `- H5DevServerURL：${evidence.ios.h5DevServerUrl || "未采集"}`,
+    `- H5DevServerURL 类型：${evidence.ios.h5DevServerUrlKind || "未采集"}`,
+    `- 正式验收 LAN 前置校验：${evidence.ios.formalReadiness.ready ? "通过" : "未通过"}`,
+    ...(evidence.ios.formalReadiness.failures.length > 0
+      ? evidence.ios.formalReadiness.failures.map((failure) => `- formalReadiness：${failure}`)
+      : []),
     `- H5DevServerURL 目标页面识别：${evidence.ios.h5DevServerTargetMarkerFound ? "是" : "否"}`,
     `- Simulator UDID：${evidence.ios.simulatorUdid || "未采集"}`,
     `- App container：${evidence.ios.appContainer || "未采集"}`,
@@ -4807,6 +4888,81 @@ async function main() {
   const git = collectGitState(args);
   const serviceHealth = collectServiceHealth(args);
   const ios = collectBuildAndLaunch({ ...args, outputDir });
+  ios.formalReadiness = buildFormalReadiness({
+    h5DevServerUrlKind: ios.h5DevServerUrlKind,
+    requireLanH5: args.requireLanH5,
+  });
+  if (!ios.formalReadiness.ready) {
+    const checklist = collectChecklistShape();
+    const evidence = {
+      generatedAt: new Date().toISOString(),
+      runStartedAt,
+      mode,
+      replacesManualAcceptance: false,
+      automatedEvidence,
+      manualEvidenceStillRequired,
+      manualEvidenceGuides,
+      git: {
+        branch: git.branch,
+        commit: git.commit,
+        recentCommits: git.recentCommits,
+        commands: compactCommands(git.commands),
+      },
+      serviceHealth: {
+        apiHealthStatus: serviceHealth.apiHealthStatus,
+        h5NativeUrlKind: serviceHealth.h5NativeUrlKind,
+        h5NativeTargetMarkerFound: serviceHealth.h5NativeTargetMarkerFound,
+        h5NativeTargetUrl: serviceHealth.h5NativeTargetUrl,
+        h5NativeStatus: serviceHealth.h5NativeStatus,
+        commands: compactCommands(serviceHealth.commands),
+      },
+      backendFactSnapshot: {
+        available: false,
+        conversationId: null,
+        counts: {
+          calendarEvents: 0,
+          executionLedger: 0,
+          expenses: 0,
+          reminders: 0,
+          turns: 0,
+        },
+        commands: {},
+      },
+      ios: {
+        appPath: ios.appPath,
+        bundleId: ios.bundleId,
+        resetApp: ios.resetApp,
+        simulatorUdid: ios.simulatorUdid,
+        appContainer: ios.appContainer,
+        h5DevServerTargetMarkerFound: ios.h5DevServerTargetMarkerFound,
+        h5DevServerTargetUrl: ios.h5DevServerTargetUrl,
+        h5DevServerUrl: ios.h5DevServerUrl,
+        h5DevServerUrlKind: ios.h5DevServerUrlKind,
+        formalReadiness: ios.formalReadiness,
+        screenshotPath: ios.screenshotPath,
+        screenshotDelayMs: ios.screenshotDelayMs,
+        conversationPersistence: ios.conversationPersistence,
+        systemDiagnostics: ios.systemDiagnostics,
+        commands: compactCommands(ios.commands),
+      },
+      checklist,
+    };
+    const manifest = buildManifest(evidence);
+    writeText(
+      path.join(outputDir, "acceptance-evidence.json"),
+      `${JSON.stringify(evidence, null, 2)}\n`
+    );
+    writeText(
+      path.join(outputDir, "manifest.json"),
+      `${JSON.stringify(manifest, null, 2)}\n`
+    );
+    console.error("Formal iOS acceptance requires a private LAN H5 URL.");
+    for (const failure of ios.formalReadiness.failures) {
+      console.error(`- ${failure}`);
+    }
+    console.error(`Partial evidence written to ${outputDir}`);
+    process.exit(1);
+  }
   const calendarAccessPreparation = prepareCalendarAccessForSystemEvidence({
     captureCalendarSystemApp: args.captureCalendarSystemApp,
     dryRun: args.dryRun,
@@ -5004,6 +5160,7 @@ async function main() {
     },
     serviceHealth: {
       apiHealthStatus: serviceHealth.apiHealthStatus,
+      h5NativeUrlKind: serviceHealth.h5NativeUrlKind,
       h5NativeTargetMarkerFound: serviceHealth.h5NativeTargetMarkerFound,
       h5NativeTargetUrl: serviceHealth.h5NativeTargetUrl,
       h5NativeStatus: serviceHealth.h5NativeStatus,
@@ -5064,6 +5221,8 @@ async function main() {
       h5DevServerTargetMarkerFound: ios.h5DevServerTargetMarkerFound,
       h5DevServerTargetUrl: ios.h5DevServerTargetUrl,
       h5DevServerUrl: ios.h5DevServerUrl,
+      h5DevServerUrlKind: ios.h5DevServerUrlKind,
+      formalReadiness: ios.formalReadiness,
       screenshotPath: ios.screenshotPath,
       screenshotDelayMs: ios.screenshotDelayMs,
       calendarAccessPreparation: {

@@ -6475,3 +6475,45 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 `1bb9d83` 的 Handoff 防误签脚本变更重新绑定到正式 LAN full audit：自动化门禁全绿、候选证据缺口归零、证据包 HEAD 新鲜。剩余阻塞仍是清晰的人类边界：真实操作者需要逐项复核并签署 passed filled 记录。
+
+## 阶段 225：正式 iOS 采证 LAN 前置校验
+
+背景：
+
+- 最近几轮正式 full audit 都依赖局域网 H5 地址，才能证明 iOS App 不是只访问本机 loopback。
+- 旧采证命令即使父进程忘记传局域网地址，也会继续跑系统日历、通知、附件等长采证，最后才在人工 review 中暴露“局域网地址 App 启动截图”缺口。
+- 这会浪费一次 full audit 时间，也容易让操作者误以为证据包已经满足正式验收环境。
+
+实现：
+
+- `collect:ios-acceptance-evidence` 新增 `--require-lan-h5`，也可通过 `AI_CODE_IOS_ACCEPTANCE_REQUIRE_LAN_H5=1` 开启。
+- 采证包新增 URL 分类字段：
+  - `serviceHealth.h5NativeUrlKind`
+  - `ios.h5DevServerUrlKind`
+  - `ios.formalReadiness`
+  - `manifest.formalReadiness`
+- URL 分类把 `localhost`、`127.*`、`::1` 归为 `loopback`；把 `10/8`、`172.16/12`、`192.168/16`、`169.254/16` 归为 `private_lan`；其他可解析地址归为 `other`。
+- 当开启 `--require-lan-h5` 且 `H5DevServerURL` 不是 `private_lan` 时，脚本会在基础服务和 iOS 启动信息采集后写出 `acceptance-evidence.json` / `manifest.json`，随后非零退出，不再继续跑后续长采证。
+- `summary.md` 会展示 H5 native URL 类型、`H5DevServerURL` 类型和正式验收 LAN 前置校验结果。
+- `validate:native-shells` 已新增护栏，防止参数、`formalReadiness`、URL kind 字段和失败文案被后续重构移除。
+
+验证：
+
+```bash
+node --test scripts/collect-ios-acceptance-evidence.test.mjs
+node --check scripts/collect-ios-acceptance-evidence.mjs
+node --test scripts/validate-native-shells.test.mjs
+pnpm validate:ios-acceptance-evidence
+pnpm validate:native-shells
+```
+
+结果：
+
+- 默认 dry-run 会记录 `loopback`，`formalReadiness.ready=true`。
+- `--dry-run --require-lan-h5` 在默认 loopback 下会失败，并把失败原因写入 evidence / manifest。
+- 注入 `H5_DEV_SERVER_URL=http://192.168.1.238:3000/?native=ios&bridgeDebug=1` 和 `AI_CODE_H5_NATIVE_BASE_URL=http://192.168.1.238:3000` 后，`--require-lan-h5` dry-run 通过并记录 `private_lan`。
+- 下一轮正式 LAN full audit 应显式带上 `--require-lan-h5`，让错误环境快速失败。
+
+阶段价值：
+
+这一阶段把“正式验收必须使用局域网 H5 地址”从人工 review 里的后置缺口，前移成采证入口的结构化门禁。它不改变人工验收边界，也不会把任何 item 自动标为 passed；它只是防止非正式环境的证据包继续消耗长采证时间。
