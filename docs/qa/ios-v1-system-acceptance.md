@@ -508,8 +508,9 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 - HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-review-pack.html`。
 - HEAD 绑定确认列表：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-reviewed-items.json`。
 - lightweight audit：`.tmp/v1-completion-audit/current-lightweight-20260608-4281375-lan`。
+- full audit：`.tmp/v1-completion-audit/current-full-final-20260608-a4b9385-lan`。
 
-本轮 evidence 使用 `--require-lan-h5` 生成，`manifest.formalReadiness.ready=true`，`H5DevServerURL` 和 H5 native URL 均为 `private_lan`。lightweight audit 使用当前 HEAD 的 `.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json`，证据包 `packageFreshness.status=current`，候选证据缺口为 0。但本轮没有使用 `--run-automated-commands` 重跑 21 个自动化命令；最近一次 21 项全绿 full audit 仍是 `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`。人工记录仍为 `acceptanceVerdict=not_evaluated`，14 个 item 全部 `pending`，所以不能视为验收通过。
+本轮 evidence 使用 `--require-lan-h5` 生成，`manifest.formalReadiness.ready=true`，`H5DevServerURL` 和 H5 native URL 均为 `private_lan`。HEAD `a4b9385` 的 full audit 使用 `--run-automated-commands --manual-record best --manual-record-root .tmp/ios-acceptance-evidence`，自动选择 `.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json`；21 个自动化命令全部 `passed`，候选证据缺口为 0，`packageFreshness.status=current_with_docs_only_changes`。人工记录仍为 `acceptanceVerdict=not_evaluated`，14 个 item 全部 `pending`，且缺少 `operatorSignoff`，所以不能视为验收通过。
 
 当前候选证据缺口已为 0；Handoff 的“当前补证重点”显示没有缺少的候选证据。但这只说明候选材料齐备，不代表真实人工验收已经通过。
 

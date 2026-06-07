@@ -6773,3 +6773,47 @@ pnpm collect:v1-completion-audit -- \
 阶段价值：
 
 这一阶段把当前 HEAD 的人工复核入口重新拉回 fresh 状态：操作者现在应打开 `4281375` 的 Handoff / Review Pack 逐项复核，而不是继续使用 `a00ae87` 的旧包。正式 completion 仍需要真实操作者生成 signed filled record，并用该 filled record 重跑 `--run-automated-commands` full audit；本轮没有执行飞书或 Obsidian 真实同步。
+
+## 阶段 230：HEAD a4b9385 full audit 基线刷新
+
+背景：
+
+- 阶段 229 只生成了当前 HEAD 辅助证据包和 lightweight audit。
+- `a4b9385` 是记录当前证据入口的 docs-only 提交；按照 docs-only 新鲜度规则，`4281375` 的人工 review record 可以作为 `current_with_docs_only_changes` 候选，但仍需要补一份当前 HEAD 的 full audit 自动化基线。
+
+执行：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:v1-completion-audit -- \
+  --run-automated-commands \
+  --manual-record best \
+  --manual-record-root .tmp/ios-acceptance-evidence \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-a4b9385-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-a4b9385-lan`。
+- 21 个自动化命令全部 `passed`。
+- `--manual-record best` 选择 `.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json`。
+- `manualEvidence.missingEvidenceCount=0`。
+- `manualEvidence.packageFreshness.status=current_with_docs_only_changes`。
+- `recordHeadSha=4281375`，`currentHeadSha=a4b9385`。
+- `postRecordChangedFiles` 仅包含 `ai-factory/memory/` 与 `docs/` 源稿，不包含产品代码或采证脚本。
+- 最终仍为 `verdict=not_complete`。
+
+未完成边界：
+
+- 14 个人工验收 item 仍全部为 `pending`。
+- `operatorSignoff` 仍缺失。
+- `acceptanceVerdict=not_evaluated`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把当前 HEAD 的自动化门禁重新拉到全绿基线，同时保留人工验收边界：自动化全绿只说明产品、契约、iOS UI test、采证工具和文档门禁未回归；不代表真实系统能力人工验收已经通过。下一步仍是由真实操作者基于 `4281375` Review Pack 逐项复核并生成 signed filled record。
