@@ -51,6 +51,87 @@ function completeReviewRecord() {
   };
 }
 
+function notificationReviewRecord() {
+  return {
+    schemaVersion: 1,
+    headSha: "abc1234",
+    acceptanceVerdict: "not_evaluated",
+    manualAcceptanceRequired: true,
+    automationCanReplaceManualAcceptance: false,
+    packageEvidence: {},
+    items: [
+      {
+        id: "local_notification",
+        title: "本地通知",
+        status: "pending",
+        requiredEvidence: {
+          screenshots: [],
+          recordings: [],
+          apiSummaries: [],
+          bridgeMarkers: [],
+          systemArtifacts: ["系统通知截图"],
+        },
+        evidence: {
+          screenshots: [],
+          recordings: [],
+          apiSummaries: [],
+          bridgeMarkers: [],
+          systemArtifacts: [],
+          operatorNotes: "",
+          blocker: "",
+        },
+      },
+      {
+        id: "notification_click_backflow",
+        title: "通知点击回流",
+        status: "pending",
+        requiredEvidence: {
+          screenshots: [],
+          recordings: [],
+          apiSummaries: [],
+          bridgeMarkers: [],
+          systemArtifacts: ["系统通知点击录屏"],
+        },
+        evidence: {
+          screenshots: [],
+          recordings: [],
+          apiSummaries: [],
+          bridgeMarkers: [],
+          systemArtifacts: [],
+          operatorNotes: "",
+          blocker: "",
+        },
+      },
+    ],
+  };
+}
+
+function writeNotificationUiTestMetadata(tmpDir, overrides = {}) {
+  const logPath = path.join(tmpDir, "ios-notification-ui-test.log");
+  const resultBundlePath = path.join(tmpDir, "ios-notification-ui-test.xcresult");
+  const videoPath = path.join(tmpDir, "system-notification-click.mp4");
+  fs.writeFileSync(logPath, "notification ui test log\n");
+  fs.mkdirSync(resultBundlePath, { recursive: true });
+  fs.writeFileSync(videoPath, "video\n");
+  const metadata = {
+    error: null,
+    generatedAt: "2026-06-08T00:00:00.000Z",
+    logPath,
+    passed: true,
+    resultBundlePath,
+    screenshotAttachments: {
+      notificationClickBackflow: "通知点击后 App 回流",
+      systemNotification: "系统通知截图",
+    },
+    source: "validate:ios-notification-ui-test",
+    videoPath,
+    ...overrides,
+  };
+  const metadataPath = path.join(tmpDir, "notification-ui-test.json");
+  fs.writeFileSync(metadataPath, `${JSON.stringify(metadata, null, 2)}\n`);
+  return { logPath, metadata, metadataPath, resultBundlePath, videoPath };
+}
+
 test("filled record draft preserves pending statuses by default", () => {
   const record = buildFilledManualEvidenceRecord(completeReviewRecord(), {
     sourcePath: "manual-evidence-record.review.json",
@@ -242,6 +323,138 @@ test("CLI mark-passed refuses reviewed item file from another record head", () =
 
   assert.equal(result.status, 1, result.stdout);
   assert.match(result.stderr, /recordHeadSha does not match/);
+});
+
+test("CLI attaches notification UI test metadata without changing pending statuses", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "manual-evidence-notification-"));
+  const reviewPath = path.join(tmpDir, "manual-evidence-record.review.json");
+  const filledPath = path.join(tmpDir, "manual-evidence-record.notification-review.json");
+  const { metadataPath, resultBundlePath, videoPath } = writeNotificationUiTestMetadata(tmpDir);
+  fs.writeFileSync(reviewPath, `${JSON.stringify(notificationReviewRecord(), null, 2)}\n`);
+
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/fill-ios-manual-evidence-record.mjs",
+      "--",
+      "--record",
+      reviewPath,
+      "--output",
+      filledPath,
+      "--attach-notification-ui-test-metadata",
+      metadataPath,
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const filled = JSON.parse(fs.readFileSync(filledPath, "utf8"));
+  assert.equal(filled.acceptanceVerdict, "not_evaluated");
+  assert.equal(filled.items[0].status, "pending");
+  assert.equal(filled.items[1].status, "pending");
+  assert.deepEqual(filled.operatorSignoff, {
+    confirmedAt: null,
+    mode: "draft",
+    operator: null,
+    reviewedItemIds: [],
+  });
+  assert.ok(
+    filled.items[0].evidence.systemArtifacts.some((entry) =>
+      entry.includes(`系统通知截图: 系统通知截图 (${resultBundlePath})`)
+    )
+  );
+  assert.ok(
+    filled.items[1].evidence.systemArtifacts.some((entry) =>
+      entry.includes(`系统通知点击录屏: ${videoPath}`)
+    )
+  );
+  assert.match(filled.items[0].evidence.operatorNotes, /通知 UI test metadata/);
+});
+
+test("CLI refuses to attach failed or incomplete notification UI test metadata", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "manual-evidence-notification-"));
+  const reviewPath = path.join(tmpDir, "manual-evidence-record.review.json");
+  const filledPath = path.join(tmpDir, "manual-evidence-record.notification-review.json");
+  const { metadataPath, videoPath } = writeNotificationUiTestMetadata(tmpDir, {
+    passed: false,
+  });
+  fs.writeFileSync(reviewPath, `${JSON.stringify(notificationReviewRecord(), null, 2)}\n`);
+
+  const failedResult = spawnSync(
+    "node",
+    [
+      "scripts/fill-ios-manual-evidence-record.mjs",
+      "--",
+      "--record",
+      reviewPath,
+      "--output",
+      filledPath,
+      "--attach-notification-ui-test-metadata",
+      metadataPath,
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(failedResult.status, 1, failedResult.stdout);
+  assert.match(failedResult.stderr, /metadata passed must be true/);
+
+  fs.unlinkSync(videoPath);
+  const missingVideoPath = path.join(tmpDir, "missing-system-notification-click.mp4");
+  writeNotificationUiTestMetadata(tmpDir, {
+    videoPath: missingVideoPath,
+  });
+  const missingVideoResult = spawnSync(
+    "node",
+    [
+      "scripts/fill-ios-manual-evidence-record.mjs",
+      "--",
+      "--record",
+      reviewPath,
+      "--output",
+      filledPath,
+      "--attach-notification-ui-test-metadata",
+      metadataPath,
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(missingVideoResult.status, 1, missingVideoResult.stdout);
+  assert.match(missingVideoResult.stderr, /metadata videoPath does not exist/);
+});
+
+test("CLI refuses to attach notification UI test metadata while marking passed", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "manual-evidence-notification-"));
+  const reviewPath = path.join(tmpDir, "manual-evidence-record.review.json");
+  const filledPath = path.join(tmpDir, "manual-evidence-record.notification-review.json");
+  const { metadataPath } = writeNotificationUiTestMetadata(tmpDir);
+  fs.writeFileSync(reviewPath, `${JSON.stringify(notificationReviewRecord(), null, 2)}\n`);
+
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/fill-ios-manual-evidence-record.mjs",
+      "--",
+      "--record",
+      reviewPath,
+      "--output",
+      filledPath,
+      "--attach-notification-ui-test-metadata",
+      metadataPath,
+      "--mark-passed",
+      "--operator",
+      "QA",
+      "--confirmed-at",
+      "2026-06-08T00:00:00.000Z",
+      "--reviewed-item",
+      "local_notification",
+      "--reviewed-item",
+      "notification_click_backflow",
+    ],
+    { cwd: rootDir, encoding: "utf8" }
+  );
+
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /cannot be used with --mark-passed/);
 });
 
 test("package exposes manual evidence fill command", () => {

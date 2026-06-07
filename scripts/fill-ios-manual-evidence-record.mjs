@@ -14,6 +14,79 @@ function appendOperatorNote(existingNote, nextNote) {
   return current ? `${current}\n${nextNote}` : nextNote;
 }
 
+function addUnique(values, nextValue) {
+  const list = Array.isArray(values) ? values : [];
+  return list.includes(nextValue) ? list : [...list, nextValue];
+}
+
+function assertExistingMetadataPath(label, filePath) {
+  if (!filePath) {
+    throw new Error(`notification UI test metadata ${label} is required`);
+  }
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`notification UI test metadata ${label} does not exist: ${filePath}`);
+  }
+}
+
+function readNotificationUiTestMetadata(filePath) {
+  const metadata = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  if (metadata.passed !== true) {
+    throw new Error("notification UI test metadata passed must be true");
+  }
+  assertExistingMetadataPath("logPath", metadata.logPath);
+  assertExistingMetadataPath("resultBundlePath", metadata.resultBundlePath);
+  assertExistingMetadataPath("videoPath", metadata.videoPath);
+  if (!metadata.screenshotAttachments?.systemNotification) {
+    throw new Error("notification UI test metadata screenshotAttachments.systemNotification is required");
+  }
+  return metadata;
+}
+
+function appendNotificationUiTestEvidence(record, metadata) {
+  const nextRecord = cloneJson(record);
+  const localNotificationItem = (nextRecord.items ?? []).find(
+    (item) => item?.id === "local_notification"
+  );
+  const notificationClickBackflowItem = (nextRecord.items ?? []).find(
+    (item) => item?.id === "notification_click_backflow"
+  );
+  if (!localNotificationItem || !notificationClickBackflowItem) {
+    throw new Error("notification UI test metadata import requires local_notification and notification_click_backflow items");
+  }
+
+  const testArtifactSummary =
+    `pnpm validate:ios-notification-ui-test 输出或 xcresult: log=${metadata.logPath}, xcresult=${metadata.resultBundlePath}`;
+  localNotificationItem.evidence = localNotificationItem.evidence ?? {};
+  localNotificationItem.evidence.systemArtifacts = addUnique(
+    localNotificationItem.evidence.systemArtifacts,
+    `系统通知截图: ${metadata.screenshotAttachments.systemNotification} (${metadata.resultBundlePath})`
+  );
+  localNotificationItem.evidence.systemArtifacts = addUnique(
+    localNotificationItem.evidence.systemArtifacts,
+    testArtifactSummary
+  );
+  localNotificationItem.evidence.operatorNotes = appendOperatorNote(
+    localNotificationItem.evidence.operatorNotes,
+    "已从通知 UI test metadata 导入系统通知候选证据；仍需人工复核。"
+  );
+
+  notificationClickBackflowItem.evidence = notificationClickBackflowItem.evidence ?? {};
+  notificationClickBackflowItem.evidence.systemArtifacts = addUnique(
+    notificationClickBackflowItem.evidence.systemArtifacts,
+    `系统通知点击录屏: ${metadata.videoPath}`
+  );
+  notificationClickBackflowItem.evidence.systemArtifacts = addUnique(
+    notificationClickBackflowItem.evidence.systemArtifacts,
+    testArtifactSummary
+  );
+  notificationClickBackflowItem.evidence.operatorNotes = appendOperatorNote(
+    notificationClickBackflowItem.evidence.operatorNotes,
+    "已从通知 UI test metadata 导入系统通知点击候选证据；仍需人工复核。"
+  );
+
+  return nextRecord;
+}
+
 function assertMarkPassedOptions(options) {
   if (!options.operator) {
     throw new Error("--operator is required when --mark-passed is used");
@@ -100,7 +173,12 @@ function buildInstructions(markPassed) {
 }
 
 export function buildFilledManualEvidenceRecord(record, options = {}) {
-  const nextRecord = cloneJson(record);
+  if (options.markPassed && options.notificationUiTestMetadata) {
+    throw new Error("--attach-notification-ui-test-metadata cannot be used with --mark-passed");
+  }
+  const nextRecord = options.notificationUiTestMetadata
+    ? appendNotificationUiTestEvidence(record, options.notificationUiTestMetadata)
+    : cloneJson(record);
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const sourcePath = options.sourcePath ?? null;
   const markPassed = options.markPassed === true;
@@ -178,6 +256,9 @@ function parseArgs(argv) {
     } else if (arg === "--reviewed-items-file") {
       args.reviewedItemsFilePath = argv[index + 1];
       index += 1;
+    } else if (arg === "--attach-notification-ui-test-metadata") {
+      args.notificationUiTestMetadataPath = argv[index + 1];
+      index += 1;
     } else if (arg === "--mark-passed") {
       args.markPassed = true;
     } else if (arg === "--help" || arg === "-h") {
@@ -192,10 +273,12 @@ function parseArgs(argv) {
 function printUsage() {
   console.log(`Usage:
   node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> [--output <filled.json>]
+  node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> --output <filled.json> --attach-notification-ui-test-metadata <notification-ui-test.json>
   node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> --output <filled.json> --mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-item <item-id>...
   node scripts/fill-ios-manual-evidence-record.mjs --record <review.json> --output <filled.json> --mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-items-file <json-or-lines>
 
 Default behavior writes a filled draft and keeps pending/not_evaluated statuses.
+Use --attach-notification-ui-test-metadata only to append notification candidate evidence; it cannot be combined with --mark-passed.
 Use --mark-passed only after an operator has manually reviewed every evidence item.
 The --reviewed-item or --reviewed-items-file list must exactly match the record items.`);
 }
@@ -239,9 +322,13 @@ function runCli() {
         ? parseReviewedItemIdsFile(path.resolve(rootDir, args.reviewedItemsFilePath), record)
         : []),
     ];
+    const notificationUiTestMetadata = args.notificationUiTestMetadataPath
+      ? readNotificationUiTestMetadata(path.resolve(rootDir, args.notificationUiTestMetadataPath))
+      : null;
     filledRecord = buildFilledManualEvidenceRecord(record, {
       confirmedAt: args.confirmedAt,
       markPassed: args.markPassed,
+      notificationUiTestMetadata,
       operator: args.operator,
       reviewedItemIds,
       sourcePath: path.relative(rootDir, recordPath),

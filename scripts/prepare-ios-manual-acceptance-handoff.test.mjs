@@ -71,6 +71,52 @@ function reviewRecord() {
   };
 }
 
+function reviewRecordWithMissingEvidence() {
+  return {
+    ...reviewRecord(),
+    items: [
+      {
+        id: "local_notification",
+        title: "本地通知",
+        status: "pending",
+        requiredEvidence: {
+          screenshots: ["系统通知截图"],
+          recordings: [],
+          apiSummaries: ["/reminders?conversationId=..."],
+          bridgeMarkers: [],
+          systemArtifacts: [],
+        },
+        evidence: {
+          screenshots: [],
+          recordings: [],
+          apiSummaries: ["/reminders?conversationId=... -> scheduled"],
+          bridgeMarkers: [],
+          systemArtifacts: [],
+        },
+      },
+      {
+        id: "notification_click_backflow",
+        title: "通知点击回流",
+        status: "pending",
+        requiredEvidence: {
+          screenshots: [],
+          recordings: ["系统通知点击录屏"],
+          apiSummaries: [],
+          bridgeMarkers: ["source=native.notifications.reminders.opened"],
+          systemArtifacts: [],
+        },
+        evidence: {
+          screenshots: [],
+          recordings: [],
+          apiSummaries: [],
+          bridgeMarkers: ["source=native.notifications.reminders.opened"],
+          systemArtifacts: [],
+        },
+      },
+    ],
+  };
+}
+
 test("manual acceptance handoff keeps review, sign and audit commands together", () => {
   const markdown = buildManualAcceptanceHandoff(reviewRecord(), {
     audit: {
@@ -207,6 +253,65 @@ test("HTML handoff renders clickable review links and command blocks", () => {
   assert.match(html, /allItemsReviewed/);
   assert.match(html, /--reviewed-items-file .tmp\/run\/manual-evidence-reviewed-items\.json/);
   assert.match(html, /collect:v1-completion-audit/);
+});
+
+test("handoff summarizes current missing evidence focus", () => {
+  const markdown = buildManualAcceptanceHandoff(reviewRecordWithMissingEvidence(), {
+    audit: {
+      verdict: "not_complete",
+      manualEvidence: {
+        packageFreshness: {
+          status: "current",
+          currentHeadSha: "abc1234",
+          recordHeadSha: "abc1234",
+        },
+        missingEvidenceCount: 2,
+        statusCounts: {
+          passed: 0,
+          pending: 2,
+          failed: 0,
+          blocked: 0,
+          other: 0,
+        },
+      },
+    },
+  });
+  const html = buildManualAcceptanceHtmlHandoff(reviewRecordWithMissingEvidence(), {
+    audit: {
+      verdict: "not_complete",
+      manualEvidence: {
+        packageFreshness: {
+          status: "current",
+          currentHeadSha: "abc1234",
+          recordHeadSha: "abc1234",
+        },
+        missingEvidenceCount: 2,
+        statusCounts: {
+          passed: 0,
+          pending: 2,
+          failed: 0,
+          blocked: 0,
+          other: 0,
+        },
+      },
+    },
+  });
+
+  assert.match(markdown, /## 当前补证重点/);
+  assert.match(markdown, /本地通知 `local_notification`/);
+  assert.match(markdown, /`screenshots: 系统通知截图`/);
+  assert.match(markdown, /通知点击回流 `notification_click_backflow`/);
+  assert.match(markdown, /`recordings: 系统通知点击录屏`/);
+  assert.match(markdown, /pnpm validate:ios-notification-ui-test/);
+  assert.match(markdown, /--attach-notification-ui-test-metadata \.tmp\/ios-notification-ui-test\/notification-ui-test\.json/);
+  assert.match(markdown, /manual-evidence-record\.notification-review\.json/);
+  assert.match(html, /<h2>当前补证重点<\/h2>/);
+  assert.match(html, /data-missing-evidence-item-id="local_notification"/);
+  assert.match(html, /screenshots: 系统通知截图/);
+  assert.match(html, /data-missing-evidence-item-id="notification_click_backflow"/);
+  assert.match(html, /recordings: 系统通知点击录屏/);
+  assert.match(html, /pnpm validate:ios-notification-ui-test/);
+  assert.match(html, /attach-notification-ui-test-metadata/);
 });
 
 test("package exposes manual acceptance handoff command", () => {

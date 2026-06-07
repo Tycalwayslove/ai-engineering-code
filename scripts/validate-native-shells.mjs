@@ -126,6 +126,10 @@ assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "confirmed-at
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "generated-sign-command");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "copy-command");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "copy-generated-sign-command");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "missingEvidenceFocusItems");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "当前补证重点");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "通知 UI test 补证辅助");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "--attach-notification-ui-test-metadata");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function copyCommand");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function updateSignCommand");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "allItemsReviewed");
@@ -138,6 +142,8 @@ assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HTML handoff ren
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HEAD-bound reviewed item list");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "generated-sign-command");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "copy-generated-sign-command");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "handoff summarizes current missing evidence focus");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "data-missing-evidence-item-id");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "function copyCommand");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "allItemsReviewed");
 
@@ -148,6 +154,9 @@ assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "pa
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewedItemIds");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--reviewed-item is required");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--reviewed-items-file");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "--attach-notification-ui-test-metadata");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "notification UI test metadata passed must be true");
+assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "cannot be used with --mark-passed");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "recordHeadSha does not match");
 assertIncludes(iosManualEvidenceFillScriptPath, iosManualEvidenceFillScript, "reviewed item ids must exactly match record item ids");
 
@@ -156,6 +165,8 @@ const iosManualEvidenceFillTest = readRequired(iosManualEvidenceFillTestPath);
 assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "mark-passed refuses missing or unknown reviewed item ids");
 assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "reviewedItemIds");
 assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "--reviewed-item is required");
+assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "attaches notification UI test metadata");
+assertIncludes(iosManualEvidenceFillTestPath, iosManualEvidenceFillTest, "cannot be used with --mark-passed");
 
 const v1CompletionAuditScriptPath = "scripts/collect-v1-completion-audit.mjs";
 const v1CompletionAuditScript = readRequired(v1CompletionAuditScriptPath);

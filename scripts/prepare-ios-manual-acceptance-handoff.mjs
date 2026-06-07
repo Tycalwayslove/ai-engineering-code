@@ -12,9 +12,48 @@ import { buildV1CompletionAudit } from "./collect-v1-completion-audit.mjs";
 
 const rootDir = process.cwd();
 const defaultManualRecordRoot = path.join(".tmp", "ios-acceptance-evidence");
+const evidenceCategories = [
+  "screenshots",
+  "recordings",
+  "apiSummaries",
+  "bridgeMarkers",
+  "systemArtifacts",
+];
 
 function asArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function evidenceText(value) {
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function hasEvidence(actualValues, expected) {
+  return asArray(actualValues).some((value) => evidenceText(value).includes(expected));
+}
+
+function missingEvidenceEntries(item) {
+  const requiredEvidence = item?.requiredEvidence ?? {};
+  const evidence = item?.evidence ?? {};
+  const missing = [];
+  for (const category of evidenceCategories) {
+    for (const expected of asArray(requiredEvidence[category])) {
+      if (!hasEvidence(evidence[category], expected)) {
+        missing.push(`${category}: ${expected}`);
+      }
+    }
+  }
+  return missing;
+}
+
+function missingEvidenceFocusItems(items) {
+  return asArray(items)
+    .map((item) => ({
+      id: item?.id ?? "",
+      missing: missingEvidenceEntries(item),
+      title: item?.title ?? item?.item ?? item?.id ?? "未命名项目",
+    }))
+    .filter((item) => item.missing.length > 0);
 }
 
 function currentGitHeadSha() {
@@ -71,10 +110,15 @@ function commandSet({
   gapsReportPath,
   htmlReviewPackPath,
   manualRecordPath,
+  notificationReviewRecordPath,
+  notificationUiTestMetadataPath,
   reviewedItemsPath,
 }) {
   return {
+    attachNotificationUiTestMetadata: `pnpm prepare:ios-manual-evidence-record -- --record ${manualRecordPath} --output ${notificationReviewRecordPath} --attach-notification-ui-test-metadata ${notificationUiTestMetadataPath}`,
     openReviewPack: `open ${htmlReviewPackPath}`,
+    prepareNotificationHandoff: `pnpm prepare:ios-manual-handoff -- --record ${notificationReviewRecordPath}`,
+    runNotificationUiTest: "pnpm validate:ios-notification-ui-test",
     signFilledRecord: `pnpm prepare:ios-manual-evidence-record -- --record ${manualRecordPath} --output ${filledRecordPath} --mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-items-file ${reviewedItemsPath}`,
     validateFilledRecord: `node scripts/validate-ios-manual-evidence-record.mjs --record ${filledRecordPath} --require-complete --report ${gapsReportPath}`,
     runCompletionAudit: `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record ${filledRecordPath} --output-dir ${auditOutputDir} --external-knowledge-status not_synced`,
@@ -95,6 +139,12 @@ function handoffContext(record, options = {}) {
     options.filledRecordPath ?? path.join(path.dirname(manualRecordPath), "manual-evidence-record.filled.json");
   const gapsReportPath =
     options.gapsReportPath ?? path.join(path.dirname(manualRecordPath), "manual-evidence-gaps.md");
+  const notificationReviewRecordPath =
+    options.notificationReviewRecordPath ??
+    path.join(path.dirname(manualRecordPath), "manual-evidence-record.notification-review.json");
+  const notificationUiTestMetadataPath =
+    options.notificationUiTestMetadataPath ??
+    path.join(".tmp", "ios-notification-ui-test", "notification-ui-test.json");
   const auditOutputDir =
     options.auditOutputDir ?? path.join(".tmp", "v1-completion-audit", "manual-acceptance-final");
   const items = asArray(record?.items);
@@ -107,6 +157,8 @@ function handoffContext(record, options = {}) {
     items,
     manualEvidence,
     manualRecordPath,
+    notificationReviewRecordPath,
+    notificationUiTestMetadataPath,
     packageFreshness,
     recordHeadSha: record?.headSha ?? "unknown",
     reviewPackPath,
@@ -130,6 +182,71 @@ function reviewedItemChecklistHtml(items) {
 
 function commandBlockHtml(command) {
   return `<div class="command-block"><button type="button" class="copy-command" data-copy-text="${escapeHtml(command)}">复制</button><pre><code>${escapeHtml(command)}</code></pre></div>`;
+}
+
+function notificationFocusNeeded(focusItems) {
+  return focusItems.some((item) =>
+    ["local_notification", "notification_click_backflow"].includes(item.id)
+  );
+}
+
+function missingEvidenceFocusMarkdown(items, commands) {
+  const focusItems = missingEvidenceFocusItems(items);
+  const lines = ["## 当前补证重点", ""];
+  if (focusItems.length === 0) {
+    lines.push("当前没有缺少的候选证据；仍需真实操作者逐项复核后才能签署。");
+    return lines;
+  }
+  lines.push("以下只是候选证据缺口提示，不代表其它项目已经验收通过。");
+  lines.push("");
+  for (const item of focusItems) {
+    lines.push(`- ${item.title} \`${item.id}\``);
+    for (const missing of item.missing) {
+      lines.push(`  - \`${missing}\``);
+    }
+  }
+  if (notificationFocusNeeded(focusItems)) {
+    lines.push(
+      "",
+      "### 通知 UI test 补证辅助",
+      "",
+      "如果本机已能跑 iOS notification UI test，可以先生成通知候选证据草稿；该命令只补候选 evidence，仍保持 pending/not_evaluated。",
+      "",
+      "```bash",
+      commands.runNotificationUiTest,
+      commands.attachNotificationUiTestMetadata,
+      commands.prepareNotificationHandoff,
+      "```"
+    );
+  }
+  return lines;
+}
+
+function missingEvidenceFocusHtml(items, commands) {
+  const focusItems = missingEvidenceFocusItems(items);
+  if (focusItems.length === 0) {
+    return `<section class="panel">
+    <h2>当前补证重点</h2>
+    <p>当前没有缺少的候选证据；仍需真实操作者逐项复核后才能签署。</p>
+  </section>`;
+  }
+  const itemHtml = focusItems
+    .map(
+      (item) => `<li data-missing-evidence-item-id="${escapeHtml(item.id)}">${escapeHtml(item.title)} <code>${escapeHtml(item.id)}</code><ul>${item.missing
+        .map((missing) => `<li><code>${escapeHtml(missing)}</code></li>`)
+        .join("\n")}</ul></li>`
+    )
+    .join("\n");
+  return `<section class="panel">
+    <h2>当前补证重点</h2>
+    <p>以下只是候选证据缺口提示，不代表其它项目已经验收通过。</p>
+    <ul>${itemHtml}</ul>
+    ${notificationFocusNeeded(focusItems) ? `<h3>通知 UI test 补证辅助</h3>
+    <p>如果本机已能跑 iOS notification UI test，可以先生成通知候选证据草稿；该命令只补候选 evidence，仍保持 pending/not_evaluated。</p>
+    ${commandBlockHtml(commands.runNotificationUiTest)}
+    ${commandBlockHtml(commands.attachNotificationUiTestMetadata)}
+    ${commandBlockHtml(commands.prepareNotificationHandoff)}` : ""}
+  </section>`;
 }
 
 export function buildManualAcceptanceHandoff(record, options = {}) {
@@ -156,6 +273,8 @@ export function buildManualAcceptanceHandoff(record, options = {}) {
     `- missingEvidenceCount: \`${context.manualEvidence.missingEvidenceCount ?? "unknown"}\``,
     `- statusCounts: \`${context.statusCounts}\``,
     `- totalItems: \`${context.items.length}\``,
+    "",
+    ...missingEvidenceFocusMarkdown(context.items, commands),
     "",
     "## 操作步骤",
     "",
@@ -242,6 +361,7 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
       <li>totalItems: <code>${context.items.length}</code></li>
     </ul>
   </section>
+  ${missingEvidenceFocusHtml(context.items, commands)}
   <section class="panel">
     <h2>操作步骤</h2>
     <p>1. 打开 HTML Review Pack，逐项查看截图、录屏、API 摘要、Bridge marker 和系统证据。</p>
