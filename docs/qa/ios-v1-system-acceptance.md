@@ -111,7 +111,7 @@ pnpm prepare:ios-manual-review-pack -- --record .tmp/ios-acceptance-evidence/<ru
 pnpm prepare:ios-manual-handoff -- --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.review.json
 ```
 
-该命令会生成 `manual-acceptance-handoff.md` 和 `manual-acceptance-handoff.html`，并刷新同目录的 Markdown / HTML Review Pack 和 `manual-evidence-reviewed-items.json`。HTML Handoff 可以直接点击打开 HTML Review Pack；命令块仍保留可从仓库根目录复制执行的路径。Handoff 会给出 HTML 打开命令、`--mark-passed` 签署命令、`--require-complete` 校验命令和正式 completion audit 命令；它仍不代表验收通过，只有真实操作者逐项复核后才能运行签署命令。
+该命令会生成 `manual-acceptance-handoff.md` 和 `manual-acceptance-handoff.html`，并刷新同目录的 Markdown / HTML Review Pack 和 `manual-evidence-reviewed-items.json`。HTML Handoff 可以直接点击打开 HTML Review Pack；命令块仍保留可从仓库根目录复制执行的路径。Handoff 会给出 HTML 打开命令、`--mark-passed` 签署命令、`--require-complete` 校验命令和正式 completion audit 命令。HTML Handoff 还包含签署命令生成器：操作者必须逐项勾选全部验收 item，并填写 `operator` 与 `confirmedAt` 后，页面才会生成引用 `manual-evidence-reviewed-items.json` 的 passed filled 记录命令。它仍不代表验收通过，只有真实操作者逐项复核后才能运行签署命令。
 
 证据包默认输出到 `.tmp/ios-acceptance-evidence/<timestamp>/`，包含 `manifest.json`、`acceptance-evidence.json`、`summary.md`、`manual-checklist.todo.md`、`manual-evidence-record.template.json`、`manual-evidence-record.draft.json`、`manual-evidence-record.review.json` 和 `simulator-launch.png`。常用参数：
 
@@ -140,7 +140,7 @@ pnpm prepare:ios-manual-handoff -- --record .tmp/ios-acceptance-evidence/<run>/m
 
 人工复核时可以先用 `pnpm prepare:ios-manual-evidence-record -- --record .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.review.json --output .tmp/ios-acceptance-evidence/<run>/manual-evidence-record.filled.json` 生成 filled 草稿。默认模式只写入 `operatorSignoff.mode=draft` 和 `reviewedItemIds=[]`，保留 `acceptanceVerdict=not_evaluated` 和所有 item 的 `pending` 状态，便于操作者逐项检查。只有操作者已经真实复核并确认所有证据通过时，才允许追加 `--mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-item <item-id>...` 或 `--reviewed-items-file <json-or-lines>`；该模式会先按 `--require-complete` 校验证据字段，并要求确认列表与 `record.items[].id` 完全一致，缺证据、漏 item、未知 item 或重复 item 都不会生成通过记录。生成后的 filled 记录仍要再运行 `node scripts/validate-ios-manual-evidence-record.mjs --record <path> --require-complete --report <report-path>`，再进入 completion audit。
 
-正式签署前建议先生成 `manual-evidence-review-pack.md` 和 `manual-evidence-review-pack.html`。它们会汇总 record 路径、record HEAD、当前 HEAD、新鲜度、`acceptanceVerdict`、每个 item 的状态、required evidence、缺少的候选证据、已预填的截图 / 录屏 / API 摘要 / bridge marker / 系统 artifact，以及下一步签署命令。命令同时会在同目录生成 `manual-evidence-reviewed-items.json`，签署命令会引用该文件；该文件默认包含 `schemaVersion`、`recordHeadSha` 和 `reviewedItemIds`，签署脚本会拒绝 `recordHeadSha` 与当前人工记录 `headSha` 不一致的确认列表。操作者应逐项打开材料确认后再运行。HTML 版会把本地候选证据路径渲染为可点击链接。它们都是复核工作台，不是通过证明；只要 review 记录仍是 `pending` / `not_evaluated`，completion audit 就必须保持 `not_complete`。
+正式签署前建议先生成 `manual-evidence-review-pack.md`、`manual-evidence-review-pack.html` 和 `manual-acceptance-handoff.html`。Review Pack 会汇总 record 路径、record HEAD、当前 HEAD、新鲜度、`acceptanceVerdict`、每个 item 的状态、required evidence、缺少的候选证据、已预填的截图 / 录屏 / API 摘要 / bridge marker / 系统 artifact，以及下一步签署命令。命令同时会在同目录生成 `manual-evidence-reviewed-items.json`，签署命令会引用该文件；该文件默认包含 `schemaVersion`、`recordHeadSha` 和 `reviewedItemIds`，签署脚本会拒绝 `recordHeadSha` 与当前人工记录 `headSha` 不一致的确认列表。HTML Handoff 的签署命令生成器会要求操作者逐项勾选全部 item，并填写 `operator` 与 `confirmedAt` 后才输出签署命令。操作者应逐项打开材料确认后再运行。HTML 版会把本地候选证据路径渲染为可点击链接。它们都是复核工作台，不是通过证明；只要 review 记录仍是 `pending` / `not_evaluated`，completion audit 就必须保持 `not_complete`。
 
 可以用结构化记录校验器检查模板或已补证记录：
 

@@ -6068,3 +6068,66 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 HTML Handoff 提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。工程侧自动化继续全绿，当前唯一产品完成阻塞仍是真实操作者逐项复核签署。
+
+## 阶段 213：HTML Handoff 签署命令生成器
+
+背景：
+
+- HTML Handoff 已经能集中展示 Review Pack、签署命令、校验命令和正式 audit 命令。
+- 操作者仍需要手动确认 14 个 item 都已逐项复核，并手动填入 `operator` 与 `confirmedAt` 后复制命令。
+- 当前最大风险不是缺少候选证据，而是误把未逐项复核的 review 记录一键标成 passed。
+
+实现：
+
+- `manual-acceptance-handoff.html` 新增“签署命令生成器”。
+- 生成器会按 `record.items[]` 渲染逐项 checkbox，并保留每个 item 的 `data-item-id`。
+- 只有全部 item 被勾选，且填写 `operator` 与 `confirmedAt` 后，才会生成 `pnpm prepare:ios-manual-evidence-record -- --mark-passed ... --reviewed-items-file ...` 命令。
+- 生成器默认填入当前 ISO 时间，但仍要求操作者真实复核后再运行命令。
+- `validate:native-shells` 增加 `reviewedItemChecklistHtml`、`data-item-id`、`operator-name`、`confirmed-at`、`generated-sign-command`、`updateSignCommand` 和 `allItemsReviewed` 护栏。
+
+验证：
+
+- 先新增测试并观察失败：HTML Handoff 中没有 `data-item-id="keyboard_input"` 等生成器标识。
+- 实现后 `node --test scripts/prepare-ios-manual-acceptance-handoff.test.mjs scripts/validate-native-shells.test.mjs` 通过。
+- `node --check scripts/prepare-ios-manual-acceptance-handoff.mjs && git diff --check` 通过。
+- `pnpm validate:native-shells` 通过。
+
+阶段价值：
+
+这一阶段把人工签署从“复制固定命令”推进为“逐项勾选确认后生成命令”。它减少漏项和误复制风险，但仍不改变边界：checkbox 只是操作者复核动作的本地辅助，AI 不能代替操作者勾选，也不能自行生成 passed filled 记录。
+
+## 阶段 214：HEAD 0750636 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260601-0750636-lan-rerun \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan`。
+- Markdown Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-acceptance-handoff.md`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-acceptance-handoff.html`，包含签署命令生成器。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260601-0750636-lan-rerun`。
+- 首次 full audit 中 `validate:ios-navigation-ui-test` 因 Simulator / XCTest 偶发状态返回 65；随后单独重跑 `pnpm validate:ios-navigation-ui-test` 通过，再重跑 full audit 得到 21 个自动化命令全部 `passed`。
+- `manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，`recordHeadSha=0750636`，`currentHeadSha=0750636`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 HTML 签署命令生成器提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。工程侧自动化和候选证据继续齐备；剩余阻塞仍是人工 operator sign-off，必须由真实操作者打开 Handoff / HTML Review Pack 逐项复核并签署 filled 记录。

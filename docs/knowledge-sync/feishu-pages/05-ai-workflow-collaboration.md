@@ -973,3 +973,15 @@ HEAD `a118819` 进一步把确认列表文件绑定到人工记录 HEAD：`.tmp/
 HEAD `ad63244` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260601-ad63244-lan/manual-acceptance-handoff.md` 是当前人工收口入口，`.tmp/v1-completion-audit/current-full-final-20260601-ad63244-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
 
 HEAD `121a330` 在此基础上生成 HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260601-121a330-lan/manual-acceptance-handoff.html` 可直接打开并跳转到同目录的 HTML Review Pack；full audit `.tmp/v1-completion-audit/current-full-final-20260601-121a330-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
+## HTML Handoff 签署命令生成器规则
+
+2026-06-01 起，`manual-acceptance-handoff.html` 可以作为人工验收签署的主入口。HTML Handoff 的职责是降低操作者复核成本，而不是降低 completion 标准。
+
+- HTML Handoff 必须展示 14 个人工验收 item 的逐项 checkbox，并把 item id 写入 `data-item-id`。
+- 只有全部 checkbox 勾选，且填写 `operator` 与 `confirmedAt` 后，页面才生成 `pnpm prepare:ios-manual-evidence-record -- --mark-passed ... --reviewed-items-file ...` 命令。
+- 生成器必须引用同目录 `manual-evidence-reviewed-items.json`，该文件仍必须带 `recordHeadSha`，签署脚本仍必须拒绝跨 HEAD 文件。
+- 页面默认填入当前 ISO 时间只是减少录入成本，不代表签署已经发生；真实操作者仍必须逐项打开 HTML Review Pack 中的截图、录屏、API 摘要、bridge marker 和系统 artifact 后再运行命令。
+- `validate:native-shells` 必须守住 `reviewedItemChecklistHtml`、`data-item-id`、`operator-name`、`confirmed-at`、`generated-sign-command`、`updateSignCommand` 和 `allItemsReviewed`，防止后续重构把逐项确认生成器退化成无门槛签署按钮。
+
+HEAD `0750636` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-acceptance-handoff.html` 包含签署命令生成器；full audit rerun `.tmp/v1-completion-audit/current-full-final-20260601-0750636-lan-rerun` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
