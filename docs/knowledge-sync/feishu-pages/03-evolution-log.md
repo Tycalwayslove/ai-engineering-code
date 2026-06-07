@@ -6131,3 +6131,65 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 HTML 签署命令生成器提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。工程侧自动化和候选证据继续齐备；剩余阻塞仍是人工 operator sign-off，必须由真实操作者打开 Handoff / HTML Review Pack 逐项复核并签署 filled 记录。
+
+## 阶段 215：HTML Handoff 命令复制
+
+背景：
+
+- HTML Handoff 已经把 Review Pack、签署命令生成器、校验命令和正式 audit 命令集中到同一个本地页面。
+- 操作者仍需要手动选择较长命令，尤其是带 record、filled、reviewed-items-file 和 audit output 的命令，容易漏选或误复制。
+
+实现：
+
+- `manual-acceptance-handoff.html` 的固定命令块新增“复制”按钮，通过 `data-copy-text` 复制完整命令。
+- 签署命令生成器新增“复制生成的签署命令”按钮，通过 `data-copy-target="generated-sign-command"` 复制当前生成命令。
+- 页面新增 `copy-command-status`，复制成功、无可复制命令或复制失败时给出明确反馈。
+- 浏览器支持 `navigator.clipboard` 时优先使用安全剪贴板 API；不支持时使用隐藏 textarea fallback。
+- `validate:native-shells` 增加 `copy-command`、`copy-generated-sign-command` 和 `function copyCommand` 护栏。
+
+验证：
+
+- 先新增 TDD 断言并观察失败：HTML Handoff 中没有 `data-copy-text=...`、`copy-generated-sign-command` 和 `function copyCommand`。
+- 实现后 `node --test scripts/prepare-ios-manual-acceptance-handoff.test.mjs scripts/validate-native-shells.test.mjs` 通过。
+- `node --check scripts/prepare-ios-manual-acceptance-handoff.mjs && git diff --check` 通过。
+- `pnpm validate:native-shells` 通过。
+
+阶段价值：
+
+这一阶段把人工验收交接页从“可打开、可生成命令”推进为“可直接复制命令”。它降低操作者摩擦，但不降低验收标准：只有真实操作者逐项复核、勾选全部 14 个 item、填写 `operator` / `confirmedAt` 并运行签署命令后，才可能生成 passed filled 记录。
+
+## 阶段 216：HEAD 8de7b4e full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-acceptance-handoff.html`，包含固定命令复制按钮、签署命令生成器和生成命令复制按钮。
+- Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-evidence-review-pack.md` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan`。
+- 21 个自动化命令全部 `passed`。
+- `manualEvidence.packageFreshness.status=current`，`recordHeadSha=8de7b4e`，`currentHeadSha=8de7b4e`。
+- `manualEvidence.missingEvidenceCount=2`，剩余候选证据缺口为本地通知的“系统通知截图”和通知点击回流的“系统通知点击录屏”。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把命令复制能力提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。自动化门禁保持全绿；completion 仍不能完成，因为人工验收尚未签署，且通知相关真实系统素材仍需人工复核补齐。

@@ -49,6 +49,8 @@ Goal 不能标记 complete。
 
 2026-06-01 HEAD `0750636` 已生成当前正式证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan`，并生成包含签署命令生成器的 `.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-acceptance-handoff.html`。full audit rerun `.tmp/v1-completion-audit/current-full-final-20260601-0750636-lan-rerun` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`。结论仍是 `verdict=not_complete`，因为 14 个人工验收 item 全部 `pending`，顶层 `acceptanceVerdict=not_evaluated`。
 
+2026-06-08 HEAD `8de7b4e` 已生成当前正式证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan`，并生成包含命令复制按钮和签署命令生成器的 `.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-acceptance-handoff.html`。full audit `.tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.packageFreshness.status=current`，`recordHeadSha=8de7b4e`，`currentHeadSha=8de7b4e`。结论仍是 `verdict=not_complete`，因为 14 个人工验收 item 全部 `pending`，顶层 `acceptanceVerdict=not_evaluated`；当前剩余候选证据缺口为本地通知的“系统通知截图”和通知点击回流的“系统通知点击录屏”。
+
 ## 人工证据缺口
 
 以下内容必须按 `docs/qa/ios-v1-system-acceptance.md` 在 Xcode 模拟器或真机上逐项记录证据。没有这些证据时，不能把“第一版原生 App 系统能力完整可用”作为已完成事实。
@@ -74,6 +76,7 @@ Goal 不能标记 complete。
 
 - 尚未在仓库中保存完整的 iOS 系统能力人工验收通过记录；当前自动证据包会生成 `manual-evidence-record.template.json`、`manual-evidence-record.draft.json` 和 `manual-evidence-record.review.json`，也可以用 `pnpm prepare:ios-manual-handoff` 生成 `manual-acceptance-handoff.md`、`manual-acceptance-handoff.html`、HTML Review Pack 和带 `recordHeadSha` 的 `manual-evidence-reviewed-items.json`，再用 `pnpm prepare:ios-manual-evidence-record` 派生 `manual-evidence-record.filled.json` 草稿。HTML Handoff 的签署命令生成器会要求操作者逐项勾选全部 item，并填写 `operator` 与 `confirmedAt` 后才输出 passed filled 命令。草稿默认仍是 `pending` / `not_evaluated`，需要人工逐项复核后才能用 `--mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-items-file <path>` 生成通过记录；确认列表必须覆盖全部 item id，不能漏项、重复或混入未知 id，也不能来自另一个 record HEAD。
 - 已在 full audit rerun `.tmp/v1-completion-audit/current-full-final-20260601-0750636-lan-rerun` 中留存 HEAD `0750636` 的全套自动化命令输出，21 项全部 `passed`；但该 audit 使用的是 review 记录，不是人工 signed filled 记录，所以仍为 `not_complete`。正式完成仍需使用补证后的 passed filled 记录重新运行 `--run-automated-commands --manual-record <filled-path>`。
+- 已在 full audit `.tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan` 中留存 HEAD `8de7b4e` 的全套自动化命令输出，21 项全部 `passed`；但该 audit 使用的是 review 记录，不是人工 signed filled 记录，所以仍为 `not_complete`。正式完成仍需补齐通知截图 / 通知点击录屏等人工素材，生成 passed filled 记录后重新运行 `--run-automated-commands --manual-record <filled-path>`。
 - 尚未执行外部知识库真实同步；当前只有仓库内 `docs/knowledge-sync/feishu-pages/` 源稿更新。`pnpm collect:v1-completion-audit` 会在 `externalKnowledgeSync` 中默认记录 `status=not_synced`、`sourceDraftPaths`、Feishu / Obsidian target 状态和最终披露文案。
 
 ## 完成判定门槛

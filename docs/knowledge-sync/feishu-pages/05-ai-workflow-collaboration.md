@@ -985,3 +985,15 @@ HEAD `121a330` 在此基础上生成 HTML Handoff：`.tmp/ios-acceptance-evidenc
 - `validate:native-shells` 必须守住 `reviewedItemChecklistHtml`、`data-item-id`、`operator-name`、`confirmed-at`、`generated-sign-command`、`updateSignCommand` 和 `allItemsReviewed`，防止后续重构把逐项确认生成器退化成无门槛签署按钮。
 
 HEAD `0750636` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-acceptance-handoff.html` 包含签署命令生成器；full audit rerun `.tmp/v1-completion-audit/current-full-final-20260601-0750636-lan-rerun` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
+## HTML Handoff 命令复制规则
+
+2026-06-08 起，`manual-acceptance-handoff.html` 的命令块必须支持复制。该规则解决的是人工交接过程中的误复制风险，不改变验收边界。
+
+- 固定命令块用 `.copy-command` 按钮和 `data-copy-text` 保存完整命令，避免操作者拖选长命令时漏选。
+- 签署命令生成器用 `#copy-generated-sign-command` 和 `data-copy-target="generated-sign-command"` 复制当前生成命令。
+- `#copy-command-status` 必须反馈复制成功、无可复制命令或复制失败。
+- 复制失败时页面只能提示手动选择命令文本，不能绕过逐项 checkbox、`operator`、`confirmedAt` 或 `manual-evidence-reviewed-items.json` 的 HEAD 校验。
+- `validate:native-shells` 必须守住 `copy-command`、`copy-generated-sign-command` 和 `function copyCommand`，防止 Handoff 回退为只能手动拖选命令。
+
+HEAD `8de7b4e` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-acceptance-handoff.html` 包含固定命令复制按钮和生成签署命令复制按钮；full audit `.tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，`acceptanceVerdict=not_evaluated`，所以 goal 仍不能标记 complete。

@@ -5,7 +5,7 @@
 - domain: working
 - area: active-context
 - status: current
-- last_updated: 2026-06-01
+- last_updated: 2026-06-08
 - sourcePath: `ai-factory/memory/working/active-context/current-project-state.md`
 
 ## 新窗口必读摘要
@@ -1423,6 +1423,9 @@ pnpm validate:h5-runtime
 - 2026-06-01 已提交 `0750636 feat(qa): 增加HTML签署命令生成器`：`manual-acceptance-handoff.html` 现在包含“签署命令生成器”，会按 14 个人工验收 item 渲染逐项 checkbox，只有全部勾选并填写 `operator` / `confirmedAt` 后才生成 `pnpm prepare:ios-manual-evidence-record -- --mark-passed ... --reviewed-items-file ...` 命令。该生成器只降低人工签署漏项和误复制风险，不代表 AI 可以替代操作者复核。
 - 2026-06-01 已用 HEAD `0750636` 和局域网地址重跑当前正式证据包、Markdown / HTML Handoff 与 full completion audit：证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan` 绑定 `headSha=0750636`，HTML Handoff 路径为 `.tmp/ios-acceptance-evidence/current-head-final-20260601-0750636-lan/manual-acceptance-handoff.html`，包含签署命令生成器；full audit rerun `.tmp/v1-completion-audit/current-full-final-20260601-0750636-lan-rerun` 使用 `--run-automated-commands` 后 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`、`packageFreshness.status=current`，最终仍为 `verdict=not_complete`。首次 full audit 中 `validate:ios-navigation-ui-test` 曾因 Simulator / XCTest 偶发状态返回 65，单独重跑后通过，并已用 rerun audit 归档为自动化全绿。剩余阻塞仍是 14 个人工验收 item 全部 `pending`、`acceptanceVerdict=not_evaluated`，以及外部知识库 `not_synced`。不能把 goal 标记为 complete。
 - 本次“HTML Handoff 签署命令生成器”和“HEAD 0750636 full audit 刷新”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单、v1 readiness 审计和当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
+- 2026-06-08 已提交 `8de7b4e feat(qa): 支持复制人工验收命令`：`manual-acceptance-handoff.html` 的固定命令块和签署命令生成器现在都有复制按钮；固定命令通过 `data-copy-text` 复制，生成命令通过 `data-copy-target="generated-sign-command"` 复制，并带 `copy-command-status` 状态反馈。该能力只减少人工操作者复制命令的摩擦，不改变逐项 checkbox、`operator`、`confirmedAt`、`manual-evidence-reviewed-items.json` HEAD 绑定和真实人工复核边界。
+- 2026-06-08 已用 HEAD `8de7b4e` 和局域网地址重跑当前正式证据包、HTML Handoff 与 full completion audit：证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan` 绑定 `headSha=8de7b4e`，HTML Handoff 路径为 `.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-acceptance-handoff.html`，包含命令复制按钮和签署命令生成器；full audit `.tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan` 使用 `--run-automated-commands` 后 21 个自动化命令全部 `passed`，`manualEvidence.packageFreshness.status=current`、`recordHeadSha=8de7b4e`、`currentHeadSha=8de7b4e`，最终仍为 `verdict=not_complete`。本轮 review 记录仍是 14 个人工验收 item 全部 `pending`、`acceptanceVerdict=not_evaluated`；`manualEvidence.missingEvidenceCount=2`，剩余候选证据缺口为本地通知的“系统通知截图”和通知点击回流的“系统通知点击录屏”。不能把 goal 标记为 complete。
+- 本次“HTML Handoff 命令复制”和“HEAD 8de7b4e full audit 刷新”已更新飞书源稿 `03 阶段演进记录` 和 `05 工作流与 AI 协作体系`，并更新 iOS v1 系统能力验收清单、v1 readiness 审计和当前项目状态；实际飞书页面是否已更新必须以后续 `lark-cli docs +update --api-version v2` 执行记录为准。
 - 飞书同步不是自动的；需要先更新 `docs/knowledge-sync/feishu-pages/` 源稿，再用 `lark-cli docs +update --api-version v2` 同步对应页面。
 - 如果新窗口没有执行 Obsidian 或飞书写入，就不能声称外部知识库已经更新。
 
