@@ -501,14 +501,14 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 
 ## 当前 Handoff 入口
 
-2026-06-08 HEAD `9e3c418` 的当前正式候选证据齐备入口：
+2026-06-08 HEAD `a00ae87` 的当前正式候选证据齐备入口：
 
-- 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan`。
-- HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan/manual-acceptance-handoff.html`。
-- HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan/manual-evidence-review-pack.html`。
-- full audit：`.tmp/v1-completion-audit/current-full-final-20260608-9e3c418-lan`。
+- 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan`。
+- HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-review-pack.html`。
+- full audit：`.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`。
 
-本轮 evidence 使用 `--require-lan-h5` 生成，证据包记录 `serviceHealth.h5NativeUrlKind=private_lan`、`ios.h5DevServerUrlKind=private_lan`、`ios.formalReadiness.ready=true` 和 `manifest.formalReadiness.ready=true`。full audit 中 21 个自动化命令全部 `passed`，证据包 `packageFreshness.status=current`，候选证据缺口为 0。但人工记录仍为 `acceptanceVerdict=not_evaluated`，14 个 item 全部 `pending`，所以不能视为验收通过。
+本轮 evidence 使用 `--require-lan-h5` 生成。full audit 使用 `--manual-record best --manual-record-root .tmp/ios-acceptance-evidence`，自动选择当前 HEAD 的 `.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json`。full audit 中 21 个自动化命令全部 `passed`，证据包 `packageFreshness.status=current`，候选证据缺口为 0。但人工记录仍为 `acceptanceVerdict=not_evaluated`，14 个 item 全部 `pending`，所以不能视为验收通过。
 
 当前候选证据缺口已为 0；Handoff 的“当前补证重点”显示没有缺少的候选证据。但这只说明候选材料齐备，不代表真实人工验收已经通过。
 

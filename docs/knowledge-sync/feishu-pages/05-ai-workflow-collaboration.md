@@ -1079,3 +1079,15 @@ pnpm validate:native-shells
 该规则只前移环境校验，不改变 completion 结论：即使正式 LAN 采证通过，14 个人工验收 item 仍必须由真实操作者逐项复核并签署后，completion audit 才可能进入 complete。
 
 HEAD `9e3c418` 已按该规则重新归档：正式证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan` 使用 `--require-lan-h5` 生成，`serviceHealth.h5NativeUrlKind=private_lan`、`ios.h5DevServerUrlKind=private_lan`、`formalReadiness.ready=true`；full audit `.tmp/v1-completion-audit/current-full-final-20260608-9e3c418-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
+## Best 人工证据选择规则
+
+2026-06-08 起，`--manual-record best` 必须把 docs-only 新鲜度纳入候选排序，避免默认 Handoff 或 completion audit 在多证据包并存时误选旧 HEAD 的 filled 记录。
+
+- `best` 的 freshness 优先级是：`current`、`current_with_docs_only_changes`、`missing_record_head/unknown`、`stale`。
+- freshness 相同时，才比较 `requireCompletePassed`、`missingEvidenceCount`、文件优先级和 mtime。
+- `latest` 仍保持纯 mtime 语义，只用于操作者明确想看最新写入记录时。
+- `selection.selectedPostRecordChangedFiles` 必须记录被选中候选相对当前 HEAD 的变更文件，并传入最终 `packageFreshness`，避免候选排序与最终报告不一致。
+- 旧 filled 包不能压过 docs-only 新鲜的当前 review 包；真实人工签署状态仍由 `requireCompletePassed` 和 item status 决定。
+
+HEAD `a00ae87` 已按该规则重新归档：`best-selection-check-20260608-a00ae87` 和 full audit `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan` 都选择 `.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json`；21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。

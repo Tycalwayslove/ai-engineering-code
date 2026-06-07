@@ -6572,3 +6572,104 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把 `9e3c418` 的新 LAN 前置校验真正跑进正式证据链：采证入口使用 `--require-lan-h5`，证据包和 manifest 均记录 LAN readiness 通过，full audit 也重新绑定到当前 HEAD。当前剩余阻塞已经非常清楚：不是代码自动化失败，而是 14 个人工验收项尚未由真实操作者签署。
+
+## 阶段 227：best 证据选择 docs-only 新鲜度修复与 HEAD a00ae87 full audit
+
+背景：
+
+- completion audit 已支持 `packageFreshness.status=current_with_docs_only_changes`，用于允许 evidence record 之后只有文档 / 记忆文件变更的场景。
+- 但 `--manual-record best` 的候选排序此前只把 exact HEAD 视为 `current`，把 docs-only newer head 也归为 `stale`。
+- 多个历史证据包并存时，旧 HEAD 的 `manual-evidence-record.filled.json` 可能因为 `filled` 优先级和 `missingEvidenceCount=0` 压过最新 review 包，导致默认 Handoff / audit 误选旧包。
+
+实现：
+
+- `collectManualRecordCandidates()` 在候选阶段计算 `current_with_docs_only_changes`。
+- `manualRecordFreshnessRank()` 调整为：
+  - `current`
+  - `current_with_docs_only_changes`
+  - `missing_record_head/unknown`
+  - `stale`
+- 被选中候选的 `selectedPostRecordChangedFiles` 会传入最终 `buildManualEvidencePackageFreshness()`，避免候选排序和最终报告不一致。
+- `selection` 会记录 `selectedPostRecordChangedFiles`，便于排查 best 为什么选择某个 record。
+- TDD 新增：
+  - 旧 `manual-evidence-record.filled.json` vs docs-only 新鲜 `manual-evidence-record.review.json` 时，`best` 必须选择后者。
+  - `latest` 必须按 record mtime 选择最新候选，不受 complete 状态影响。
+
+验证：
+
+```bash
+node --test scripts/collect-v1-completion-audit.test.mjs
+node --check scripts/collect-v1-completion-audit.mjs
+node --test scripts/collect-v1-completion-audit.test.mjs scripts/prepare-ios-manual-acceptance-handoff.test.mjs
+pnpm validate:native-shells
+```
+
+真实 `.tmp` 轻量验证：
+
+```bash
+pnpm collect:v1-completion-audit -- \
+  --manual-record best \
+  --manual-record-root .tmp/ios-acceptance-evidence \
+  --output-dir .tmp/v1-completion-audit/best-selection-check-20260608-a00ae87 \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- `selectedRecordPath=.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json`。
+- `selectedRecordFreshnessStatus=current`。
+- `selectedMissingEvidenceCount=0`。
+- `selectedRequireCompletePassed=false`。
+
+随后用当前 HEAD `a00ae87` 重跑正式证据链：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- \
+  --require-lan-h5 \
+  --seed-supported-system-evidence \
+  --seed-keyboard-input \
+  --seed-attachment-inputs \
+  --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json
+
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record best \
+  --manual-record-root .tmp/ios-acceptance-evidence \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`。
+- `manualEvidence.selection.strategy=best`。
+- `selectedRecordPath=.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json`。
+- 21 个自动化命令全部 `passed`。
+- `manualEvidence.missingEvidenceCount=0`。
+- `manualEvidence.packageFreshness.status=current`。
+- `recordHeadSha=a00ae87`，`currentHeadSha=a00ae87`。
+- 最终仍为 `verdict=not_complete`。
+
+未完成边界：
+
+- 14 个人工验收 item 仍全部为 `pending`。
+- `acceptanceVerdict=not_evaluated`。
+- `externalKnowledgeSync.status=not_synced`。
+- 本轮只证明默认 best 选择、自动化门禁和候选证据完整性；不能替代真实操作者逐项复核和签署。
+
+阶段价值：
+
+这一阶段补上了人工验收收尾入口的一个选择风险：以后使用 `--manual-record best` 或默认 Handoff 时，不会因为旧 filled 包存在而偏离当前 HEAD / docs-only 新鲜证据包。当前剩余阻塞仍是明确的人类边界，而不是工具选择不确定性。
