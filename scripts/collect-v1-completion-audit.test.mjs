@@ -554,6 +554,101 @@ test("v1 completion audit best treats docs-only newer head as a fresh candidate"
   ]);
 });
 
+test("v1 completion audit best prefers the stale record closest to current head", () => {
+  const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
+  const oldFilledDir = path.join(recordRoot, "old-filled-run");
+  const newerReviewDir = path.join(recordRoot, "newer-review-run");
+  fs.mkdirSync(oldFilledDir, { recursive: true });
+  fs.mkdirSync(newerReviewDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(oldFilledDir, "manual-evidence-record.filled.json"),
+    `${JSON.stringify(passedManualRecordForHead("old1234"), null, 2)}\n`
+  );
+  fs.writeFileSync(
+    path.join(newerReviewDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(
+      { ...incompleteManualRecord(), headSha: "near5678" },
+      null,
+      2
+    )}\n`
+  );
+
+  const audit = buildV1CompletionAudit({
+    currentHeadSha: "current9",
+    manualRecordPath: "best",
+    manualRecordRoot: recordRoot,
+    postRecordChangedFilesByRecordHead: {
+      old1234: [
+        "apps/ios/AIEngineeringCode/HybridShellView.swift",
+        "scripts/collect-ios-acceptance-evidence.mjs",
+        "scripts/fill-ios-manual-evidence-record.mjs",
+      ],
+      near5678: ["scripts/fill-ios-manual-evidence-record.mjs"],
+    },
+  });
+
+  assert.equal(
+    audit.manualEvidence.recordPath,
+    path.relative(
+      rootDir,
+      path.join(newerReviewDir, "manual-evidence-record.review.json")
+    )
+  );
+  assert.equal(audit.manualEvidence.packageFreshness.status, "stale");
+  assert.deepEqual(audit.manualEvidence.packageFreshness.changedFiles, [
+    "scripts/fill-ios-manual-evidence-record.mjs",
+  ]);
+  assert.equal(audit.manualEvidence.selection.selectedRequireCompletePassed, false);
+});
+
+test("v1 completion audit best ignores dry-run placeholder heads before stale real records", () => {
+  const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
+  const dryRunDir = path.join(recordRoot, "attachment-dry-run");
+  const staleDir = path.join(recordRoot, "stale-real-run");
+  fs.mkdirSync(dryRunDir, { recursive: true });
+  fs.mkdirSync(staleDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(dryRunDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(
+      {
+        ...incompleteManualRecord(),
+        headSha: "[dry-run] git rev-parse --short HEAD",
+      },
+      null,
+      2
+    )}\n`
+  );
+  fs.writeFileSync(
+    path.join(staleDir, "manual-evidence-record.review.json"),
+    `${JSON.stringify(
+      { ...incompleteManualRecord(), headSha: "real123" },
+      null,
+      2
+    )}\n`
+  );
+
+  const audit = buildV1CompletionAudit({
+    currentHeadSha: "current9",
+    manualRecordPath: "best",
+    manualRecordRoot: recordRoot,
+    postRecordChangedFilesByRecordHead: {
+      real123: ["scripts/fill-ios-manual-evidence-record.mjs"],
+    },
+  });
+
+  assert.equal(
+    audit.manualEvidence.recordPath,
+    path.relative(
+      rootDir,
+      path.join(staleDir, "manual-evidence-record.review.json")
+    )
+  );
+  assert.equal(audit.manualEvidence.packageFreshness.status, "stale");
+  assert.equal(audit.manualEvidence.selection.selectedRecordHeadSha, "real123");
+});
+
 test("v1 completion audit latest selects the newest record by mtime", () => {
   const recordRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ios-acceptance-evidence-"));
   const oldFilledDir = path.join(recordRoot, "older-filled-run");

@@ -209,6 +209,10 @@ function docsOnlyFreshnessStatusForChangedFiles(changedFiles) {
     : null;
 }
 
+function isLikelyGitSha(value) {
+  return typeof value === "string" && /^[A-Za-z0-9]{7,40}$/.test(value);
+}
+
 function changedFilesForRecordHead(
   recordHeadSha,
   currentHeadSha,
@@ -216,6 +220,9 @@ function changedFilesForRecordHead(
 ) {
   if (!recordHeadSha || !currentHeadSha || recordHeadSha === currentHeadSha) {
     return [];
+  }
+  if (!isLikelyGitSha(recordHeadSha) || !isLikelyGitSha(currentHeadSha)) {
+    return null;
   }
   if (typeof postRecordChangedFilesByRecordHead === "function") {
     return postRecordChangedFilesByRecordHead(recordHeadSha, currentHeadSha);
@@ -242,6 +249,9 @@ function relativeToRoot(absolutePath) {
 
 function freshnessStatusForRecordHead(recordHeadSha, currentHeadSha, changedFiles) {
   if (recordHeadSha && currentHeadSha) {
+    if (!isLikelyGitSha(recordHeadSha) || !isLikelyGitSha(currentHeadSha)) {
+      return "invalid_record_head";
+    }
     if (recordHeadSha === currentHeadSha) {
       return "current";
     }
@@ -262,6 +272,9 @@ function manualRecordFreshnessRank(status) {
   }
   if (status === "missing_record_head" || status === "unknown") {
     return 2;
+  }
+  if (status === "invalid_record_head") {
+    return 4;
   }
   return 3;
 }
@@ -350,6 +363,15 @@ function collectManualRecordCandidates(
 function compareManualRecordCandidatesForBest(left, right) {
   if (left.freshnessRank !== right.freshnessRank) {
     return left.freshnessRank - right.freshnessRank;
+  }
+  const leftChangedFileCount = Array.isArray(left.postRecordChangedFiles)
+    ? left.postRecordChangedFiles.length
+    : Number.POSITIVE_INFINITY;
+  const rightChangedFileCount = Array.isArray(right.postRecordChangedFiles)
+    ? right.postRecordChangedFiles.length
+    : Number.POSITIVE_INFINITY;
+  if (leftChangedFileCount !== rightChangedFileCount) {
+    return leftChangedFileCount - rightChangedFileCount;
   }
   if (left.requireCompletePassed !== right.requireCompletePassed) {
     return left.requireCompletePassed ? -1 : 1;

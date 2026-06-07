@@ -1086,9 +1086,12 @@ HEAD `9e3c418` 已按该规则重新归档：正式证据包 `.tmp/ios-acceptanc
 
 - `best` 的 freshness 优先级是：`current`、`current_with_docs_only_changes`、`missing_record_head/unknown`、`stale`。
 - freshness 相同时，才比较 `requireCompletePassed`、`missingEvidenceCount`、文件优先级和 mtime。
+- freshness 相同且候选都不是 exact current 时，优先选择 `selectedPostRecordChangedFiles` 更少的记录，避免所有候选都 stale 后旧 filled 包压过更接近当前 HEAD 的 review 包。
 - `latest` 仍保持纯 mtime 语义，只用于操作者明确想看最新写入记录时。
 - `selection.selectedPostRecordChangedFiles` 必须记录被选中候选相对当前 HEAD 的变更文件，并传入最终 `packageFreshness`，避免候选排序与最终报告不一致。
 - 旧 filled 包不能压过 docs-only 新鲜的当前 review 包；真实人工签署状态仍由 `requireCompletePassed` 和 item status 决定。
+- 旧 stale 包不能仅凭 filled 文件名压过距离当前 HEAD 更近的 stale review 包；若二者同为 stale，先按变更文件数量衡量“离当前 HEAD 更近”。
+- dry-run 记录中的占位 `headSha`（例如包含命令文本的字符串）必须标记为 `invalid_record_head`，排在真实 stale 记录之后，避免干扰正式 best 选择。
 
 HEAD `a00ae87` 已按该规则重新归档：`best-selection-check-20260608-a00ae87` 和 full audit `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan` 都选择 `.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json`；21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
 

@@ -6692,6 +6692,8 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
   - 记录含 `headSha` 时，`operatorSignoff.recordHeadSha` 必须与记录 `headSha` 相同。
 - `fill-ios-manual-evidence-record.mjs` 在 `--mark-passed` 路径写入 `operatorSignoff.recordHeadSha`；默认 draft 和 notification metadata 导入路径不写 passed 签署字段，继续保持 `pending` / `not_evaluated`。
 - `collect-v1-completion-audit.test.mjs` 的 passed 人工记录样本同步改为带真实签署元数据，避免测试继续使用弱样本。
+- `--manual-record best` 的同 freshness 候选排序增加 `postRecordChangedFiles.length` tie-breaker。所有候选都因后续脚本变更变为 `stale` 时，会优先选择离当前 HEAD 变更更少的证据包，避免旧 filled 包仅凭文件名优先级压过更近的 review 包。
+- dry-run 记录中的占位 `headSha` 会被标记为 `invalid_record_head` 并排在真实 stale 记录之后，避免 `[dry-run] git rev-parse --short HEAD` 这类占位值被误当成距离当前 HEAD 最近。
 
 验证：
 
@@ -6699,6 +6701,7 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 node --test scripts/validate-ios-manual-evidence-record.test.mjs scripts/fill-ios-manual-evidence-record.test.mjs scripts/collect-v1-completion-audit.test.mjs
 node --check scripts/validate-ios-manual-evidence-record.mjs
 node --check scripts/fill-ios-manual-evidence-record.mjs
+node --test scripts/collect-v1-completion-audit.test.mjs
 pnpm validate:ios-manual-evidence-record
 pnpm validate:native-shells
 ```
