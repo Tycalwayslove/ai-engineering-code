@@ -6673,3 +6673,51 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段补上了人工验收收尾入口的一个选择风险：以后使用 `--manual-record best` 或默认 Handoff 时，不会因为旧 filled 包存在而偏离当前 HEAD / docs-only 新鲜证据包。当前剩余阻塞仍是明确的人类边界，而不是工具选择不确定性。
+
+## 阶段 228：人工验收 completion 签署强校验
+
+背景：
+
+- Handoff / Review Pack 已经要求操作者逐项勾选、填写 `operator` 与 `confirmedAt` 后生成 `--mark-passed` 命令。
+- `prepare:ios-manual-evidence-record -- --mark-passed` 也已经要求 `reviewedItemIds` 完整覆盖 record item。
+- 但最终 `validate-ios-manual-evidence-record --require-complete` 主要检查 `acceptanceVerdict=passed`、item `status=passed` 和证据字段，理论上无法单独防住“直接手改 JSON 为 passed 但没有 operator signoff”的弱记录。
+
+实现：
+
+- `validate-ios-manual-evidence-record.mjs` 新增 completion signoff 校验：
+  - `operatorSignoff.mode` 必须是 `mark-passed`。
+  - `operatorSignoff.operator` 必须非空。
+  - `operatorSignoff.confirmedAt` 必须是可解析的 ISO 8601 时间。
+  - `operatorSignoff.reviewedItemIds` 必须与 `record.items[].id` 完全一致，不能漏项、重复或混入未知 item。
+  - 记录含 `headSha` 时，`operatorSignoff.recordHeadSha` 必须与记录 `headSha` 相同。
+- `fill-ios-manual-evidence-record.mjs` 在 `--mark-passed` 路径写入 `operatorSignoff.recordHeadSha`；默认 draft 和 notification metadata 导入路径不写 passed 签署字段，继续保持 `pending` / `not_evaluated`。
+- `collect-v1-completion-audit.test.mjs` 的 passed 人工记录样本同步改为带真实签署元数据，避免测试继续使用弱样本。
+
+验证：
+
+```bash
+node --test scripts/validate-ios-manual-evidence-record.test.mjs scripts/fill-ios-manual-evidence-record.test.mjs scripts/collect-v1-completion-audit.test.mjs
+node --check scripts/validate-ios-manual-evidence-record.mjs
+node --check scripts/fill-ios-manual-evidence-record.mjs
+pnpm validate:ios-manual-evidence-record
+pnpm validate:native-shells
+```
+
+真实记录负向验证：
+
+```bash
+node scripts/validate-ios-manual-evidence-record.mjs \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json \
+  --require-complete \
+  --report .tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-gaps.signoff-check.md
+```
+
+结果：
+
+- 当前 review 记录仍失败，且失败原因新增缺少 `operatorSignoff.mode`、`operatorSignoff.operator`、`operatorSignoff.confirmedAt`、完整 `reviewedItemIds` 和 `operatorSignoff.recordHeadSha`。
+- 临时篡改 review JSON 为 `acceptanceVerdict=passed` 且所有 item `status=passed`，但不写 `operatorSignoff` 时，`--require-complete` 仍失败。
+- 轻量 audit `.tmp/v1-completion-audit/signoff-gate-check-20260608` 选择 `a00ae87` review 记录，`missingEvidenceCount=0`，`packageFreshness.status=current_with_docs_only_changes`，但 `selectedRequireCompletePassed=false`，最终 `verdict=not_complete`。
+
+阶段价值：
+
+这一阶段把“人工验收通过”从状态字段升级为“状态 + 证据 + 操作者签署 + HEAD 绑定”的组合门槛。自动候选证据、机器预填和后续可能增加的 machine precheck 都不能绕过 `operatorSignoff`。当前剩余阻塞仍是 14 个人工验收 item 需要真实操作者逐项复核并签署 passed filled 记录。

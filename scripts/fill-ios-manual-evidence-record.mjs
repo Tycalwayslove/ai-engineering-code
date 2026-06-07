@@ -199,6 +199,9 @@ export function buildFilledManualEvidenceRecord(record, options = {}) {
     operator: markPassed ? options.operator : null,
     reviewedItemIds: markPassed ? reviewedItemIds : [],
   };
+  if (markPassed) {
+    nextRecord.operatorSignoff.recordHeadSha = record?.headSha ?? null;
+  }
 
   if (markPassed) {
     nextRecord.acceptanceVerdict = "passed";

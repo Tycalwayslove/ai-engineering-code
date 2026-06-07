@@ -1091,3 +1091,26 @@ HEAD `9e3c418` 已按该规则重新归档：正式证据包 `.tmp/ios-acceptanc
 - 旧 filled 包不能压过 docs-only 新鲜的当前 review 包；真实人工签署状态仍由 `requireCompletePassed` 和 item status 决定。
 
 HEAD `a00ae87` 已按该规则重新归档：`best-selection-check-20260608-a00ae87` 和 full audit `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan` 都选择 `.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json`；21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
+## 人工验收 Completion 签署强校验
+
+2026-06-08 起，`--require-complete` 不再只看 `acceptanceVerdict=passed`、item `status=passed` 和证据字段，还必须校验人工签署元数据。这个规则用于防止直接手改 JSON 绕过 Handoff / Review Pack 的逐项复核流程。
+
+- passed filled 记录必须包含 `operatorSignoff.mode=mark-passed`。
+- `operatorSignoff.operator` 必须非空。
+- `operatorSignoff.confirmedAt` 必须是可解析的 ISO 8601 时间。
+- `operatorSignoff.reviewedItemIds` 必须与 `record.items[].id` 完全一致，不能漏项、重复或混入未知 item。
+- 如果记录包含 `headSha`，`operatorSignoff.recordHeadSha` 必须与记录 `headSha` 相同。
+- `pnpm prepare:ios-manual-evidence-record -- --mark-passed` 会写入 `recordHeadSha`；默认 draft 模式不写 passed 签署字段，也不会改变 `pending` / `not_evaluated`。
+- 机器预填候选证据和 future machine precheck 不能替代 `operatorSignoff`；没有真实操作者签署的记录必须保持 `not_complete`。
+
+已验证：
+
+```bash
+node --test scripts/validate-ios-manual-evidence-record.test.mjs scripts/fill-ios-manual-evidence-record.test.mjs scripts/collect-v1-completion-audit.test.mjs
+pnpm validate:ios-manual-evidence-record
+pnpm validate:native-shells
+pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .tmp/ios-acceptance-evidence --output-dir .tmp/v1-completion-audit/signoff-gate-check-20260608 --external-knowledge-status not_synced
+```
+
+轻量 audit `.tmp/v1-completion-audit/signoff-gate-check-20260608` 仍选择 `a00ae87` review 记录，`missingEvidenceCount=0`，但现在明确列出缺少 `operatorSignoff` 和 14 个 item 仍 pending；结论保持 `verdict=not_complete`。

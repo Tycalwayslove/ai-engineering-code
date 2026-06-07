@@ -18,6 +18,12 @@ function passedManualRecord() {
     acceptanceVerdict: "passed",
     manualAcceptanceRequired: true,
     automationCanReplaceManualAcceptance: false,
+    operatorSignoff: {
+      confirmedAt: "2026-05-29T10:00:00.000Z",
+      mode: "mark-passed",
+      operator: "QA",
+      reviewedItemIds: ["navigation_surfaces"],
+    },
     packageEvidence: {
       acceptanceEvidenceJson: "acceptance-evidence.json",
       manifestJson: "manifest.json",
@@ -50,6 +56,17 @@ function passedManualRecord() {
         },
       },
     ],
+  };
+}
+
+function passedManualRecordForHead(headSha) {
+  return {
+    ...passedManualRecord(),
+    headSha,
+    operatorSignoff: {
+      ...passedManualRecord().operatorSignoff,
+      recordHeadSha: headSha,
+    },
   };
 }
 
@@ -146,10 +163,7 @@ test("v1 completion audit can pass when all command and manual evidence inputs p
 });
 
 test("v1 completion audit does not pass with a stale manual evidence record head", () => {
-  const record = {
-    ...passedManualRecord(),
-    headSha: "old1234",
-  };
+  const record = passedManualRecordForHead("old1234");
   const commandResults = new Map(
     buildV1CompletionAudit({ manualRecord: record }).automatedCommands.map(
       (command) => [
@@ -181,10 +195,7 @@ test("v1 completion audit does not pass with a stale manual evidence record head
 });
 
 test("v1 completion audit accepts passed evidence when later changes are docs only", () => {
-  const record = {
-    ...passedManualRecord(),
-    headSha: "code123",
-  };
+  const record = passedManualRecordForHead("code123");
   const commandResults = new Map(
     buildV1CompletionAudit({ manualRecord: record }).automatedCommands.map(
       (command) => [
@@ -226,10 +237,7 @@ test("v1 completion audit accepts passed evidence when later changes are docs on
 });
 
 test("v1 completion audit still blocks stale evidence when later changes touch code", () => {
-  const record = {
-    ...passedManualRecord(),
-    headSha: "code123",
-  };
+  const record = passedManualRecordForHead("code123");
   const commandResults = new Map(
     buildV1CompletionAudit({ manualRecord: record }).automatedCommands.map(
       (command) => [
@@ -467,7 +475,7 @@ test("v1 completion audit best prefers current head evidence over stale candidat
 
   fs.writeFileSync(
     path.join(staleDir, "manual-evidence-record.review.json"),
-    `${JSON.stringify({ ...passedManualRecord(), headSha: "old1234" }, null, 2)}\n`
+    `${JSON.stringify(passedManualRecordForHead("old1234"), null, 2)}\n`
   );
   fs.writeFileSync(
     path.join(currentDir, "manual-evidence-record.review.json"),
@@ -501,7 +509,7 @@ test("v1 completion audit best treats docs-only newer head as a fresh candidate"
 
   fs.writeFileSync(
     path.join(oldFilledDir, "manual-evidence-record.filled.json"),
-    `${JSON.stringify({ ...passedManualRecord(), headSha: "44574d1" }, null, 2)}\n`
+    `${JSON.stringify(passedManualRecordForHead("44574d1"), null, 2)}\n`
   );
   fs.writeFileSync(
     path.join(latestReviewDir, "manual-evidence-record.review.json"),
@@ -557,7 +565,7 @@ test("v1 completion audit latest selects the newest record by mtime", () => {
 
   fs.writeFileSync(
     oldRecordPath,
-    `${JSON.stringify({ ...passedManualRecord(), headSha: "old1234" }, null, 2)}\n`
+    `${JSON.stringify(passedManualRecordForHead("old1234"), null, 2)}\n`
   );
   fs.writeFileSync(
     latestRecordPath,

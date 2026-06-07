@@ -28,6 +28,71 @@ function pushFailure(failures, recordPath, message) {
   failures.push(`${recordPath}: ${message}`);
 }
 
+function itemIdsForRecord(record) {
+  return asArray(record?.items).map((item) => item?.id).filter(Boolean);
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim() !== "";
+}
+
+function isIsoTimestamp(value) {
+  return isNonEmptyString(value) && !Number.isNaN(Date.parse(value));
+}
+
+function reviewedItemIdMismatch(record, reviewedItemIds) {
+  const expectedItemIds = itemIdsForRecord(record);
+  const reviewedIds = Array.isArray(reviewedItemIds) ? reviewedItemIds : [];
+  const expected = new Set(expectedItemIds);
+  const reviewed = new Set(reviewedIds);
+  const missing = expectedItemIds.filter((itemId) => !reviewed.has(itemId));
+  const unknown = reviewedIds.filter((itemId) => !expected.has(itemId));
+  const duplicated = reviewedIds.filter(
+    (itemId, index) => reviewedIds.indexOf(itemId) !== index
+  );
+  if (missing.length === 0 && unknown.length === 0 && duplicated.length === 0) {
+    return null;
+  }
+  return [
+    "operatorSignoff.reviewedItemIds must exactly match record item ids",
+    missing.length > 0 ? `missing: ${missing.join(", ")}` : null,
+    unknown.length > 0 ? `unknown: ${unknown.join(", ")}` : null,
+    duplicated.length > 0 ? `duplicated: ${duplicated.join(", ")}` : null,
+  ]
+    .filter(Boolean)
+    .join("; ");
+}
+
+function completionSignoffGaps(record) {
+  const gaps = [];
+  const signoff = record?.operatorSignoff ?? {};
+  if (signoff.mode !== "mark-passed") {
+    gaps.push("operatorSignoff.mode must be mark-passed when --require-complete is used");
+  }
+  if (!isNonEmptyString(signoff.operator)) {
+    gaps.push("operatorSignoff.operator is required when --require-complete is used");
+  }
+  if (!isIsoTimestamp(signoff.confirmedAt)) {
+    gaps.push(
+      "operatorSignoff.confirmedAt must be an ISO 8601 timestamp when --require-complete is used"
+    );
+  }
+  const reviewedMismatch = reviewedItemIdMismatch(record, signoff.reviewedItemIds);
+  if (reviewedMismatch) {
+    gaps.push(reviewedMismatch);
+  }
+  if (record?.headSha) {
+    if (!isNonEmptyString(signoff.recordHeadSha)) {
+      gaps.push("operatorSignoff.recordHeadSha is required when record headSha is present");
+    } else if (signoff.recordHeadSha !== record.headSha) {
+      gaps.push(
+        `operatorSignoff.recordHeadSha must match record headSha: ${signoff.recordHeadSha} !== ${record.headSha}`
+      );
+    }
+  }
+  return gaps;
+}
+
 function missingEvidenceForItem(item) {
   const requiredEvidence = item?.requiredEvidence ?? {};
   const evidence = item?.evidence ?? {};
@@ -68,6 +133,9 @@ export function buildManualEvidenceRecordReport(record, options = {}) {
 
   if (record?.acceptanceVerdict !== "passed") {
     globalGaps.push("acceptanceVerdict must be passed for completion");
+  }
+  if (record?.acceptanceVerdict === "passed" || record?.operatorSignoff) {
+    globalGaps.push(...completionSignoffGaps(record));
   }
 
   for (const item of items) {
@@ -183,6 +251,11 @@ export function validateManualEvidenceRecord(record, options = {}) {
       recordPath,
       "acceptanceVerdict must be passed when --require-complete is used"
     );
+  }
+  if (requireComplete) {
+    for (const gap of completionSignoffGaps(record)) {
+      pushFailure(failures, recordPath, gap);
+    }
   }
 
   const packageEvidence = record.packageEvidence ?? {};

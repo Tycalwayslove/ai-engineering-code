@@ -137,7 +137,15 @@ test("manual evidence report includes global verdict gaps", () => {
 
 test("completion validation accepts passed records with required evidence", () => {
   const record = baseRecord();
+  record.headSha = "abc1234";
   record.acceptanceVerdict = "passed";
+  record.operatorSignoff = {
+    confirmedAt: "2026-06-01T08:00:00.000Z",
+    mode: "mark-passed",
+    operator: "QA",
+    recordHeadSha: "abc1234",
+    reviewedItemIds: ["voice_input"],
+  };
   record.items[0].status = "passed";
   record.items[0].evidence = {
     screenshots: ["evidence/voice-text.png - 识别文本"],
@@ -157,6 +165,72 @@ test("completion validation accepts passed records with required evidence", () =
   });
 
   assert.deepEqual(result.failures, []);
+});
+
+test("completion validation requires operator signoff for passed records", () => {
+  const record = baseRecord();
+  record.headSha = "abc1234";
+  record.acceptanceVerdict = "passed";
+  record.items[0].status = "passed";
+  record.items[0].evidence = {
+    screenshots: ["识别文本"],
+    recordings: [],
+    apiSummaries: ["/reminders?conversationId=..."],
+    bridgeMarkers: ["source=native.composer.voice"],
+    systemArtifacts: ["iOS 权限弹窗截图或录屏"],
+    operatorNotes: "人工已复核。",
+    blocker: "",
+  };
+
+  const result = validateManualEvidenceRecord(record, {
+    requireComplete: true,
+    recordPath: "manual-evidence-record.filled.json",
+  });
+
+  assert.ok(
+    result.failures.includes(
+      "manual-evidence-record.filled.json: operatorSignoff.mode must be mark-passed when --require-complete is used"
+    )
+  );
+});
+
+test("completion validation requires reviewed item ids to match record items", () => {
+  const record = baseRecord();
+  record.headSha = "abc1234";
+  record.acceptanceVerdict = "passed";
+  record.operatorSignoff = {
+    confirmedAt: "2026-06-01T08:00:00.000Z",
+    mode: "mark-passed",
+    operator: "QA",
+    recordHeadSha: "different",
+    reviewedItemIds: ["unknown_item"],
+  };
+  record.items[0].status = "passed";
+  record.items[0].evidence = {
+    screenshots: ["识别文本"],
+    recordings: [],
+    apiSummaries: ["/reminders?conversationId=..."],
+    bridgeMarkers: ["source=native.composer.voice"],
+    systemArtifacts: ["iOS 权限弹窗截图或录屏"],
+    operatorNotes: "人工已复核。",
+    blocker: "",
+  };
+
+  const result = validateManualEvidenceRecord(record, {
+    requireComplete: true,
+    recordPath: "manual-evidence-record.filled.json",
+  });
+
+  assert.ok(
+    result.failures.includes(
+      "manual-evidence-record.filled.json: operatorSignoff.reviewedItemIds must exactly match record item ids; missing: voice_input; unknown: unknown_item"
+    )
+  );
+  assert.ok(
+    result.failures.includes(
+      "manual-evidence-record.filled.json: operatorSignoff.recordHeadSha must match record headSha: different !== abc1234"
+    )
+  );
 });
 
 test("package exposes manual evidence record validation command", () => {
