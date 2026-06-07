@@ -501,12 +501,12 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 
 ## 当前 Handoff 入口
 
-2026-06-08 HEAD `d9618d8` 的当前正式候选证据齐备入口：
+2026-06-08 HEAD `1bb9d83` 的当前正式候选证据齐备入口：
 
-- 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan`。
-- HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-acceptance-handoff.html`。
-- HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-evidence-review-pack.html`。
-- full audit：`.tmp/v1-completion-audit/current-full-final-20260608-d9618d8-lan`。
+- 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan`。
+- HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan/manual-evidence-review-pack.html`。
+- full audit：`.tmp/v1-completion-audit/current-full-final-20260608-1bb9d83-lan`。
 
 本轮 full audit 中 21 个自动化命令全部 `passed`，证据包 `packageFreshness.status=current`，候选证据缺口为 0。但人工记录仍为 `acceptanceVerdict=not_evaluated`，14 个 item 全部 `pending`，所以不能视为验收通过。
 
@@ -514,11 +514,11 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 
 HTML Handoff 中的复制按钮、通知 UI test metadata 导入命令和签署命令生成器只用于减少人工复核后的操作成本。操作者仍必须先打开 HTML Review Pack 逐项核对截图、录屏、API 摘要、Bridge marker、系统 artifact 和备注，再勾选全部 item、填写 `operator` / `confirmedAt` 并运行生成的签署命令。
 
-补充历史：2026-06-08 HEAD `ed0b281` 在 Handoff 上新增逐项“查看证据”链接：
+补充历史：2026-06-08 HEAD `ed0b281` 在 Handoff 上新增逐项“查看证据”链接；2026-06-08 HEAD `1bb9d83` 已在此基础上补齐缺证防误签逻辑，并重新跑通 LAN full audit：
 
 - 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan`。
 - HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-acceptance-handoff.html`。
 - HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-evidence-review-pack.html`。
 - lightweight audit：`.tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan`。
 
-该版本的 Handoff 清单每个 item 都可以直接跳转到 Review Pack 的 `item-<itemId>` 证据段，适合作为人工复核体验的最新入口。但本轮采证没有运行 `--run-automated-commands`，且本机构建配置仍是 `H5DevServerURL=http://127.0.0.1:3000/?native=ios`，所以该证据包 `manualEvidence.missingEvidenceCount=11`，不能替代 `029fdf5-lan` 的正式局域网 full audit 结论。无论使用哪个入口，人工记录仍必须由真实操作者逐项复核后签署。
+该版本的 Handoff 清单每个 item 都可以直接跳转到 Review Pack 的 `item-<itemId>` 证据段，是后续 Handoff 体验增强的历史基线。但本轮采证没有运行 `--run-automated-commands`，且本机构建配置仍是 `H5DevServerURL=http://127.0.0.1:3000/?native=ios`，所以该证据包 `manualEvidence.missingEvidenceCount=11`，不能替代当前 `1bb9d83-lan` 的正式局域网 full audit 结论。无论使用哪个入口，人工记录仍必须由真实操作者逐项复核后签署。

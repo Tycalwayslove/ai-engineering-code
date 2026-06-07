@@ -1040,6 +1040,8 @@ HEAD `ed0b281` 已提交该规则：`manual-acceptance-handoff.html` 的 14 个 
 
 当前实现已用正式 LAN record 复核：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-acceptance-handoff.html` 因 `missingEvidenceCount=0` 继续保留签署命令生成器；测试 fixture 中存在缺口时，Handoff 会进入“签署命令生成器已停用”状态。
 
+HEAD `1bb9d83` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan/manual-acceptance-handoff.html` 因候选证据缺口为 0，继续保留签署命令生成器；full audit `.tmp/v1-completion-audit/current-full-final-20260608-1bb9d83-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
+
 ## LAN Full Audit 的测试环境隔离规则
 
 正式 LAN full audit 会把局域网 URL 注入父进程环境，供 iOS build、Simulator smoke 和 UI test 使用。采证脚本自身的 dry-run 单测必须隔离这些外部 URL，避免“默认值测试”被正式 audit 环境污染。

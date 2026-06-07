@@ -6431,3 +6431,47 @@ node scripts/prepare-ios-manual-acceptance-handoff.mjs -- \
 - 对有候选证据缺口的 fixture，Handoff 不再输出可执行的 `--mark-passed` 签署命令。
 - 对 `missingEvidenceCount=0` 的正式 LAN review record，`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-acceptance-handoff.html` 仍保留签署命令生成器。
 - 该改动只减少误签风险，不改变 completion 结论：14 个人工验收 item 仍必须由真实操作者复核并签署后，goal 才可能进入 complete 审计。
+
+## 阶段 224：HEAD 1bb9d83 LAN full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- \
+  --seed-supported-system-evidence \
+  --seed-keyboard-input \
+  --seed-attachment-inputs \
+  --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan/manual-evidence-record.review.json
+
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-1bb9d83-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-1bb9d83-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-1bb9d83-lan`。
+- 21 个自动化命令全部 `passed`。
+- `manualEvidence.missingEvidenceCount=0`，`manualEvidence.packageFreshness.status=current`，`recordHeadSha=1bb9d83`，`currentHeadSha=1bb9d83`。
+- Handoff 显示“当前没有缺少的候选证据；仍需真实操作者逐项复核后才能签署”，并保留签署命令生成器。
+- 最终仍为 `verdict=not_complete`，因为 14 个人工验收 item 全部 `pending`、`acceptanceVerdict=not_evaluated`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把 `1bb9d83` 的 Handoff 防误签脚本变更重新绑定到正式 LAN full audit：自动化门禁全绿、候选证据缺口归零、证据包 HEAD 新鲜。剩余阻塞仍是清晰的人类边界：真实操作者需要逐项复核并签署 passed filled 记录。
