@@ -6316,3 +6316,78 @@ pnpm collect:v1-completion-audit -- \
 阶段价值：
 
 这次 fresh evidence 用于证明 `ed0b281` 的 Handoff / Review Pack 锚点能力可以在当前 HEAD 生成；它不是正式 full audit 替代品，也不覆盖 HEAD `029fdf5` 局域网 full audit 中 `manualEvidence.missingEvidenceCount=0`、21 个自动化命令全 `passed` 的候选证据结论。正式完成仍需真实操作者逐项复核并签署 passed filled 记录。
+
+## 阶段 221：采证单测隔离 LAN 环境
+
+背景：
+
+- 使用 LAN 环境运行正式 full audit 时，需要设置 `H5_DEV_SERVER_URL=http://192.168.1.238:3000/?native=ios&bridgeDebug=1`、`AI_CODE_H5_NATIVE_BASE_URL=http://192.168.1.238:3000` 和 `AI_CODE_API_BASE_URL=http://192.168.1.238:8000`。
+- `validate:ios-acceptance-evidence` 中的 dry-run 单测继承了这些环境变量，但部分断言是在验证脚本默认值应为 `127.0.0.1`。
+- 结果是正式 full audit 中其它 20 个命令已通过，`validate:ios-acceptance-evidence` 因测试环境污染失败，而不是产品或采证能力失败。
+
+实现：
+
+- `scripts/collect-ios-acceptance-evidence.test.mjs` 新增 `testEnv()` helper。
+- `testEnv()` 会继承当前环境，但删除 `H5_DEV_SERVER_URL`、`AI_CODE_H5_NATIVE_BASE_URL` 和 `AI_CODE_API_BASE_URL`。
+- 需要注入 UI test metadata 或系统证据开关的子进程测试，统一通过 `testEnv(overrides)` 传入。
+- 没有特殊覆盖的 dry-run 子进程测试，也显式使用 `testEnv()`，避免再隐式继承 full audit 的 LAN URL。
+
+验证：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+pnpm validate:ios-acceptance-evidence
+```
+
+结果：29 个测试全部通过。
+
+已提交 `d9618d8 test(qa): 隔离采证单测URL环境`。
+
+阶段价值：
+
+这一阶段让“正式 LAN full audit”和“采证脚本默认值单测”可以共存，避免当前最关键的收尾命令因为父进程 URL 环境污染而误报失败。
+
+## 阶段 222：HEAD d9618d8 LAN full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- \
+  --seed-supported-system-evidence \
+  --seed-keyboard-input \
+  --seed-attachment-inputs \
+  --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-evidence-record.review.json
+
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-d9618d8-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-d9618d8-lan`。
+- 21 个自动化命令全部 `passed`。
+- `manualEvidence.missingEvidenceCount=0`，`manualEvidence.packageFreshness.status=current`，`recordHeadSha=d9618d8`，`currentHeadSha=d9618d8`。
+- 最终仍为 `verdict=not_complete`，因为 14 个人工验收 item 全部 `pending`、`acceptanceVerdict=not_evaluated`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把最新 HEAD 重新拉回正式 LAN full audit 状态：自动化门禁全绿、候选证据缺口归零、证据包 HEAD 新鲜。剩余阻塞已经是清晰的人类边界：真实操作者需要逐项复核并签署 passed filled 记录。

@@ -55,6 +55,8 @@ Goal 不能标记 complete。
 
 2026-06-08 HEAD `ed0b281` 已提交 Handoff 到 Review Pack 的逐项证据链接，并生成 fresh evidence `.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan`、HTML Handoff `.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-acceptance-handoff.html` 和 HTML Review Pack `.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-evidence-review-pack.html`。该版本的 Handoff 清单可以通过“查看证据”直接跳到 `manual-evidence-review-pack.html#item-<itemId>`。本轮只运行了 lightweight audit `.tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan`，未使用 `--run-automated-commands` 重跑 21 个自动化命令；同时本机 `Info.plist` 中 `H5DevServerURL` 为 `http://127.0.0.1:3000/?native=ios`，所以 `manualEvidence.missingEvidenceCount=11`，主要缺局域网启动截图和系统日历写入 / 取消清理候选材料。该结果不能替代 `029fdf5-lan` 的正式局域网 full audit；正式完成仍需真实操作者逐项复核并签署 passed filled 记录。
 
+2026-06-08 HEAD `d9618d8` 已修复采证 dry-run 单测受 LAN URL 环境污染的问题，并生成当前正式证据包 `.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan`、HTML Handoff `.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-acceptance-handoff.html` 和 HTML Review Pack `.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-evidence-review-pack.html`。full audit `.tmp/v1-completion-audit/current-full-final-20260608-d9618d8-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`manualEvidence.packageFreshness.status=current`，`recordHeadSha=d9618d8`，`currentHeadSha=d9618d8`。结论仍是 `verdict=not_complete`，因为 14 个人工验收 item 全部 `pending`，顶层 `acceptanceVerdict=not_evaluated`；当前剩余阻塞是人工逐项复核和签署。
+
 ## 人工证据缺口
 
 以下内容必须按 `docs/qa/ios-v1-system-acceptance.md` 在 Xcode 模拟器或真机上逐项记录证据。没有这些证据时，不能把“第一版原生 App 系统能力完整可用”作为已完成事实。
@@ -83,6 +85,7 @@ Goal 不能标记 complete。
 - 已在 full audit `.tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan` 中留存 HEAD `8de7b4e` 的全套自动化命令输出，21 项全部 `passed`；但该 audit 使用的是 review 记录，不是人工 signed filled 记录，所以仍为 `not_complete`。正式完成仍需补齐通知截图 / 通知点击录屏等人工素材，生成 passed filled 记录后重新运行 `--run-automated-commands --manual-record <filled-path>`。
 - 已在 full audit `.tmp/v1-completion-audit/current-full-final-20260608-029fdf5-lan` 中留存 HEAD `029fdf5` 的全套自动化命令输出，21 项全部 `passed`，且 `manualEvidence.missingEvidenceCount=0`；但该 audit 使用的是 review 记录，不是人工 signed filled 记录，所以仍为 `not_complete`。正式完成仍需真实操作者逐项复核 14 个 pending item，生成 passed filled 记录后重新运行 `--run-automated-commands --manual-record <filled-path>`。
 - 已在 lightweight audit `.tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan` 中留存 HEAD `ed0b281` 的 fresh evidence 汇总，但该 audit 未运行 `--run-automated-commands`，且本轮 evidence 使用 `127.0.0.1` H5 地址导致 `manualEvidence.missingEvidenceCount=11`；它只记录最新 Handoff 逐项证据链接能力，不可作为正式 completion full audit。
+- 已在 full audit `.tmp/v1-completion-audit/current-full-final-20260608-d9618d8-lan` 中留存 HEAD `d9618d8` 的全套自动化命令输出，21 项全部 `passed`，且 `manualEvidence.missingEvidenceCount=0`、`packageFreshness.status=current`；但该 audit 使用的是 review 记录，不是人工 signed filled 记录，所以仍为 `not_complete`。正式完成仍需真实操作者逐项复核 14 个 pending item，生成 passed filled 记录后重新运行 `--run-automated-commands --manual-record <filled-path>`。
 - 尚未执行外部知识库真实同步；当前只有仓库内 `docs/knowledge-sync/feishu-pages/` 源稿更新。`pnpm collect:v1-completion-audit` 会在 `externalKnowledgeSync` 中默认记录 `status=not_synced`、`sourceDraftPaths`、Feishu / Obsidian target 状态和最终披露文案。
 
 ## 完成判定门槛

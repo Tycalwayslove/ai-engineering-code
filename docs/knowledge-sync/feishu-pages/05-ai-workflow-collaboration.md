@@ -1022,3 +1022,15 @@ HEAD `029fdf5` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/curre
 - 该链接只减少人工查找成本；即使全部链接存在、候选证据完整，`status=pending` 和 `acceptanceVerdict=not_evaluated` 仍必须保持 `not_complete`。
 
 HEAD `ed0b281` 已提交该规则：`manual-acceptance-handoff.html` 的 14 个 checkbox item 均可跳到 `manual-evidence-review-pack.html#item-...`。同 HEAD 生成的 lightweight audit `.tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan` 由于未运行 `--run-automated-commands` 且本机 `H5DevServerURL` 为 `127.0.0.1`，显示 `manualEvidence.missingEvidenceCount=11`；它只证明新链接能力可生成，不代表正式 full audit 已完成。
+
+## LAN Full Audit 的测试环境隔离规则
+
+正式 LAN full audit 会把局域网 URL 注入父进程环境，供 iOS build、Simulator smoke 和 UI test 使用。采证脚本自身的 dry-run 单测必须隔离这些外部 URL，避免“默认值测试”被正式 audit 环境污染。
+
+- `collect-ios-acceptance-evidence.test.mjs` 的子进程测试必须通过 `testEnv()` 或同等 helper 传入环境。
+- `testEnv()` 必须删除 `H5_DEV_SERVER_URL`、`AI_CODE_H5_NATIVE_BASE_URL` 和 `AI_CODE_API_BASE_URL`，再合并测试需要的 metadata / seed override。
+- 如果某个测试是在验证默认 URL，就不能隐式继承 full audit 的 LAN URL。
+- 如果某个测试是在验证 env override 行为，必须只注入该测试明确需要的变量。
+- `validate:ios-acceptance-evidence` 必须能在 LAN full audit 环境下通过，不能要求调用者先手动 unset URL 变量。
+
+HEAD `d9618d8` 已按该规则修复并归档：在 LAN 环境下单独运行 `pnpm validate:ios-acceptance-evidence` 通过 29 个测试；full audit `.tmp/v1-completion-audit/current-full-final-20260608-d9618d8-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，但 14 个人工验收 item 仍全部为 `pending`，所以 goal 仍不能标记 complete。
