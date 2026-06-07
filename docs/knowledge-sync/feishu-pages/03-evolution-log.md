@@ -6517,3 +6517,58 @@ pnpm validate:native-shells
 阶段价值：
 
 这一阶段把“正式验收必须使用局域网 H5 地址”从人工 review 里的后置缺口，前移成采证入口的结构化门禁。它不改变人工验收边界，也不会把任何 item 自动标为 passed；它只是防止非正式环境的证据包继续消耗长采证时间。
+
+## 阶段 226：HEAD 9e3c418 LAN readiness full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- \
+  --require-lan-h5 \
+  --seed-supported-system-evidence \
+  --seed-keyboard-input \
+  --seed-attachment-inputs \
+  --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan/manual-evidence-record.review.json
+
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-9e3c418-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-9e3c418-lan/manual-evidence-review-pack.html`。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-9e3c418-lan`。
+- `serviceHealth.h5NativeUrlKind=private_lan`。
+- `ios.h5DevServerUrlKind=private_lan`。
+- `ios.formalReadiness.ready=true`，`manifest.formalReadiness.ready=true`，`requireLanH5=true`，`failures=[]`。
+- 21 个自动化命令全部 `passed`。
+- `manualEvidence.missingEvidenceCount=0`。
+- `manualEvidence.packageFreshness.status=current`。
+- `recordHeadSha=9e3c418`，`currentHeadSha=9e3c418`。
+- 最终仍为 `verdict=not_complete`。
+
+未完成边界：
+
+- 14 个人工验收 item 仍全部为 `pending`。
+- `acceptanceVerdict=not_evaluated`。
+- `externalKnowledgeSync.status=not_synced`。
+- 本轮只证明当前 HEAD 的自动化门禁、LAN readiness 和候选证据完整性；不能替代真实操作者逐项复核和签署。
+
+阶段价值：
+
+这一阶段把 `9e3c418` 的新 LAN 前置校验真正跑进正式证据链：采证入口使用 `--require-lan-h5`，证据包和 manifest 均记录 LAN readiness 通过，full audit 也重新绑定到当前 HEAD。当前剩余阻塞已经非常清楚：不是代码自动化失败，而是 14 个人工验收项尚未由真实操作者签署。
