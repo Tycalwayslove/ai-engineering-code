@@ -997,3 +997,16 @@ HEAD `0750636` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/curre
 - `validate:native-shells` 必须守住 `copy-command`、`copy-generated-sign-command` 和 `function copyCommand`，防止 Handoff 回退为只能手动拖选命令。
 
 HEAD `8de7b4e` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260608-8de7b4e-lan/manual-acceptance-handoff.html` 包含固定命令复制按钮和生成签署命令复制按钮；full audit `.tmp/v1-completion-audit/current-full-final-20260608-8de7b4e-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，`acceptanceVerdict=not_evaluated`，所以 goal 仍不能标记 complete。
+
+## 通知候选证据导入规则
+
+2026-06-08 起，Handoff 可以辅助导入通知 UI test 产物，但该能力只补候选 evidence，不做人工验收签署。
+
+- Handoff 的“当前补证重点”必须从 `requiredEvidence` 与 `evidence` 的实际差异生成，帮助操作者优先补缺少的候选材料。
+- 当缺口涉及 `local_notification` 或 `notification_click_backflow` 时，Handoff 可以展示 `pnpm validate:ios-notification-ui-test` 和 `--attach-notification-ui-test-metadata` 辅助命令。
+- `--attach-notification-ui-test-metadata` 只允许读取 `passed=true` 且 log / xcresult / video 文件都存在的 `notification-ui-test.json`。
+- 导入后只能追加 `systemArtifacts` 和 operator note，不能修改 item `status`、顶层 `acceptanceVerdict`、`manualAcceptanceRequired` 或 `automationCanReplaceManualAcceptance`。
+- `--attach-notification-ui-test-metadata` 必须拒绝和 `--mark-passed` 同次使用，强制操作者先生成 pending draft，再人工复核签署。
+- 即使 `manualEvidence.missingEvidenceCount=0`，只要 14 个 item 仍是 `pending`，completion audit 必须继续 `not_complete`。
+
+HEAD `029fdf5` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260608-029fdf5-lan/manual-acceptance-handoff.html` 的当前补证重点显示没有缺少候选证据；full audit `.tmp/v1-completion-audit/current-full-final-20260608-029fdf5-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`manualEvidence.packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，`acceptanceVerdict=not_evaluated`，所以 goal 仍不能标记 complete。

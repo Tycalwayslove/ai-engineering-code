@@ -6193,3 +6193,66 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把命令复制能力提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。自动化门禁保持全绿；completion 仍不能完成，因为人工验收尚未签署，且通知相关真实系统素材仍需人工复核补齐。
+
+## 阶段 217：通知人工补证入口
+
+背景：
+
+- HEAD `8de7b4e` 的 full audit 已经让自动化门禁全绿，但 `manualEvidence.missingEvidenceCount=2`。
+- 两个剩余候选证据缺口都集中在通知系统能力：本地通知缺“系统通知截图”，通知点击回流缺“系统通知点击录屏”。
+- 本地已有 `pnpm validate:ios-notification-ui-test` 产物，包含 `notification-ui-test.json`、log、xcresult 和 `system-notification-click.mp4`；但如果采证包生成时没有读到这些产物，操作者需要重新理解脚本和路径，摩擦偏高。
+
+实现：
+
+- HTML / Markdown Handoff 新增“当前补证重点”，直接从 `record.items[].requiredEvidence` 与 `evidence` 对比，列出缺证 item 和缺少的候选证据类型。
+- 当缺口涉及 `local_notification` 或 `notification_click_backflow` 时，Handoff 会给出通知 UI test 补证辅助命令：运行 `pnpm validate:ios-notification-ui-test`，再用 `--attach-notification-ui-test-metadata .tmp/ios-notification-ui-test/notification-ui-test.json` 生成补证 draft，最后重新生成 Handoff。
+- `prepare:ios-manual-evidence-record` 新增 `--attach-notification-ui-test-metadata <notification-ui-test.json>`。
+- 导入逻辑只在 metadata `passed=true` 且 `logPath`、`resultBundlePath`、`videoPath` 文件真实存在时追加候选证据。
+- 追加内容只进入 `local_notification.evidence.systemArtifacts` 和 `notification_click_backflow.evidence.systemArtifacts`，并追加 operator note 提示“仍需人工复核”。
+- `--attach-notification-ui-test-metadata` 禁止和 `--mark-passed` 同用，避免把自动导入候选证据误当成人工签署。
+
+验证：
+
+- TDD 红灯覆盖 Handoff 缺口摘要、通知 UI test 补证命令、metadata 导入成功、metadata 失败 / 文件缺失、与 `--mark-passed` 混用失败。
+- `node --test scripts/prepare-ios-manual-acceptance-handoff.test.mjs scripts/fill-ios-manual-evidence-record.test.mjs scripts/validate-native-shells.test.mjs` 通过。
+- `node --check scripts/prepare-ios-manual-acceptance-handoff.mjs && node --check scripts/fill-ios-manual-evidence-record.mjs && git diff --check` 通过。
+- `pnpm validate:native-shells` 通过。
+
+阶段价值：
+
+这一阶段把最后两个候选证据缺口从“操作者要自己找通知 UI test 产物”收敛为 Handoff 首页可见、命令可复制、导入有硬校验的流程。它仍不改变验收边界：导入 metadata 只补候选 evidence，不会改 `status` 或 `acceptanceVerdict`。
+
+## 阶段 218：HEAD 029fdf5 full audit 刷新
+
+执行命令：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- --seed-supported-system-evidence --seed-keyboard-input --seed-attachment-inputs --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-029fdf5-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-029fdf5-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- --run-automated-commands \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260608-029fdf5-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-029fdf5-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-029fdf5-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-029fdf5-lan/manual-acceptance-handoff.html`。
+- Handoff 当前补证重点显示“当前没有缺少的候选证据；仍需真实操作者逐项复核后才能签署”。
+- full audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-029fdf5-lan`。
+- 21 个自动化命令全部 `passed`。
+- `manualEvidence.missingEvidenceCount=0`，`manualEvidence.packageFreshness.status=current`，`recordHeadSha=029fdf5`，`currentHeadSha=029fdf5`。
+- 最终 `verdict=not_complete`，因为 `acceptanceVerdict=not_evaluated`，14 个人工验收 item 仍全部为 `pending`。
+- `externalKnowledgeSync.status=not_synced`。
+
+阶段价值：
+
+这一阶段把通知补证入口提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。候选证据缺口已经归零；剩余阻塞只剩真实操作者逐项复核并签署 passed filled 记录。
