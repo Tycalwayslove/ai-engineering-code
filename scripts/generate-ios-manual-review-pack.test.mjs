@@ -125,6 +125,8 @@ test("CLI writes manual review pack next to the record by default", () => {
   assert.match(markdown, /--reviewed-items-file .*manual-evidence-reviewed-items\.json/);
   assert.match(html, /<title>iOS 人工验收 Review Pack<\/title>/);
   assert.match(html, /本文件不代表验收通过/);
+  assert.match(html, /id="item-voice_input"/);
+  assert.match(html, /id="item-local_notification"/);
   assert.match(html, /--reviewed-items-file .*manual-evidence-reviewed-items\.json/);
   assert.match(html, /statusCounts/);
   assert.match(html, /href="\/tmp\/voice-text\.png"/);
@@ -148,6 +150,8 @@ test("HTML manual review pack renders evidence links without passing pending ite
   assert.match(html, /packageFreshness: <code>stale<\/code>/);
   assert.match(html, /acceptanceVerdict: <code>not_evaluated<\/code>/);
   assert.match(html, /statusCounts: <code>passed=0, pending=2, failed=0, blocked=0, other=0<\/code>/);
+  assert.match(html, /<article class="item" id="item-voice_input">/);
+  assert.match(html, /<article class="item" id="item-local_notification">/);
   assert.match(html, /必需证据/);
   assert.match(html, /截图：识别文本/);
   assert.match(html, /系统证据：iOS 权限弹窗截图或录屏/);

@@ -99,6 +99,8 @@ assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "recordHeadSha");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual review HTML pack written");
 assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "manual reviewed item list written");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "itemAnchorId");
+assertIncludes(iosManualReviewPackScriptPath, iosManualReviewPackScript, "id=\"${escapeHtml(itemAnchorId");
 
 const iosManualReviewPackTestPath = "scripts/generate-ios-manual-review-pack.test.mjs";
 const iosManualReviewPackTest = readRequired(iosManualReviewPackTestPath);
@@ -107,6 +109,7 @@ assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "HTML manua
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "packageFreshness: `stale`");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "docs-only changes");
 assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "--reviewed-item voice_input");
+assertIncludes(iosManualReviewPackTestPath, iosManualReviewPackTest, "id=\"item-voice_input\"");
 
 const iosManualHandoffScriptPath = "scripts/prepare-ios-manual-acceptance-handoff.mjs";
 const iosManualHandoffScript = readRequired(iosManualHandoffScriptPath);
@@ -134,6 +137,9 @@ assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function cop
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function updateSignCommand");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "allItemsReviewed");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "本文件不代表验收通过");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "itemAnchorId");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "查看证据");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "#${itemAnchorId");
 
 const iosManualHandoffTestPath = "scripts/prepare-ios-manual-acceptance-handoff.test.mjs";
 const iosManualHandoffTest = readRequired(iosManualHandoffTestPath);
@@ -146,6 +152,8 @@ assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "handoff summariz
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "data-missing-evidence-item-id");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "function copyCommand");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "allItemsReviewed");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "#item-keyboard_input");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "#item-local_notification");
 
 const iosManualEvidenceFillScriptPath = "scripts/fill-ios-manual-evidence-record.mjs";
 const iosManualEvidenceFillScript = readRequired(iosManualEvidenceFillScriptPath);

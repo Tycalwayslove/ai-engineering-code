@@ -104,6 +104,11 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+function itemAnchorId(itemId) {
+  const safeId = String(itemId || "unknown").replace(/[^A-Za-z0-9_-]/g, "-");
+  return `item-${safeId}`;
+}
+
 function commandSet({
   auditOutputDir,
   filledRecordPath,
@@ -167,7 +172,7 @@ function handoffContext(record, options = {}) {
   };
 }
 
-function reviewedItemChecklistHtml(items) {
+function reviewedItemChecklistHtml(items, reviewHref) {
   if (items.length === 0) {
     return "<li>无验收项目</li>";
   }
@@ -175,7 +180,8 @@ function reviewedItemChecklistHtml(items) {
     .map((item, index) => {
       const itemId = item?.id ?? "";
       const title = item?.title ?? item?.item ?? itemId ?? `项目 ${index + 1}`;
-      return `<li><label><input type="checkbox" class="reviewed-item" data-item-id="${escapeHtml(itemId)}"> ${index + 1}. ${escapeHtml(title)} <code>${escapeHtml(itemId)}</code></label></li>`;
+      const itemHref = `${reviewHref}#${itemAnchorId(itemId)}`;
+      return `<li><label><input type="checkbox" class="reviewed-item" data-item-id="${escapeHtml(itemId)}"> ${index + 1}. ${escapeHtml(title)} <code>${escapeHtml(itemId)}</code></label> <a href="${escapeHtml(itemHref)}">查看证据</a></li>`;
     })
     .join("\n");
 }
@@ -376,7 +382,7 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
   <section class="panel">
     <h2>签署命令生成器</h2>
     <p>逐项打开 Review Pack 证据并确认通过后，勾选对应项目；填入操作者和时间后，下方会生成签署命令。</p>
-    <ul>${reviewedItemChecklistHtml(context.items)}</ul>
+    <ul>${reviewedItemChecklistHtml(context.items, reviewHref)}</ul>
     <div class="field-row">
       <label>operator
         <input id="operator-name" type="text" placeholder="例如 QA 或你的名字">

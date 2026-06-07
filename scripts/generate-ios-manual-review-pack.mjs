@@ -31,6 +31,11 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+function itemAnchorId(itemId) {
+  const safeId = String(itemId || "unknown").replace(/[^A-Za-z0-9_-]/g, "-");
+  return `item-${safeId}`;
+}
+
 function evidencePath(value) {
   const text = evidenceText(value);
   const match = text.match(/(?:^|[\s:])((?:\/|\.\.?\/|[A-Za-z0-9_.-]+\/)[^\s,，)]+(?:\.png|\.jpg|\.jpeg|\.mp4|\.mov|\.json|\.log|\.xcresult|\.md|\.html))/i);
@@ -333,7 +338,7 @@ export function buildManualReviewHtmlPack(record, options = {}) {
         ? `<p><strong>blocker:</strong> ${escapeHtml(item.evidence.blocker)}</p>`
         : "";
       return `
-      <article class="item">
+      <article class="item" id="${escapeHtml(itemAnchorId(item?.id))}">
         <h3>${index + 1}. ${escapeHtml(item?.title ?? item?.item ?? item?.id ?? "未命名项目")}</h3>
         <p>id: <code>${escapeHtml(item?.id ?? "")}</code></p>
         <p>status: <code>${escapeHtml(item?.status ?? "missing")}</code></p>
