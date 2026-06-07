@@ -29,6 +29,17 @@ const packageJson = JSON.parse(
   fs.readFileSync(path.join(rootDir, "package.json"), "utf8")
 );
 
+function testEnv(overrides = {}) {
+  const env = { ...process.env };
+  delete env.H5_DEV_SERVER_URL;
+  delete env.AI_CODE_H5_NATIVE_BASE_URL;
+  delete env.AI_CODE_API_BASE_URL;
+  return {
+    ...env,
+    ...overrides,
+  };
+}
+
 test("collect iOS acceptance evidence supports dry-run output with manual gaps", () => {
   const outputDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "ios-acceptance-evidence-")
@@ -40,8 +51,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_NAVIGATION_UI_TEST_METADATA_PATH: path.join(
           outputDir,
           "missing-navigation-ui-test.json"
@@ -54,7 +64,7 @@ test("collect iOS acceptance evidence supports dry-run output with manual gaps",
           outputDir,
           "missing-voice-ui-test.json"
         ),
-      },
+      }),
     }
   );
 
@@ -391,10 +401,9 @@ test("collect iOS acceptance evidence reads voice UI test metadata", () => {
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_VOICE_UI_TEST_METADATA_PATH: metadataPath,
-      },
+      }),
     }
   );
 
@@ -463,10 +472,9 @@ test("collect iOS acceptance evidence reads voice permission UI test metadata", 
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_VOICE_PERMISSION_UI_TEST_METADATA_PATH: metadataPath,
-      },
+      }),
     }
   );
 
@@ -550,10 +558,9 @@ test("collect iOS acceptance evidence reads notification UI test metadata", () =
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_NOTIFICATION_UI_TEST_METADATA_PATH: metadataPath,
-      },
+      }),
     }
   );
 
@@ -636,10 +643,9 @@ test("collect iOS acceptance evidence reads attachment UI test metadata", () => 
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: metadataPath,
-      },
+      }),
     }
   );
 
@@ -696,13 +702,12 @@ test("collect iOS acceptance evidence can opt into notification click backflow s
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: path.join(
           outputDir,
           "missing-attachment-ui-test.json"
         ),
-      },
+      }),
     }
   );
 
@@ -750,13 +755,12 @@ test("collect iOS acceptance evidence can opt into native keyboard input support
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: path.join(
           outputDir,
           "missing-attachment-ui-test.json"
         ),
-      },
+      }),
     }
   );
 
@@ -877,13 +881,12 @@ test("collect iOS acceptance evidence can opt into native attachment inputs supp
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_ATTACHMENT_UI_TEST_METADATA_PATH: path.join(
           outputDir,
           "missing-attachment-ui-test.json"
         ),
-      },
+      }),
     }
   );
 
@@ -956,6 +959,7 @@ test("collect iOS acceptance evidence can opt into notification delivery diagnos
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: testEnv(),
     }
   );
 
@@ -1042,6 +1046,7 @@ test("collect iOS acceptance evidence can opt into calendar permission denial se
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: testEnv(),
     }
   );
 
@@ -1080,6 +1085,7 @@ test("collect iOS acceptance evidence can opt into seeded acceptance facts", () 
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: testEnv(),
     }
   );
 
@@ -1166,6 +1172,7 @@ test("collect iOS acceptance evidence can opt into system Calendar app screensho
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: testEnv(),
     }
   );
 
@@ -1212,6 +1219,7 @@ test("collect iOS acceptance evidence can opt into calendar cleanup seed", () =>
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: testEnv(),
     }
   );
 
@@ -1303,6 +1311,7 @@ test("collect iOS acceptance evidence can batch all supported system evidence se
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: testEnv(),
     }
   );
 
@@ -1354,10 +1363,9 @@ test("collect iOS acceptance evidence can batch supported system evidence via en
     {
       cwd: rootDir,
       encoding: "utf8",
-      env: {
-        ...process.env,
+      env: testEnv({
         AI_CODE_IOS_ACCEPTANCE_SEED_SUPPORTED_SYSTEM_EVIDENCE: "1",
-      },
+      }),
     }
   );
 
@@ -1404,6 +1412,7 @@ test("collect iOS acceptance evidence ignores pnpm argument separator", () => {
     {
       cwd: rootDir,
       encoding: "utf8",
+      env: testEnv(),
     }
   );
 
