@@ -1010,3 +1010,15 @@ HEAD `8de7b4e` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/curre
 - 即使 `manualEvidence.missingEvidenceCount=0`，只要 14 个 item 仍是 `pending`，completion audit 必须继续 `not_complete`。
 
 HEAD `029fdf5` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/current-head-final-20260608-029fdf5-lan/manual-acceptance-handoff.html` 的当前补证重点显示没有缺少候选证据；full audit `.tmp/v1-completion-audit/current-full-final-20260608-029fdf5-lan` 中 21 个自动化命令全部 `passed`，`manualEvidence.missingEvidenceCount=0`，`manualEvidence.packageFreshness.status=current`，但 14 个人工验收 item 仍全部为 `pending`，`acceptanceVerdict=not_evaluated`，所以 goal 仍不能标记 complete。
+
+## Handoff 到 Review Pack 的逐项证据链接
+
+2026-06-08 起，HTML Handoff 的逐项确认清单必须能直接跳转到 HTML Review Pack 中对应证据段。这个规则继续服务人工复核，不改变人工验收边界。
+
+- HTML Review Pack 中每个验收 item 必须有稳定锚点 `item-<itemId>`。
+- HTML Handoff 中每个 checkbox item 必须提供“查看证据”链接，指向同目录 `manual-evidence-review-pack.html#item-<itemId>`。
+- 操作者应先通过“查看证据”打开对应段落，复核截图、录屏、API 摘要、Bridge marker、system artifact 和备注，再决定是否勾选该 item。
+- `validate:native-shells` 必须守住 `itemAnchorId`、HTML item id、`查看证据` 和 `#item-*` 字符串，防止后续重构让清单和证据包重新脱节。
+- 该链接只减少人工查找成本；即使全部链接存在、候选证据完整，`status=pending` 和 `acceptanceVerdict=not_evaluated` 仍必须保持 `not_complete`。
+
+HEAD `ed0b281` 已提交该规则：`manual-acceptance-handoff.html` 的 14 个 checkbox item 均可跳到 `manual-evidence-review-pack.html#item-...`。同 HEAD 生成的 lightweight audit `.tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan` 由于未运行 `--run-automated-commands` 且本机 `H5DevServerURL` 为 `127.0.0.1`，显示 `manualEvidence.missingEvidenceCount=11`；它只证明新链接能力可生成，不代表正式 full audit 已完成。

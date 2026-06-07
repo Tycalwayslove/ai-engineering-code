@@ -6256,3 +6256,63 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把通知补证入口提交后的当前 HEAD 重新拉回 current evidence / current audit 状态。候选证据缺口已经归零；剩余阻塞只剩真实操作者逐项复核并签署 passed filled 记录。
+
+## 阶段 219：人工复核证据项直达链接
+
+背景：
+
+- HTML Handoff 已经能集中展示签署命令生成器、复制按钮和当前补证重点，但操作者勾选 14 个人工验收 item 时，还需要回到 HTML Review Pack 里手动查找对应证据段。
+- 这会增加“勾选清单”和“复核证据”之间的跳转成本，尤其在截图、录屏、API 摘要、Bridge marker 和 system artifact 较多时，容易打断人工复核节奏。
+
+实现：
+
+- `manual-evidence-review-pack.html` 的每个验收 item 现在渲染稳定锚点 `item-<itemId>`。
+- `manual-acceptance-handoff.html` 的逐项 checkbox 清单增加“查看证据”链接，指向 `manual-evidence-review-pack.html#item-<itemId>`。
+- `itemAnchorId()` 会把非安全字符归一为 `-`，避免未来 item id 扩展时生成非法 HTML anchor。
+- `validate:native-shells` 增加 `itemAnchorId`、HTML item id、`查看证据` 和 `#item-*` 护栏，防止 Handoff 与 Review Pack 重新脱节。
+
+验证：
+
+- `node --test scripts/generate-ios-manual-review-pack.test.mjs scripts/prepare-ios-manual-acceptance-handoff.test.mjs scripts/validate-native-shells.test.mjs` 通过。
+- `node --check scripts/generate-ios-manual-review-pack.mjs && node --check scripts/prepare-ios-manual-acceptance-handoff.mjs && node --check scripts/validate-native-shells.mjs && git diff --check` 通过。
+- `pnpm validate:native-shells` 通过。
+- 已提交 `ed0b281 feat(qa): 链接人工复核证据项`。
+
+阶段价值：
+
+这一阶段把人工复核入口从“清单和证据包并列打开”推进为“每个待勾选 item 可直达证据段”。它只降低操作者复核摩擦，不会修改 `status`、`acceptanceVerdict` 或任何 completion 判定。
+
+## 阶段 220：HEAD ed0b281 fresh evidence 记录
+
+执行命令：
+
+```bash
+pnpm collect:ios-acceptance-evidence -- \
+  --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan \
+  --seed-supported-system-evidence \
+  --seed-keyboard-input \
+  --seed-attachment-inputs
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-evidence-review-pack.html`，包含 `id="item-keyboard_input"`、`id="item-local_notification"` 等稳定锚点。
+- lightweight audit 路径：`.tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan`。
+- 本轮没有加 `--run-automated-commands`，因此 21 个自动化门禁在该 audit 中显示 `not_run`。
+- `manualEvidence.packageFreshness.status=current`，`recordHeadSha=ed0b281`，`currentHeadSha=ed0b281`。
+- `manualEvidence.missingEvidenceCount=11`，主要原因是本机 `Info.plist` 当前 `H5DevServerURL` 为 `http://127.0.0.1:3000/?native=ios`，没有生成“局域网地址 App 启动截图”，并且本轮系统日历写入 / 取消清理候选材料不完整。
+- 最终仍为 `verdict=not_complete`，因为 14 个人工验收 item 全部 `pending`、`acceptanceVerdict=not_evaluated`，且外部知识库 `not_synced`。
+
+阶段价值：
+
+这次 fresh evidence 用于证明 `ed0b281` 的 Handoff / Review Pack 锚点能力可以在当前 HEAD 生成；它不是正式 full audit 替代品，也不覆盖 HEAD `029fdf5` 局域网 full audit 中 `manualEvidence.missingEvidenceCount=0`、21 个自动化命令全 `passed` 的候选证据结论。正式完成仍需真实操作者逐项复核并签署 passed filled 记录。
