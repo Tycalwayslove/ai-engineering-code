@@ -316,6 +316,60 @@ test("handoff summarizes current missing evidence focus", () => {
   assert.match(html, /attach-notification-ui-test-metadata/);
 });
 
+test("handoff disables signing when candidate evidence is incomplete", () => {
+  const markdown = buildManualAcceptanceHandoff(reviewRecordWithMissingEvidence(), {
+    audit: {
+      verdict: "not_complete",
+      manualEvidence: {
+        packageFreshness: {
+          status: "current",
+          currentHeadSha: "abc1234",
+          recordHeadSha: "abc1234",
+        },
+        missingEvidenceCount: 2,
+        statusCounts: {
+          passed: 0,
+          pending: 2,
+          failed: 0,
+          blocked: 0,
+          other: 0,
+        },
+      },
+    },
+    manualRecordPath: ".tmp/run/manual-evidence-record.review.json",
+  });
+  const html = buildManualAcceptanceHtmlHandoff(reviewRecordWithMissingEvidence(), {
+    audit: {
+      verdict: "not_complete",
+      manualEvidence: {
+        packageFreshness: {
+          status: "current",
+          currentHeadSha: "abc1234",
+          recordHeadSha: "abc1234",
+        },
+        missingEvidenceCount: 2,
+        statusCounts: {
+          passed: 0,
+          pending: 2,
+          failed: 0,
+          blocked: 0,
+          other: 0,
+        },
+      },
+    },
+    manualRecordPath: ".tmp/run/manual-evidence-record.review.json",
+  });
+
+  assert.match(markdown, /当前仍有候选证据缺口/);
+  assert.match(markdown, /pnpm prepare:ios-manual-handoff -- --record \.tmp\/run\/manual-evidence-record\.review\.json/);
+  assert.doesNotMatch(markdown, /pnpm prepare:ios-manual-evidence-record[^\n]*--mark-passed/);
+  assert.match(html, /id="sign-command-generator-disabled"/);
+  assert.match(html, /签署命令生成器已停用/);
+  assert.doesNotMatch(html, /id="generated-sign-command"/);
+  assert.doesNotMatch(html, /id="copy-generated-sign-command"/);
+  assert.doesNotMatch(html, /pnpm prepare:ios-manual-evidence-record[^<]*--mark-passed/);
+});
+
 test("package exposes manual acceptance handoff command", () => {
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(rootDir, "package.json"), "utf8")

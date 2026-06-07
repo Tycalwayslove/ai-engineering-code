@@ -133,6 +133,9 @@ assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "missingEvide
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "当前补证重点");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "通知 UI test 补证辅助");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "--attach-notification-ui-test-metadata");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "sign-command-generator-disabled");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "签署命令生成器已停用");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "candidateEvidenceComplete");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function copyCommand");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function updateSignCommand");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "allItemsReviewed");
@@ -149,7 +152,9 @@ assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HEAD-bound revie
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "generated-sign-command");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "copy-generated-sign-command");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "handoff summarizes current missing evidence focus");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "handoff disables signing when candidate evidence is incomplete");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "data-missing-evidence-item-id");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "sign-command-generator-disabled");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "function copyCommand");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "allItemsReviewed");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "#item-keyboard_input");

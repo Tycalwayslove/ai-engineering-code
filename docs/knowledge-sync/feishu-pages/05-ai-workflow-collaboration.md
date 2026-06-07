@@ -1023,6 +1023,23 @@ HEAD `029fdf5` 已按该规则重新归档：`.tmp/ios-acceptance-evidence/curre
 
 HEAD `ed0b281` 已提交该规则：`manual-acceptance-handoff.html` 的 14 个 checkbox item 均可跳到 `manual-evidence-review-pack.html#item-...`。同 HEAD 生成的 lightweight audit `.tmp/v1-completion-audit/current-full-final-20260608-ed0b281-lan` 由于未运行 `--run-automated-commands` 且本机 `H5DevServerURL` 为 `127.0.0.1`，显示 `manualEvidence.missingEvidenceCount=11`；它只证明新链接能力可生成，不代表正式 full audit 已完成。
 
+## Handoff 缺证防误签规则
+
+2026-06-08 起，人工验收 Handoff 必须区分“候选证据补证模式”和“人工签署模式”。这个规则用于防止缺候选证据时误运行 `--mark-passed`，不改变真实人工验收标准。
+
+- Handoff 必须从 `requiredEvidence` 与 `evidence` 的实际差异计算 `missingEvidenceFocusItems`。
+- 如果仍有候选证据缺口，Markdown / HTML Handoff 只能展示补证路径：
+  - 打开 HTML Review Pack。
+  - 展示当前补证重点。
+  - 必要时展示通知 UI test metadata 导入辅助命令。
+  - 展示重新生成 Handoff 的命令。
+- 如果仍有候选证据缺口，Handoff 不能输出包含 `--mark-passed` 的可执行签署命令。
+- 如果仍有候选证据缺口，HTML Handoff 必须显示“签署命令生成器已停用”，且不能渲染 `generated-sign-command` 或 `copy-generated-sign-command`。
+- 只有候选证据缺口为 0 时，HTML Handoff 才能渲染签署命令生成器；即便如此，仍必须要求逐项 checkbox、`operator`、`confirmedAt` 和 HEAD 绑定的 `manual-evidence-reviewed-items.json`。
+- 该规则只防止误签；即使候选证据缺口为 0，只要 14 个人工验收 item 仍是 `pending`，completion audit 仍必须 `not_complete`。
+
+当前实现已用正式 LAN record 复核：`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-acceptance-handoff.html` 因 `missingEvidenceCount=0` 继续保留签署命令生成器；测试 fixture 中存在缺口时，Handoff 会进入“签署命令生成器已停用”状态。
+
 ## LAN Full Audit 的测试环境隔离规则
 
 正式 LAN full audit 会把局域网 URL 注入父进程环境，供 iOS build、Simulator smoke 和 UI test 使用。采证脚本自身的 dry-run 单测必须隔离这些外部 URL，避免“默认值测试”被正式 audit 环境污染。

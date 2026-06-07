@@ -123,6 +123,7 @@ function commandSet({
     attachNotificationUiTestMetadata: `pnpm prepare:ios-manual-evidence-record -- --record ${manualRecordPath} --output ${notificationReviewRecordPath} --attach-notification-ui-test-metadata ${notificationUiTestMetadataPath}`,
     openReviewPack: `open ${htmlReviewPackPath}`,
     prepareNotificationHandoff: `pnpm prepare:ios-manual-handoff -- --record ${notificationReviewRecordPath}`,
+    regenerateHandoff: `pnpm prepare:ios-manual-handoff -- --record ${manualRecordPath}`,
     runNotificationUiTest: "pnpm validate:ios-notification-ui-test",
     signFilledRecord: `pnpm prepare:ios-manual-evidence-record -- --record ${manualRecordPath} --output ${filledRecordPath} --mark-passed --operator <name> --confirmed-at <iso8601> --reviewed-items-file ${reviewedItemsPath}`,
     validateFilledRecord: `node scripts/validate-ios-manual-evidence-record.mjs --record ${filledRecordPath} --require-complete --report ${gapsReportPath}`,
@@ -255,13 +256,152 @@ function missingEvidenceFocusHtml(items, commands) {
   </section>`;
 }
 
+function markdownOperationSteps(commands, candidateEvidenceComplete) {
+  const lines = [
+    "## 操作步骤",
+    "",
+    "1. 打开 HTML Review Pack，逐项查看截图、录屏、API 摘要、Bridge marker 和系统证据。",
+    "",
+    "```bash",
+    commands.openReviewPack,
+    "```",
+    "",
+  ];
+  if (!candidateEvidenceComplete) {
+    lines.push(
+      "2. 当前仍有候选证据缺口，先补齐上方缺口；本 handoff 已停用 `--mark-passed` 签署命令。",
+      "",
+      "3. 补证并重新生成 review record 后，重新生成 handoff，再由真实操作者逐项复核。",
+      "",
+      "```bash",
+      commands.regenerateHandoff,
+      "```"
+    );
+    return lines;
+  }
+  lines.push(
+    "2. 如果每个 item 都由真实操作者确认通过，生成 signed filled 记录。",
+    "",
+    "```bash",
+    commands.signFilledRecord,
+    "```",
+    "",
+    "3. 校验 filled 记录并输出缺口报告。",
+    "",
+    "```bash",
+    commands.validateFilledRecord,
+    "```",
+    "",
+    "4. 重新运行正式 completion audit。",
+    "",
+    "```bash",
+    commands.runCompletionAudit,
+    "```"
+  );
+  return lines;
+}
+
+function htmlOperationSteps(commands, candidateEvidenceComplete) {
+  if (!candidateEvidenceComplete) {
+    return `<section class="panel">
+    <h2>操作步骤</h2>
+    <p>1. 打开 HTML Review Pack，逐项查看截图、录屏、API 摘要、Bridge marker 和系统证据。</p>
+    ${commandBlockHtml(commands.openReviewPack)}
+    <p>2. 当前仍有候选证据缺口，先补齐上方缺口；本 handoff 已停用 <code>--mark-passed</code> 签署命令。</p>
+    <p>3. 补证并重新生成 review record 后，重新生成 handoff，再由真实操作者逐项复核。</p>
+    ${commandBlockHtml(commands.regenerateHandoff)}
+  </section>`;
+  }
+  return `<section class="panel">
+    <h2>操作步骤</h2>
+    <p>1. 打开 HTML Review Pack，逐项查看截图、录屏、API 摘要、Bridge marker 和系统证据。</p>
+    ${commandBlockHtml(commands.openReviewPack)}
+    <p>2. 如果每个 item 都由真实操作者确认通过，生成 signed filled 记录。</p>
+    ${commandBlockHtml(commands.signFilledRecord)}
+    <p>3. 校验 filled 记录并输出缺口报告。</p>
+    ${commandBlockHtml(commands.validateFilledRecord)}
+    <p>4. 重新运行正式 completion audit。</p>
+    ${commandBlockHtml(commands.runCompletionAudit)}
+  </section>`;
+}
+
+function htmlSignCommandGenerator(context, reviewHref, candidateEvidenceComplete) {
+  if (!candidateEvidenceComplete) {
+    return `<section class="panel" id="sign-command-generator-disabled">
+    <h2>签署命令生成器已停用</h2>
+    <p>当前 review record 仍有候选证据缺口。请先补证并重新生成 handoff；只有缺口为 0 后，才会显示签署命令生成器。</p>
+  </section>`;
+  }
+  return `<section class="panel">
+    <h2>签署命令生成器</h2>
+    <p>逐项打开 Review Pack 证据并确认通过后，勾选对应项目；填入操作者和时间后，下方会生成签署命令。</p>
+    <ul>${reviewedItemChecklistHtml(context.items, reviewHref)}</ul>
+    <div class="field-row">
+      <label>operator
+        <input id="operator-name" type="text" placeholder="例如 QA 或你的名字">
+      </label>
+      <label>confirmedAt
+        <input id="confirmed-at" type="text" placeholder="2026-06-01T09:00:00.000Z">
+      </label>
+    </div>
+    <p id="sign-command-status">请先逐项勾选全部验收项目，并填写 operator 与 confirmedAt。</p>
+    <textarea id="generated-sign-command" readonly></textarea>
+    <p><button type="button" id="copy-generated-sign-command" class="copy-command" data-copy-target="generated-sign-command">复制生成的签署命令</button></p>
+    <p id="copy-command-status"></p>
+  </section>`;
+}
+
+function htmlSignCommandScript(context, candidateEvidenceComplete) {
+  if (!candidateEvidenceComplete) {
+    return "";
+  }
+  return `    const signCommandParts = {
+      record: ${JSON.stringify(context.manualRecordPath)},
+      output: ${JSON.stringify(context.filledRecordPath)},
+      reviewedItemsFile: ${JSON.stringify(context.reviewedItemsPath)}
+    };
+    function shellQuote(value) {
+      return "'" + String(value).replaceAll("'", "'\\\\''") + "'";
+    }
+    function updateSignCommand() {
+      const reviewedItems = Array.from(document.querySelectorAll(".reviewed-item"));
+      const allItemsReviewed = reviewedItems.length > 0 && reviewedItems.every((item) => item.checked);
+      const operator = document.getElementById("operator-name").value.trim();
+      const confirmedAt = document.getElementById("confirmed-at").value.trim();
+      const output = document.getElementById("generated-sign-command");
+      const status = document.getElementById("sign-command-status");
+      if (!allItemsReviewed || !operator || !confirmedAt) {
+        output.value = "";
+        status.textContent = "请先逐项勾选全部验收项目，并填写 operator 与 confirmedAt。";
+        return;
+      }
+      output.value = [
+        "pnpm prepare:ios-manual-evidence-record --",
+        "--record", shellQuote(signCommandParts.record),
+        "--output", shellQuote(signCommandParts.output),
+        "--mark-passed",
+        "--operator", shellQuote(operator),
+        "--confirmed-at", shellQuote(confirmedAt),
+        "--reviewed-items-file", shellQuote(signCommandParts.reviewedItemsFile)
+      ].join(" ");
+      status.textContent = "签署命令已生成。运行前请确认每项证据已经人工复核。";
+    }
+    for (const element of document.querySelectorAll(".reviewed-item, #operator-name, #confirmed-at")) {
+      element.addEventListener("input", updateSignCommand);
+      element.addEventListener("change", updateSignCommand);
+    }
+    document.getElementById("confirmed-at").value = new Date().toISOString();
+    updateSignCommand();`;
+}
+
 export function buildManualAcceptanceHandoff(record, options = {}) {
   const context = handoffContext(record, options);
   const commands = commandSet(context);
+  const candidateEvidenceComplete = missingEvidenceFocusItems(context.items).length === 0;
   const lines = [
     "# iOS 人工验收 Handoff",
     "",
-    "本文件不代表验收通过。它只把当前 review record、复核页面、签署命令和最终 audit 命令集中到一个入口。",
+    "本文件不代表验收通过。它只把当前 review record、复核页面、补证/签署命令和最终 audit 命令集中到一个入口。",
     "",
     "## 当前状态",
     "",
@@ -282,31 +422,7 @@ export function buildManualAcceptanceHandoff(record, options = {}) {
     "",
     ...missingEvidenceFocusMarkdown(context.items, commands),
     "",
-    "## 操作步骤",
-    "",
-    "1. 打开 HTML Review Pack，逐项查看截图、录屏、API 摘要、Bridge marker 和系统证据。",
-    "",
-    "```bash",
-    commands.openReviewPack,
-    "```",
-    "",
-    "2. 如果每个 item 都由真实操作者确认通过，生成 signed filled 记录。",
-    "",
-    "```bash",
-    commands.signFilledRecord,
-    "```",
-    "",
-    "3. 校验 filled 记录并输出缺口报告。",
-    "",
-    "```bash",
-    commands.validateFilledRecord,
-    "```",
-    "",
-    "4. 重新运行正式 completion audit。",
-    "",
-    "```bash",
-    commands.runCompletionAudit,
-    "```",
+    ...markdownOperationSteps(commands, candidateEvidenceComplete),
     "",
     "## 边界",
     "",
@@ -321,6 +437,7 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
   const context = handoffContext(record, options);
   const commands = commandSet(context);
   const reviewHref = escapeHtml(options.htmlReviewPackHref ?? context.htmlReviewPackPath);
+  const candidateEvidenceComplete = missingEvidenceFocusItems(context.items).length === 0;
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -348,7 +465,7 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
 </head>
 <body>
   <h1>iOS 人工验收 Handoff</h1>
-  <p class="warning">本文件不代表验收通过。它只把当前 review record、复核页面、签署命令和最终 audit 命令集中到一个入口。</p>
+  <p class="warning">本文件不代表验收通过。它只把当前 review record、复核页面、补证/签署命令和最终 audit 命令集中到一个入口。</p>
   <section class="panel">
     <h2>当前状态</h2>
     <ul>
@@ -368,34 +485,8 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     </ul>
   </section>
   ${missingEvidenceFocusHtml(context.items, commands)}
-  <section class="panel">
-    <h2>操作步骤</h2>
-    <p>1. 打开 HTML Review Pack，逐项查看截图、录屏、API 摘要、Bridge marker 和系统证据。</p>
-    ${commandBlockHtml(commands.openReviewPack)}
-    <p>2. 如果每个 item 都由真实操作者确认通过，生成 signed filled 记录。</p>
-    ${commandBlockHtml(commands.signFilledRecord)}
-    <p>3. 校验 filled 记录并输出缺口报告。</p>
-    ${commandBlockHtml(commands.validateFilledRecord)}
-    <p>4. 重新运行正式 completion audit。</p>
-    ${commandBlockHtml(commands.runCompletionAudit)}
-  </section>
-  <section class="panel">
-    <h2>签署命令生成器</h2>
-    <p>逐项打开 Review Pack 证据并确认通过后，勾选对应项目；填入操作者和时间后，下方会生成签署命令。</p>
-    <ul>${reviewedItemChecklistHtml(context.items, reviewHref)}</ul>
-    <div class="field-row">
-      <label>operator
-        <input id="operator-name" type="text" placeholder="例如 QA 或你的名字">
-      </label>
-      <label>confirmedAt
-        <input id="confirmed-at" type="text" placeholder="2026-06-01T09:00:00.000Z">
-      </label>
-    </div>
-    <p id="sign-command-status">请先逐项勾选全部验收项目，并填写 operator 与 confirmedAt。</p>
-    <textarea id="generated-sign-command" readonly></textarea>
-    <p><button type="button" id="copy-generated-sign-command" class="copy-command" data-copy-target="generated-sign-command">复制生成的签署命令</button></p>
-    <p id="copy-command-status"></p>
-  </section>
+  ${htmlOperationSteps(commands, candidateEvidenceComplete)}
+  ${htmlSignCommandGenerator(context, reviewHref, candidateEvidenceComplete)}
   <section class="panel">
     <h2>边界</h2>
     <ul>
@@ -405,14 +496,6 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     </ul>
   </section>
   <script>
-    const signCommandParts = {
-      record: ${JSON.stringify(context.manualRecordPath)},
-      output: ${JSON.stringify(context.filledRecordPath)},
-      reviewedItemsFile: ${JSON.stringify(context.reviewedItemsPath)}
-    };
-    function shellQuote(value) {
-      return "'" + String(value).replaceAll("'", "'\\\\''") + "'";
-    }
     function fallbackCopy(text) {
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -446,38 +529,10 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
         if (status) status.textContent = "复制失败，请手动选择命令文本复制。";
       }
     }
-    function updateSignCommand() {
-      const reviewedItems = Array.from(document.querySelectorAll(".reviewed-item"));
-      const allItemsReviewed = reviewedItems.length > 0 && reviewedItems.every((item) => item.checked);
-      const operator = document.getElementById("operator-name").value.trim();
-      const confirmedAt = document.getElementById("confirmed-at").value.trim();
-      const output = document.getElementById("generated-sign-command");
-      const status = document.getElementById("sign-command-status");
-      if (!allItemsReviewed || !operator || !confirmedAt) {
-        output.value = "";
-        status.textContent = "请先逐项勾选全部验收项目，并填写 operator 与 confirmedAt。";
-        return;
-      }
-      output.value = [
-        "pnpm prepare:ios-manual-evidence-record --",
-        "--record", shellQuote(signCommandParts.record),
-        "--output", shellQuote(signCommandParts.output),
-        "--mark-passed",
-        "--operator", shellQuote(operator),
-        "--confirmed-at", shellQuote(confirmedAt),
-        "--reviewed-items-file", shellQuote(signCommandParts.reviewedItemsFile)
-      ].join(" ");
-      status.textContent = "签署命令已生成。运行前请确认每项证据已经人工复核。";
-    }
-    for (const element of document.querySelectorAll(".reviewed-item, #operator-name, #confirmed-at")) {
-      element.addEventListener("input", updateSignCommand);
-      element.addEventListener("change", updateSignCommand);
-    }
     for (const element of document.querySelectorAll(".copy-command")) {
       element.addEventListener("click", copyCommand);
     }
-    document.getElementById("confirmed-at").value = new Date().toISOString();
-    updateSignCommand();
+${htmlSignCommandScript(context, candidateEvidenceComplete)}
   </script>
 </body>
 </html>

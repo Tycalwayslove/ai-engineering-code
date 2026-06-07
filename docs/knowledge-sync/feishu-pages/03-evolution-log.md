@@ -6391,3 +6391,43 @@ pnpm collect:v1-completion-audit -- --run-automated-commands \
 阶段价值：
 
 这一阶段把最新 HEAD 重新拉回正式 LAN full audit 状态：自动化门禁全绿、候选证据缺口归零、证据包 HEAD 新鲜。剩余阻塞已经是清晰的人类边界：真实操作者需要逐项复核并签署 passed filled 记录。
+
+## 阶段 223：Handoff 缺证防误签模式
+
+背景：
+
+- `manual-acceptance-handoff.html` 已能集中展示 Review Pack、签署命令生成器、校验命令和 full audit 命令。
+- 但如果当前 review record 仍存在候选证据缺口，继续展示 `--mark-passed` 签署命令会给操作者错误暗示：好像只要勾选 checkbox 就可以完成签署。
+- 当前 completion 边界要求：候选证据缺口必须先补齐；即使缺口为 0，仍必须由真实操作者逐项复核后才能把 item 改为 `passed`。
+
+实现：
+
+- `scripts/prepare-ios-manual-acceptance-handoff.mjs` 基于 `missingEvidenceFocusItems()` 判断 `candidateEvidenceComplete`。
+- 候选证据未完整时，Markdown / HTML Handoff 进入补证模式：
+  - 只展示 HTML Review Pack 打开命令。
+  - 展示重新生成 Handoff 的命令：`pnpm prepare:ios-manual-handoff -- --record <review-record>`。
+  - 不输出包含 `--mark-passed` 的可执行签署命令。
+  - HTML 显示“签署命令生成器已停用”，不渲染 `generated-sign-command` 或复制签署命令按钮。
+- 候选证据完整时，现有签署命令生成器保持可用，继续要求逐项 checkbox、`operator`、`confirmedAt` 和 `manual-evidence-reviewed-items.json`。
+- 测试新增“candidate evidence incomplete 时禁用签署”的回归断言，防止后续重构把补证状态重新暴露为可签署状态。
+
+验证：
+
+```bash
+node --check scripts/prepare-ios-manual-acceptance-handoff.mjs
+node --test scripts/generate-ios-manual-review-pack.test.mjs scripts/prepare-ios-manual-acceptance-handoff.test.mjs scripts/validate-native-shells.test.mjs
+pnpm validate:native-shells
+```
+
+同时用正式 record 重新生成 Handoff：
+
+```bash
+node scripts/prepare-ios-manual-acceptance-handoff.mjs -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-evidence-record.review.json
+```
+
+结果：
+
+- 对有候选证据缺口的 fixture，Handoff 不再输出可执行的 `--mark-passed` 签署命令。
+- 对 `missingEvidenceCount=0` 的正式 LAN review record，`.tmp/ios-acceptance-evidence/current-head-final-20260608-d9618d8-lan/manual-acceptance-handoff.html` 仍保留签署命令生成器。
+- 该改动只减少误签风险，不改变 completion 结论：14 个人工验收 item 仍必须由真实操作者复核并签署后，goal 才可能进入 complete 审计。
