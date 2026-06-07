@@ -501,20 +501,21 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 
 ## 当前 Handoff 入口
 
-2026-06-08 HEAD `a00ae87` 的当前正式候选证据齐备入口：
+2026-06-08 HEAD `4281375` 的当前正式候选证据齐备入口：
 
-- 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan`。
-- HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-acceptance-handoff.html`。
-- HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-review-pack.html`。
-- full audit：`.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`。
+- 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan`。
+- HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-review-pack.html`。
+- HEAD 绑定确认列表：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-reviewed-items.json`。
+- lightweight audit：`.tmp/v1-completion-audit/current-lightweight-20260608-4281375-lan`。
 
-本轮 evidence 使用 `--require-lan-h5` 生成。full audit 使用 `--manual-record best --manual-record-root .tmp/ios-acceptance-evidence`，自动选择当前 HEAD 的 `.tmp/ios-acceptance-evidence/current-head-final-20260608-a00ae87-lan/manual-evidence-record.review.json`。full audit 中 21 个自动化命令全部 `passed`，证据包 `packageFreshness.status=current`，候选证据缺口为 0。但人工记录仍为 `acceptanceVerdict=not_evaluated`，14 个 item 全部 `pending`，所以不能视为验收通过。
+本轮 evidence 使用 `--require-lan-h5` 生成，`manifest.formalReadiness.ready=true`，`H5DevServerURL` 和 H5 native URL 均为 `private_lan`。lightweight audit 使用当前 HEAD 的 `.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json`，证据包 `packageFreshness.status=current`，候选证据缺口为 0。但本轮没有使用 `--run-automated-commands` 重跑 21 个自动化命令；最近一次 21 项全绿 full audit 仍是 `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`。人工记录仍为 `acceptanceVerdict=not_evaluated`，14 个 item 全部 `pending`，所以不能视为验收通过。
 
 当前候选证据缺口已为 0；Handoff 的“当前补证重点”显示没有缺少的候选证据。但这只说明候选材料齐备，不代表真实人工验收已经通过。
 
 HTML Handoff 中的复制按钮、通知 UI test metadata 导入命令和签署命令生成器只用于减少人工复核后的操作成本。操作者仍必须先打开 HTML Review Pack 逐项核对截图、录屏、API 摘要、Bridge marker、系统 artifact 和备注，再勾选全部 item、填写 `operator` / `confirmedAt` 并运行生成的签署命令。
 
-补充历史：2026-06-08 HEAD `ed0b281` 在 Handoff 上新增逐项“查看证据”链接；2026-06-08 HEAD `1bb9d83` 已在此基础上补齐缺证防误签逻辑，并重新跑通 LAN full audit：
+补充历史：2026-06-08 HEAD `a00ae87` 是最近一次完整 LAN full audit 基线，full audit 路径为 `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`，21 个自动化命令全部 `passed`，候选证据缺口为 0，但仍因为人工记录未签署而 `not_complete`。2026-06-08 HEAD `ed0b281` 在 Handoff 上新增逐项“查看证据”链接；2026-06-08 HEAD `1bb9d83` 已在此基础上补齐缺证防误签逻辑，并重新跑通 LAN full audit：
 
 - 证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan`。
 - HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-ed0b281-lan/manual-acceptance-handoff.html`。

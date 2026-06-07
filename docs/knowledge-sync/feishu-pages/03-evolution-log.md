@@ -6724,3 +6724,52 @@ node scripts/validate-ios-manual-evidence-record.mjs \
 阶段价值：
 
 这一阶段把“人工验收通过”从状态字段升级为“状态 + 证据 + 操作者签署 + HEAD 绑定”的组合门槛。自动候选证据、机器预填和后续可能增加的 machine precheck 都不能绕过 `operatorSignoff`。当前剩余阻塞仍是 14 个人工验收 item 需要真实操作者逐项复核并签署 passed filled 记录。
+
+## 阶段 229：HEAD 4281375 当前 LAN 辅助证据刷新
+
+背景：
+
+- `4281375` 提交后，`a00ae87` 的正式证据包不再是 exact current。
+- 本轮代码变化集中在 QA completion 签署闸门和 `--manual-record best` 选择规则，仍会影响正式验收脚本与 Handoff，因此需要重新生成当前 HEAD 的 LAN 辅助证据包。
+- 因为没有人工 signed filled record，即使立即重跑 full 21 项自动化命令，completion audit 也仍会是 `not_complete`；本阶段先补当前 HEAD 的 fresh evidence、Handoff、Review Pack 和 lightweight audit。
+
+执行：
+
+```bash
+H5_DEV_SERVER_URL='http://192.168.1.238:3000/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3000' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- \
+  --require-lan-h5 \
+  --seed-supported-system-evidence \
+  --seed-keyboard-input \
+  --seed-attachment-inputs \
+  --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- \
+  --manual-record .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json \
+  --output-dir .tmp/v1-completion-audit/current-lightweight-20260608-4281375-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 证据包路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan`。
+- HTML Handoff 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack 路径：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-review-pack.html`。
+- HEAD 绑定确认列表：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-reviewed-items.json`。
+- lightweight audit 路径：`.tmp/v1-completion-audit/current-lightweight-20260608-4281375-lan`。
+- `manifest.headSha=4281375`，`manual-evidence-record.review.json.headSha=4281375`。
+- `formalReadiness.ready=true`，`serviceHealth.h5NativeUrlKind=private_lan`，`ios.h5DevServerUrlKind=private_lan`。
+- `manualEvidence.missingEvidenceCount=0`。
+- `manualEvidence.packageFreshness.status=current`，`recordHeadSha=4281375`，`currentHeadSha=4281375`。
+- 14 个人工验收 item 仍全部为 `pending`，`acceptanceVerdict=not_evaluated`。
+- lightweight audit 中 21 个自动化命令为 `not_run`，最终 `verdict=not_complete`。
+
+阶段价值：
+
+这一阶段把当前 HEAD 的人工复核入口重新拉回 fresh 状态：操作者现在应打开 `4281375` 的 Handoff / Review Pack 逐项复核，而不是继续使用 `a00ae87` 的旧包。正式 completion 仍需要真实操作者生成 signed filled record，并用该 filled record 重跑 `--run-automated-commands` full audit；本轮没有执行飞书或 Obsidian 真实同步。

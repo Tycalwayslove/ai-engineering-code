@@ -1117,3 +1117,23 @@ pnpm collect:v1-completion-audit -- --manual-record best --manual-record-root .t
 ```
 
 轻量 audit `.tmp/v1-completion-audit/signoff-gate-check-20260608` 仍选择 `a00ae87` review 记录，`missingEvidenceCount=0`，但现在明确列出缺少 `operatorSignoff` 和 14 个 item 仍 pending；结论保持 `verdict=not_complete`。
+
+## 当前 HEAD 人工复核入口刷新规则
+
+2026-06-08 HEAD `4281375` 已重新生成当前 LAN 辅助证据包和人工复核入口。以后继续推进 v1 completion 时，默认应优先使用当前 HEAD 的 Handoff / Review Pack，而不是旧 HEAD 的历史 full audit 包。
+
+- 当前证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan`。
+- 当前 HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-acceptance-handoff.html`。
+- 当前 HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-review-pack.html`。
+- 当前 HEAD 绑定确认列表：`.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-reviewed-items.json`。
+- 当前 lightweight audit：`.tmp/v1-completion-audit/current-lightweight-20260608-4281375-lan`。
+
+本轮 `4281375` 证据包使用 `--require-lan-h5` 生成，`formalReadiness.ready=true`，H5 native URL 和构建产物 `H5DevServerURL` 都是 `private_lan`。lightweight audit 中 `manualEvidence.packageFreshness.status=current`、`recordHeadSha=4281375`、`currentHeadSha=4281375`、`manualEvidence.missingEvidenceCount=0`。
+
+边界必须保持清楚：
+
+- `4281375` 本轮没有使用 `--run-automated-commands` 重跑 21 项自动化命令。
+- 最近一次 21 项自动化全绿 full audit 仍是 `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`。
+- 因为当前人工记录仍是 review 记录，14 个 item 全部 `pending`，且缺少 `operatorSignoff`，所以 goal 仍不能标记 complete。
+- 正式 completion 必须由真实操作者基于 `4281375` Review Pack 逐项复核，生成 signed filled record，再用该 filled record 重跑 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path> --external-knowledge-status ...`。
+- 本轮只更新仓库源稿，未执行飞书或 Obsidian 真实同步；最终回复仍必须说明“仓库已更新，外部知识库未同步”。
