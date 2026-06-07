@@ -199,6 +199,10 @@ test("HTML handoff renders clickable review links and command blocks", () => {
   assert.match(html, /id="operator-name"/);
   assert.match(html, /id="confirmed-at"/);
   assert.match(html, /id="generated-sign-command"/);
+  assert.match(html, /data-copy-text="open .tmp\/run\/manual-evidence-review-pack\.html"/);
+  assert.match(html, /id="copy-generated-sign-command"/);
+  assert.match(html, /id="copy-command-status"/);
+  assert.match(html, /function copyCommand/);
   assert.match(html, /function updateSignCommand/);
   assert.match(html, /allItemsReviewed/);
   assert.match(html, /--reviewed-items-file .tmp\/run\/manual-evidence-reviewed-items\.json/);

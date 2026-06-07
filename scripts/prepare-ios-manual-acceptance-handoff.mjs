@@ -128,6 +128,10 @@ function reviewedItemChecklistHtml(items) {
     .join("\n");
 }
 
+function commandBlockHtml(command) {
+  return `<div class="command-block"><button type="button" class="copy-command" data-copy-text="${escapeHtml(command)}">复制</button><pre><code>${escapeHtml(command)}</code></pre></div>`;
+}
+
 export function buildManualAcceptanceHandoff(record, options = {}) {
   const context = handoffContext(record, options);
   const commands = commandSet(context);
@@ -203,8 +207,12 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     h1, h2 { margin: 0 0 12px; }
     code { background: #eef1ec; padding: 2px 5px; border-radius: 4px; }
     pre { background: #17201b; color: #f7f8f5; padding: 14px; border-radius: 8px; overflow-x: auto; }
+    button { border: 1px solid #b9c2b6; background: #eef1ec; color: #17201b; border-radius: 6px; padding: 7px 10px; font: inherit; cursor: pointer; }
+    button:hover { background: #e3e9df; }
     .warning { border: 1px solid #b45309; background: #fff7ed; padding: 14px 16px; border-radius: 8px; }
     .panel { background: #fff; border: 1px solid #dde2da; border-radius: 8px; padding: 18px; margin: 18px 0; }
+    .command-block { display: grid; gap: 8px; margin: 10px 0 16px; }
+    .command-block button { justify-self: start; }
     .field-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
     .field-row label { display: grid; gap: 4px; min-width: 260px; }
     input[type="text"] { border: 1px solid #cdd5ca; border-radius: 6px; padding: 8px 10px; font: inherit; }
@@ -237,13 +245,13 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
   <section class="panel">
     <h2>操作步骤</h2>
     <p>1. 打开 HTML Review Pack，逐项查看截图、录屏、API 摘要、Bridge marker 和系统证据。</p>
-    <pre><code>${escapeHtml(commands.openReviewPack)}</code></pre>
+    ${commandBlockHtml(commands.openReviewPack)}
     <p>2. 如果每个 item 都由真实操作者确认通过，生成 signed filled 记录。</p>
-    <pre><code>${escapeHtml(commands.signFilledRecord)}</code></pre>
+    ${commandBlockHtml(commands.signFilledRecord)}
     <p>3. 校验 filled 记录并输出缺口报告。</p>
-    <pre><code>${escapeHtml(commands.validateFilledRecord)}</code></pre>
+    ${commandBlockHtml(commands.validateFilledRecord)}
     <p>4. 重新运行正式 completion audit。</p>
-    <pre><code>${escapeHtml(commands.runCompletionAudit)}</code></pre>
+    ${commandBlockHtml(commands.runCompletionAudit)}
   </section>
   <section class="panel">
     <h2>签署命令生成器</h2>
@@ -259,6 +267,8 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     </div>
     <p id="sign-command-status">请先逐项勾选全部验收项目，并填写 operator 与 confirmedAt。</p>
     <textarea id="generated-sign-command" readonly></textarea>
+    <p><button type="button" id="copy-generated-sign-command" class="copy-command" data-copy-target="generated-sign-command">复制生成的签署命令</button></p>
+    <p id="copy-command-status"></p>
   </section>
   <section class="panel">
     <h2>边界</h2>
@@ -276,6 +286,39 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     };
     function shellQuote(value) {
       return "'" + String(value).replaceAll("'", "'\\\\''") + "'";
+    }
+    function fallbackCopy(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.setAttribute("readonly", "");
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      return copied;
+    }
+    async function copyCommand(event) {
+      const button = event.currentTarget;
+      const targetId = button.dataset.copyTarget;
+      const target = targetId ? document.getElementById(targetId) : null;
+      const text = (target ? target.value || target.textContent : button.dataset.copyText || "").trim();
+      const status = document.getElementById("copy-command-status");
+      if (!text) {
+        if (status) status.textContent = "没有可复制的命令。";
+        return;
+      }
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else if (!fallbackCopy(text)) {
+          throw new Error("copy failed");
+        }
+        if (status) status.textContent = "命令已复制。运行前请再次确认人工复核结论。";
+      } catch {
+        if (status) status.textContent = "复制失败，请手动选择命令文本复制。";
+      }
     }
     function updateSignCommand() {
       const reviewedItems = Array.from(document.querySelectorAll(".reviewed-item"));
@@ -303,6 +346,9 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
     for (const element of document.querySelectorAll(".reviewed-item, #operator-name, #confirmed-at")) {
       element.addEventListener("input", updateSignCommand);
       element.addEventListener("change", updateSignCommand);
+    }
+    for (const element of document.querySelectorAll(".copy-command")) {
+      element.addEventListener("click", copyCommand);
     }
     document.getElementById("confirmed-at").value = new Date().toISOString();
     updateSignCommand();

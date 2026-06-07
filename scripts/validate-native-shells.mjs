@@ -124,6 +124,9 @@ assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "data-item-id
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "operator-name");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "confirmed-at");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "generated-sign-command");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "copy-command");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "copy-generated-sign-command");
+assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function copyCommand");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "function updateSignCommand");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "allItemsReviewed");
 assertIncludes(iosManualHandoffScriptPath, iosManualHandoffScript, "本文件不代表验收通过");
@@ -134,6 +137,8 @@ assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "manual acceptanc
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HTML handoff renders clickable review links");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "HEAD-bound reviewed item list");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "generated-sign-command");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "copy-generated-sign-command");
+assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "function copyCommand");
 assertIncludes(iosManualHandoffTestPath, iosManualHandoffTest, "allItemsReviewed");
 
 const iosManualEvidenceFillScriptPath = "scripts/fill-ios-manual-evidence-record.mjs";

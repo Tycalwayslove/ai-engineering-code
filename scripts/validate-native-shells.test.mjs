@@ -34,6 +34,9 @@ test("native shell validation guards the v1 completion audit entrypoint", () => 
   assert.match(validator, /operator-name/);
   assert.match(validator, /confirmed-at/);
   assert.match(validator, /generated-sign-command/);
+  assert.match(validator, /copy-command/);
+  assert.match(validator, /copy-generated-sign-command/);
+  assert.match(validator, /function copyCommand/);
   assert.match(validator, /function updateSignCommand/);
   assert.match(validator, /allItemsReviewed/);
   assert.match(validator, /HTML manual review pack renders evidence links/);
