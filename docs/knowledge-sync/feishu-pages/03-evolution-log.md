@@ -6817,3 +6817,33 @@ pnpm collect:v1-completion-audit -- \
 阶段价值：
 
 这一阶段把当前 HEAD 的自动化门禁重新拉到全绿基线，同时保留人工验收边界：自动化全绿只说明产品、契约、iOS UI test、采证工具和文档门禁未回归；不代表真实系统能力人工验收已经通过。下一步仍是由真实操作者基于 `4281375` Review Pack 逐项复核并生成 signed filled record。
+
+## 阶段 231：人工验收机器预检入口
+
+背景：
+
+- 当前 `4281375` LAN 证据包已经没有候选证据缺口，但 14 个 item 仍全部是 `pending`。
+- 操作者打开 Handoff / Review Pack 时，需要快速区分“候选证据是否齐备”和“是否已经人工验收通过”这两个概念。
+- 之前 Handoff 只显示缺口和签署命令，缺少一眼可见的机器预检摘要。
+
+变更：
+
+- `scripts/generate-ios-manual-review-pack.mjs` 新增机器预检摘要，输出 `machinePrecheck: candidateEvidenceComplete=<n>/<total>, incomplete=<m>, requiresHumanSignoff=true`。
+- Review Pack 逐项显示“候选证据齐备；仍需人工复核签署”或缺少的候选证据数量。
+- `scripts/prepare-ios-manual-acceptance-handoff.mjs` 在当前状态和独立“机器预检”区块展示同一摘要。
+- 机器预检不修改 `acceptanceVerdict`、item `status` 或 `operatorSignoff`；它只是复核辅助。
+
+已验证：
+
+```bash
+node --test scripts/generate-ios-manual-review-pack.test.mjs scripts/prepare-ios-manual-acceptance-handoff.test.mjs
+pnpm prepare:ios-manual-handoff -- --record .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json
+rg -n "machinePrecheck|机器预检" .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-acceptance-handoff.md .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-acceptance-handoff.html .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-review-pack.md .tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-review-pack.html
+```
+
+结果：
+
+- 当前 Handoff / Review Pack 已重新生成。
+- 当前机器预检为 `candidateEvidenceComplete=14/14, incomplete=0, requiresHumanSignoff=true`。
+- 文案明确写出“这仍不代表验收通过”和“仍需人工复核签署”。
+- goal 仍不能标记 complete；正式 completion 仍需要真实操作者生成 signed filled record，并重跑 `--run-automated-commands` full audit。

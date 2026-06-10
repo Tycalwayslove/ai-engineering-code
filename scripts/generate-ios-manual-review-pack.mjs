@@ -144,6 +144,33 @@ function missingEvidence(item) {
   return missing;
 }
 
+function machinePrecheck(items) {
+  const itemResults = asArray(items).map((item) => {
+    const missing = missingEvidence(item);
+    return {
+      complete: missing.length === 0,
+      item,
+      missing,
+    };
+  });
+  const completeCount = itemResults.filter((result) => result.complete).length;
+  const incompleteCount = itemResults.length - completeCount;
+  return {
+    completeCount,
+    incompleteCount,
+    itemResults,
+    requiresHumanSignoff: true,
+    text: `candidateEvidenceComplete=${completeCount}/${itemResults.length}, incomplete=${incompleteCount}, requiresHumanSignoff=true`,
+  };
+}
+
+function machinePrecheckItemText(missing) {
+  if (missing.length === 0) {
+    return "候选证据齐备；仍需人工复核签署。";
+  }
+  return `缺少 ${missing.length} 项候选证据；补齐后仍需人工复核签署。`;
+}
+
 function pushEvidenceSection(lines, item, category, label) {
   const values = asArray(item?.evidence?.[category]);
   lines.push(`- ${label}:`);
@@ -201,6 +228,7 @@ export function buildManualReviewPack(record, options = {}) {
   const outputPath = options.outputPath ?? "manual-evidence-review-pack.md";
   const items = asArray(record?.items);
   const statusCounts = formatStatusCounts(items);
+  const precheck = machinePrecheck(items);
   const recordHeadSha = record?.headSha ?? "unknown";
   const currentHeadSha = options.currentHeadSha ?? "unknown";
   const freshness = packageFreshness(
@@ -227,6 +255,7 @@ export function buildManualReviewPack(record, options = {}) {
     `- automationCanReplaceManualAcceptance: \`${record?.automationCanReplaceManualAcceptance ?? "missing"}\``,
     `- totalItems: \`${items.length}\``,
     `- statusCounts: \`${statusCounts.text}\``,
+    `- machinePrecheck: \`${precheck.text}\``,
   ];
   if (freshness.changedFiles.length > 0) {
     lines.push("- postRecordChangedFiles:");
@@ -258,6 +287,7 @@ export function buildManualReviewPack(record, options = {}) {
     lines.push("");
     lines.push(`- id: \`${item?.id ?? ""}\``);
     lines.push(`- status: \`${item?.status ?? "missing"}\``);
+    lines.push(`- 机器预检：${machinePrecheckItemText(missing)}`);
     pushRequiredEvidenceSection(lines, item);
     lines.push(`- 缺少候选证据：${missing.length === 0 ? "无" : missing.map((entry) => `\`${entry}\``).join(", ")}`);
     if (item?.evidence?.blocker) {
@@ -299,6 +329,7 @@ export function buildManualReviewHtmlPack(record, options = {}) {
   const outputPath = options.outputPath ?? "manual-evidence-review-pack.html";
   const items = asArray(record?.items);
   const statusCounts = formatStatusCounts(items);
+  const precheck = machinePrecheck(items);
   const recordHeadSha = record?.headSha ?? "unknown";
   const currentHeadSha = options.currentHeadSha ?? "unknown";
   const freshness = packageFreshness(
@@ -342,6 +373,7 @@ export function buildManualReviewHtmlPack(record, options = {}) {
         <h3>${index + 1}. ${escapeHtml(item?.title ?? item?.item ?? item?.id ?? "未命名项目")}</h3>
         <p>id: <code>${escapeHtml(item?.id ?? "")}</code></p>
         <p>status: <code>${escapeHtml(item?.status ?? "missing")}</code></p>
+        <p>机器预检：${escapeHtml(machinePrecheckItemText(missing))}</p>
         <section class="required-evidence">
           <h4>必需证据</h4>
           <ul>${requiredEvidenceHtml(item)}</ul>
@@ -389,6 +421,7 @@ export function buildManualReviewHtmlPack(record, options = {}) {
     <p>automationCanReplaceManualAcceptance: <code>${escapeHtml(record?.automationCanReplaceManualAcceptance ?? "missing")}</code></p>
     <p>totalItems: <code>${items.length}</code></p>
     <p>statusCounts: <code>${escapeHtml(statusCounts.text)}</code></p>
+    <p>machinePrecheck: <code>${escapeHtml(precheck.text)}</code></p>
     ${changedFilesHtml}
   </section>
   <section class="panel">

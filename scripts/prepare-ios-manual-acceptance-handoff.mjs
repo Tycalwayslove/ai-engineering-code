@@ -56,6 +56,27 @@ function missingEvidenceFocusItems(items) {
     .filter((item) => item.missing.length > 0);
 }
 
+function machinePrecheck(items) {
+  const focusItems = missingEvidenceFocusItems(items);
+  const totalItems = asArray(items).length;
+  const incompleteCount = focusItems.length;
+  const completeCount = totalItems - incompleteCount;
+  return {
+    completeCount,
+    focusItems,
+    incompleteCount,
+    requiresHumanSignoff: true,
+    text: `candidateEvidenceComplete=${completeCount}/${totalItems}, incomplete=${incompleteCount}, requiresHumanSignoff=true`,
+  };
+}
+
+function machinePrecheckSummaryText(precheck) {
+  if (precheck.incompleteCount === 0) {
+    return "机器预检显示候选证据齐备；这仍不代表验收通过。";
+  }
+  return `机器预检发现 ${precheck.incompleteCount} 个项目仍缺候选证据。`;
+}
+
 function currentGitHeadSha() {
   const result = spawnSync("git", ["rev-parse", "--short", "HEAD"], {
     cwd: rootDir,
@@ -154,6 +175,7 @@ function handoffContext(record, options = {}) {
   const auditOutputDir =
     options.auditOutputDir ?? path.join(".tmp", "v1-completion-audit", "manual-acceptance-final");
   const items = asArray(record?.items);
+  const precheck = machinePrecheck(items);
   return {
     audit,
     auditOutputDir,
@@ -166,6 +188,7 @@ function handoffContext(record, options = {}) {
     notificationReviewRecordPath,
     notificationUiTestMetadataPath,
     packageFreshness,
+    precheck,
     recordHeadSha: record?.headSha ?? "unknown",
     reviewPackPath,
     reviewedItemsPath,
@@ -397,7 +420,7 @@ function htmlSignCommandScript(context, candidateEvidenceComplete) {
 export function buildManualAcceptanceHandoff(record, options = {}) {
   const context = handoffContext(record, options);
   const commands = commandSet(context);
-  const candidateEvidenceComplete = missingEvidenceFocusItems(context.items).length === 0;
+  const candidateEvidenceComplete = context.precheck.incompleteCount === 0;
   const lines = [
     "# iOS 人工验收 Handoff",
     "",
@@ -418,7 +441,12 @@ export function buildManualAcceptanceHandoff(record, options = {}) {
     `- auditVerdict: \`${context.audit.verdict ?? "unknown"}\``,
     `- missingEvidenceCount: \`${context.manualEvidence.missingEvidenceCount ?? "unknown"}\``,
     `- statusCounts: \`${context.statusCounts}\``,
+    `- machinePrecheck: \`${context.precheck.text}\``,
     `- totalItems: \`${context.items.length}\``,
+    "",
+    "## 机器预检",
+    "",
+    machinePrecheckSummaryText(context.precheck),
     "",
     ...missingEvidenceFocusMarkdown(context.items, commands),
     "",
@@ -437,7 +465,7 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
   const context = handoffContext(record, options);
   const commands = commandSet(context);
   const reviewHref = escapeHtml(options.htmlReviewPackHref ?? context.htmlReviewPackPath);
-  const candidateEvidenceComplete = missingEvidenceFocusItems(context.items).length === 0;
+  const candidateEvidenceComplete = context.precheck.incompleteCount === 0;
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -481,8 +509,13 @@ export function buildManualAcceptanceHtmlHandoff(record, options = {}) {
       <li>auditVerdict: <code>${escapeHtml(context.audit.verdict ?? "unknown")}</code></li>
       <li>missingEvidenceCount: <code>${escapeHtml(context.manualEvidence.missingEvidenceCount ?? "unknown")}</code></li>
       <li>statusCounts: <code>${escapeHtml(context.statusCounts)}</code></li>
+      <li>machinePrecheck: <code>${escapeHtml(context.precheck.text)}</code></li>
       <li>totalItems: <code>${context.items.length}</code></li>
     </ul>
+  </section>
+  <section class="panel">
+    <h2>机器预检</h2>
+    <p>${escapeHtml(machinePrecheckSummaryText(context.precheck))}</p>
   </section>
   ${missingEvidenceFocusHtml(context.items, commands)}
   ${htmlOperationSteps(commands, candidateEvidenceComplete)}

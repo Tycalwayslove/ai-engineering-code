@@ -151,6 +151,8 @@ test("manual acceptance handoff keeps review, sign and audit commands together",
   assert.match(markdown, /HTML Review Pack: `\.tmp\/run\/manual-evidence-review-pack\.html`/);
   assert.match(markdown, /acceptanceVerdict: `not_evaluated`/);
   assert.match(markdown, /statusCounts: `passed=0, pending=2, failed=0, blocked=0, other=0`/);
+  assert.match(markdown, /machinePrecheck: `candidateEvidenceComplete=2\/2, incomplete=0, requiresHumanSignoff=true`/);
+  assert.match(markdown, /机器预检显示候选证据齐备；这仍不代表验收通过。/);
   assert.match(markdown, /open .tmp\/run\/manual-evidence-review-pack\.html/);
   assert.match(markdown, /--reviewed-items-file .tmp\/run\/manual-evidence-reviewed-items\.json/);
   assert.match(markdown, /node scripts\/validate-ios-manual-evidence-record\.mjs --record .tmp\/run\/manual-evidence-record\.filled\.json --require-complete --report .tmp\/run\/manual-evidence-gaps\.md/);
@@ -240,6 +242,8 @@ test("HTML handoff renders clickable review links and command blocks", () => {
   assert.match(html, /open .tmp\/run\/manual-evidence-review-pack\.html/);
   assert.match(html, /acceptanceVerdict: <code>not_evaluated<\/code>/);
   assert.match(html, /statusCounts: <code>passed=0, pending=2, failed=0, blocked=0, other=0<\/code>/);
+  assert.match(html, /machinePrecheck: <code>candidateEvidenceComplete=2\/2, incomplete=0, requiresHumanSignoff=true<\/code>/);
+  assert.match(html, /机器预检显示候选证据齐备；这仍不代表验收通过。/);
   assert.match(html, /data-item-id="keyboard_input"/);
   assert.match(html, /data-item-id="local_notification"/);
   assert.match(html, /href="manual-evidence-review-pack\.html#item-keyboard_input"/);
@@ -300,6 +304,8 @@ test("handoff summarizes current missing evidence focus", () => {
   });
 
   assert.match(markdown, /## 当前补证重点/);
+  assert.match(markdown, /machinePrecheck: `candidateEvidenceComplete=0\/2, incomplete=2, requiresHumanSignoff=true`/);
+  assert.match(markdown, /机器预检发现 2 个项目仍缺候选证据。/);
   assert.match(markdown, /本地通知 `local_notification`/);
   assert.match(markdown, /`screenshots: 系统通知截图`/);
   assert.match(markdown, /通知点击回流 `notification_click_backflow`/);
@@ -308,6 +314,8 @@ test("handoff summarizes current missing evidence focus", () => {
   assert.match(markdown, /--attach-notification-ui-test-metadata \.tmp\/ios-notification-ui-test\/notification-ui-test\.json/);
   assert.match(markdown, /manual-evidence-record\.notification-review\.json/);
   assert.match(html, /<h2>当前补证重点<\/h2>/);
+  assert.match(html, /machinePrecheck: <code>candidateEvidenceComplete=0\/2, incomplete=2, requiresHumanSignoff=true<\/code>/);
+  assert.match(html, /机器预检发现 2 个项目仍缺候选证据。/);
   assert.match(html, /data-missing-evidence-item-id="local_notification"/);
   assert.match(html, /screenshots: 系统通知截图/);
   assert.match(html, /data-missing-evidence-item-id="notification_click_backflow"/);

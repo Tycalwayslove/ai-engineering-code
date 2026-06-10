@@ -67,6 +67,8 @@ Goal 不能标记 complete。
 
 2026-06-08 HEAD `a4b9385` 已补跑 full completion audit `.tmp/v1-completion-audit/current-full-final-20260608-a4b9385-lan`。该 audit 使用 `--run-automated-commands --manual-record best --manual-record-root .tmp/ios-acceptance-evidence`，21 个自动化命令全部 `passed`，自动选择 `.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-record.review.json`，`manualEvidence.missingEvidenceCount=0`，`manualEvidence.packageFreshness.status=current_with_docs_only_changes`。结论仍为 `verdict=not_complete`，因为人工记录仍不是 signed filled record：14 个 item 全部 `pending`，缺少 `operatorSignoff`。
 
+2026-06-10 已为人工验收 Handoff / Review Pack 增加机器预检摘要。`pnpm prepare:ios-manual-handoff` 和 `pnpm prepare:ios-manual-review-pack` 现在会输出 `machinePrecheck: candidateEvidenceComplete=<n>/<total>, incomplete=<m>, requiresHumanSignoff=true`；Review Pack 逐项显示候选证据齐备或缺口数量，Handoff 第一屏显示机器预检结果。已重新生成 `.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-acceptance-handoff.html` 和 `.tmp/ios-acceptance-evidence/current-head-final-20260608-4281375-lan/manual-evidence-review-pack.html`，当前预检为 `14/14`。该字段只说明候选证据完整性，不改变 `acceptanceVerdict=not_evaluated`、14 个 item `pending` 和缺少 `operatorSignoff` 的 completion 阻塞。
+
 ## 人工证据缺口
 
 以下内容必须按 `docs/qa/ios-v1-system-acceptance.md` 在 Xcode 模拟器或真机上逐项记录证据。没有这些证据时，不能把“第一版原生 App 系统能力完整可用”作为已完成事实。

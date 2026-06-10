@@ -514,6 +514,8 @@ completion audit 还会结构化记录外部知识库同步状态。默认 `exte
 
 当前候选证据缺口已为 0；Handoff 的“当前补证重点”显示没有缺少的候选证据。但这只说明候选材料齐备，不代表真实人工验收已经通过。
 
+2026-06-10 重新生成的 Handoff / Review Pack 已增加机器预检摘要：`machinePrecheck: candidateEvidenceComplete=14/14, incomplete=0, requiresHumanSignoff=true`。Handoff 第一屏会显示“机器预检显示候选证据齐备；这仍不代表验收通过”，Review Pack 每个 item 会显示“候选证据齐备；仍需人工复核签署”。该摘要只帮助操作者定位证据齐备程度，不会把 `pending` 项改成 `passed`，也不会绕过 `operatorSignoff`。
+
 HTML Handoff 中的复制按钮、通知 UI test metadata 导入命令和签署命令生成器只用于减少人工复核后的操作成本。操作者仍必须先打开 HTML Review Pack 逐项核对截图、录屏、API 摘要、Bridge marker、系统 artifact 和备注，再勾选全部 item、填写 `operator` / `confirmedAt` 并运行生成的签署命令。
 
 补充历史：2026-06-08 HEAD `a00ae87` 是最近一次完整 LAN full audit 基线，full audit 路径为 `.tmp/v1-completion-audit/current-full-final-20260608-a00ae87-lan`，21 个自动化命令全部 `passed`，候选证据缺口为 0，但仍因为人工记录未签署而 `not_complete`。2026-06-08 HEAD `ed0b281` 在 Handoff 上新增逐项“查看证据”链接；2026-06-08 HEAD `1bb9d83` 已在此基础上补齐缺证防误签逻辑，并重新跑通 LAN full audit：

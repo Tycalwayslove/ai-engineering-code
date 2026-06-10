@@ -1139,3 +1139,18 @@ HEAD `a4b9385` 已补跑 full audit：21 个自动化命令全部 `passed`，`--
 - 因为当前人工记录仍是 review 记录，14 个 item 全部 `pending`，且缺少 `operatorSignoff`，所以 goal 仍不能标记 complete。
 - 正式 completion 必须由真实操作者基于 `4281375` Review Pack 逐项复核，生成 signed filled record，再用该 filled record 重跑 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path> --external-knowledge-status ...`。
 - 本轮只更新仓库源稿，未执行飞书或 Obsidian 真实同步；最终回复仍必须说明“仓库已更新，外部知识库未同步”。
+
+## 人工验收机器预检规则
+
+2026-06-10 起，Handoff / Review Pack 需要把“候选证据完整性”和“人工验收通过”分开展示。
+
+- 机器预检字段统一命名为 `machinePrecheck`。
+- 格式为 `candidateEvidenceComplete=<n>/<total>, incomplete=<m>, requiresHumanSignoff=true`。
+- `candidateEvidenceComplete` 只统计 `requiredEvidence` 是否能在对应 `evidence` 中找到候选材料。
+- `requiresHumanSignoff=true` 必须始终保留，避免被误解成自动验收。
+- Review Pack 逐项展示候选证据齐备或缺口数量。
+- Handoff 在第一屏展示机器预检摘要；当缺口为 0 时，仍必须提示“这仍不代表验收通过”。
+- 机器预检不能修改 `acceptanceVerdict`、item `status`、`operatorSignoff` 或 completion audit 结论。
+- 即使 `machinePrecheck=14/14`，最终完成仍必须依赖真实操作者 signed filled record 和 `--run-automated-commands` full audit。
+
+已重新生成当前 `4281375` LAN Handoff / Review Pack，当前机器预检为 `candidateEvidenceComplete=14/14, incomplete=0, requiresHumanSignoff=true`。该结果用于减少人工复核定位成本，不改变 goal 未完成状态。
