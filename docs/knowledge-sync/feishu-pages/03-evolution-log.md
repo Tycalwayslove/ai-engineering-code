@@ -6847,3 +6847,56 @@ rg -n "machinePrecheck|机器预检" .tmp/ios-acceptance-evidence/current-head-f
 - 当前机器预检为 `candidateEvidenceComplete=14/14, incomplete=0, requiresHumanSignoff=true`。
 - 文案明确写出“这仍不代表验收通过”和“仍需人工复核签署”。
 - goal 仍不能标记 complete；正式 completion 仍需要真实操作者生成 signed filled record，并重跑 `--run-automated-commands` full audit。
+
+## 阶段 232：HEAD 94a9a75 LAN 证据入口刷新
+
+背景：
+
+- 阶段 231 提交了 Handoff / Review Pack 生成器变更，旧 `4281375` 证据包相对当前 HEAD 不再是 exact current。
+- 采证前发现 3000 端口被另一个 `meu-mall` Next dev server 占用，不能用于本项目正式采证。
+
+执行：
+
+```bash
+pnpm --filter @ai-code/h5 exec next dev --hostname 0.0.0.0 --port 3100
+
+H5_DEV_SERVER_URL='http://192.168.1.238:3100/?native=ios&bridgeDebug=1' \
+AI_CODE_H5_NATIVE_BASE_URL='http://192.168.1.238:3100' \
+AI_CODE_API_BASE_URL='http://192.168.1.238:8000' \
+AI_CODE_IOS_ACCEPTANCE_SCREENSHOT_DELAY_MS=5000 \
+pnpm collect:ios-acceptance-evidence -- \
+  --require-lan-h5 \
+  --seed-supported-system-evidence \
+  --seed-keyboard-input \
+  --seed-attachment-inputs \
+  --output-dir .tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan
+
+pnpm prepare:ios-manual-handoff -- \
+  --record .tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan/manual-evidence-record.review.json
+
+pnpm collect:v1-completion-audit -- \
+  --manual-record best \
+  --manual-record-root .tmp/ios-acceptance-evidence \
+  --output-dir .tmp/v1-completion-audit/current-lightweight-20260610-94a9a75-lan \
+  --external-knowledge-status not_synced
+```
+
+结果：
+
+- 当前证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan`。
+- HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan/manual-acceptance-handoff.html`。
+- HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan/manual-evidence-review-pack.html`。
+- HEAD 绑定确认列表：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan/manual-evidence-reviewed-items.json`。
+- lightweight audit：`.tmp/v1-completion-audit/current-lightweight-20260610-94a9a75-lan`。
+- `manifest.headSha=94a9a75`，`manual-evidence-record.review.json.headSha=94a9a75`。
+- `formalReadiness.ready=true`，`serviceHealth.h5NativeUrlKind=private_lan`，`ios.h5DevServerUrlKind=private_lan`。
+- `acceptanceFactSeed.available=true`、`calendarCleanupSeed.available=true`、`notificationUiTest.available=true`、`nativeKeyboardInput.available=true`、`nativeAttachmentInputs.available=true`。
+- `manualEvidence.missingEvidenceCount=0`。
+- `manualEvidence.packageFreshness.status=current`，`recordHeadSha=94a9a75`，`currentHeadSha=94a9a75`。
+- `machinePrecheck=candidateEvidenceComplete=14/14, incomplete=0, requiresHumanSignoff=true`。
+- 14 个人工验收 item 仍全部为 `pending`，`acceptanceVerdict=not_evaluated`。
+- lightweight audit 中 21 个自动化命令为 `not_run`，最终 `verdict=not_complete`。
+
+阶段价值：
+
+这一阶段把当前 HEAD 的人工复核入口重新拉回 fresh 状态，并纠正了 3000 端口误指向其它项目的环境风险。正式 completion 仍需要真实操作者逐项复核并生成 signed filled record，再用该 filled record 重跑 `--run-automated-commands` full audit；本轮没有执行飞书或 Obsidian 真实同步。

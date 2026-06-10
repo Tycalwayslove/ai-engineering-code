@@ -1154,3 +1154,25 @@ HEAD `a4b9385` 已补跑 full audit：21 个自动化命令全部 `passed`，`--
 - 即使 `machinePrecheck=14/14`，最终完成仍必须依赖真实操作者 signed filled record 和 `--run-automated-commands` full audit。
 
 已重新生成当前 `4281375` LAN Handoff / Review Pack，当前机器预检为 `candidateEvidenceComplete=14/14, incomplete=0, requiresHumanSignoff=true`。该结果用于减少人工复核定位成本，不改变 goal 未完成状态。
+
+## 当前 HEAD 证据入口刷新规则
+
+2026-06-10 HEAD `94a9a75` 已重新生成当前 LAN 辅助证据包和人工复核入口。以后继续推进 v1 completion 时，默认应优先使用 `94a9a75` 的 Handoff / Review Pack，而不是 `4281375` 的旧包。
+
+- 当前证据包：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan`。
+- 当前 HTML Handoff：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan/manual-acceptance-handoff.html`。
+- 当前 HTML Review Pack：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan/manual-evidence-review-pack.html`。
+- 当前 HEAD 绑定确认列表：`.tmp/ios-acceptance-evidence/current-head-final-20260610-94a9a75-lan/manual-evidence-reviewed-items.json`。
+- 当前 lightweight audit：`.tmp/v1-completion-audit/current-lightweight-20260610-94a9a75-lan`。
+- 最近一次 full audit 基线：`.tmp/v1-completion-audit/current-full-final-20260608-a4b9385-lan`。
+
+本轮发现 3000 端口可能被其它项目占用。正式采证前必须用 `curl` 或页面内容确认 H5 URL 属于本项目 `AI 时间管理 Agent`，不能仅凭端口监听判断服务正确。若 3000 被占用，可用 `pnpm --filter @ai-code/h5 exec next dev --hostname 0.0.0.0 --port 3100` 启动本项目 H5，并把 `H5_DEV_SERVER_URL` / `AI_CODE_H5_NATIVE_BASE_URL` 指向 3100。
+
+当前 `94a9a75` 包使用 `--require-lan-h5` 生成，`formalReadiness.ready=true`，H5 native URL 和构建产物 `H5DevServerURL` 都是 `private_lan`。lightweight audit 中 `manualEvidence.packageFreshness.status=current`、`recordHeadSha=94a9a75`、`currentHeadSha=94a9a75`、`manualEvidence.missingEvidenceCount=0`，机器预检为 `candidateEvidenceComplete=14/14, incomplete=0, requiresHumanSignoff=true`。
+
+边界必须保持清楚：
+
+- `94a9a75` 的 lightweight audit 没有使用 `--run-automated-commands`；`a4b9385` 的 full audit 是最近一次 21 项自动化基线。
+- 因为当前人工记录仍是 review 记录，14 个 item 全部 `pending`，且缺少 `operatorSignoff`，所以 goal 仍不能标记 complete。
+- 正式 completion 必须由真实操作者基于 `94a9a75` Review Pack 逐项复核，生成 signed filled record，再用该 filled record 重跑 `pnpm collect:v1-completion-audit -- --run-automated-commands --manual-record <filled-path> --external-knowledge-status ...`。
+- 本轮只更新仓库源稿，未执行飞书或 Obsidian 真实同步；最终回复仍必须说明“仓库已更新，外部知识库未同步”。
